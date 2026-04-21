@@ -1425,7 +1425,7 @@ function renderSezon() {
         <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(59,130,246,0.3) 0%,transparent 60%);border-radius:50%;filter:blur(20px);"></div>
         <div style="position:absolute;bottom:-60px;left:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(16,185,129,0.25) 0%,transparent 60%);border-radius:50%;filter:blur(30px);"></div>
         <div style="position:relative;z-index:1;">
-          <div style="font-size:10px;font-weight:900;color:#60a5fa;letter-spacing:4px;text-transform:uppercase;margin-bottom:10px;opacity:0.9;">FIFA STILİ SEZON ÖZETİ</div>
+          <div style="font-size:10px;font-weight:900;color:#60a5fa;letter-spacing:4px;text-transform:uppercase;margin-bottom:10px;opacity:0.9;">SEZON ÖZETİ</div>
           <div style="font-size:40px;font-weight:900;color:#fff;letter-spacing:-2px;margin-bottom:6px;text-shadow:0 4px 30px rgba(59,130,246,0.3);">${totalWeeks} <span style="color:#10b981;">HAFTA</span></div>
           <div style="font-size:13px;color:#94a3b8;font-weight:700;letter-spacing:0.5px;">${players.length} oyuncu · ${data.weeks[0]} → ${data.weeks[totalWeeks-1]}</div>
         </div>
