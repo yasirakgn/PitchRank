@@ -4,7 +4,7 @@
       <div class="hdr-sub">Halı Saha Pro</div>
       <div class="hdr-title">Yönetim &amp; İstatistik</div>
     </div>
-    <button class="dark-btn" id="darkBtn" onclick="toggleDark()" type="button">☀️</button>
+    <button class="dark-btn" id="darkBtn" data-action="toggle-dark" type="button">☀️</button>
   </header>
 
   <section id="screen-anasayfa" class="screen active" aria-label="Anasayfa">
@@ -22,7 +22,7 @@
     </div>
 
     <div class="quick-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;">
-      <button class="quick-modern qm-puanla" onclick="switchMainScreen('puanla', this)">
+      <button class="quick-modern qm-puanla" data-action="switch-main-screen" data-screen="puanla">
         <div class="qm-icon-wrap" style="width:56px; height:56px; border-radius:18px; background:linear-gradient(135deg, #3b82f6, #0ea5e9); display:flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 8px 24px rgba(59,130,246,0.25);">
           <span class="qm-icon" style="font-size:28px;">📝</span>
         </div>
@@ -30,7 +30,7 @@
         <div class="qm-desc" style="font-size:11px; color:var(--text3); margin-top:4px; font-weight:500;">Oyuncuları değerlendir</div>
       </button>
       
-      <button class="quick-modern qm-siralama" onclick="switchMainScreen('siralama', this)">
+      <button class="quick-modern qm-siralama" data-action="switch-main-screen" data-screen="siralama">
         <div class="qm-icon-wrap" style="width:56px; height:56px; border-radius:18px; background:linear-gradient(135deg, #f59e0b, #f97316); display:flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 8px 24px rgba(245,158,11,0.25);">
           <span class="qm-icon" style="font-size:28px;">🏆</span>
         </div>
@@ -38,7 +38,7 @@
         <div class="qm-desc" style="font-size:11px; color:var(--text3); margin-top:4px; font-weight:500;">Genel ve pozisyon</div>
       </button>
       
-      <button class="quick-modern qm-istatistik" onclick="switchMainScreen('istatistik', this)">
+      <button class="quick-modern qm-istatistik" data-action="switch-main-screen" data-screen="istatistik">
         <div class="qm-icon-wrap" style="width:56px; height:56px; border-radius:18px; background:linear-gradient(135deg, #8b5cf6, #a78bfa); display:flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 8px 24px rgba(139,92,246,0.25);">
           <span class="qm-icon" style="font-size:28px;">📊</span>
         </div>
@@ -46,7 +46,7 @@
         <div class="qm-desc" style="font-size:11px; color:var(--text3); margin-top:4px; font-weight:500;">Trend ve karşılaştır</div>
       </button>
       
-      <button class="quick-modern qm-takim" onclick="switchMainScreen('takim', this)">
+      <button class="quick-modern qm-takim" data-action="switch-main-screen" data-screen="takim">
         <div class="qm-icon-wrap" style="width:56px; height:56px; border-radius:18px; background:linear-gradient(135deg, #ef4444, #f87171); display:flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 8px 24px rgba(239,68,68,0.25);">
           <span class="qm-icon" style="font-size:28px;">⚡</span>
         </div>
@@ -118,10 +118,10 @@
       </div>
     </div>
     <div class="sub-nav">
-      <button class="sub-nb active" onclick="setRankTab('genel',this)" type="button">🏆 Genel</button>
-      <button class="sub-nb" onclick="setRankTab('defans',this)" type="button">🛡️ Defans</button>
-      <button class="sub-nb" onclick="setRankTab('orta',this)" type="button">⚙️ Orta</button>
-      <button class="sub-nb" onclick="setRankTab('forvet',this)" type="button">⚡ Forvet</button>
+      <button class="sub-nb active" data-action="set-rank-tab" data-tab="genel" type="button">🏆 Genel</button>
+      <button class="sub-nb" data-action="set-rank-tab" data-tab="defans" type="button">🛡️ Defans</button>
+      <button class="sub-nb" data-action="set-rank-tab" data-tab="orta" type="button">⚙️ Orta</button>
+      <button class="sub-nb" data-action="set-rank-tab" data-tab="forvet" type="button">⚡ Forvet</button>
     </div>
     <div id="fifaGrid" class="fg" style="margin-bottom:12px;"></div>
     <div id="noDataSonuc" class="no-data" style="display:none">Henüz puan girilmedi.</div>
@@ -129,12 +129,12 @@
 
   <section id="screen-istatistik" class="screen" aria-label="İstatistik">
     <div class="sub-nav">
-      <button class="sub-nb active" onclick="setStatScreen('hafta',this)" type="button">📊 Hafta</button>
-      <button class="sub-nb" onclick="setStatScreen('trend',this)" type="button">📈 Trend</button>
-      <button class="sub-nb" onclick="setStatScreen('karsi',this)" type="button">⚔️ Karşılaştır</button>
-      <button class="sub-nb" onclick="setStatScreen('sezon',this)" type="button">🏅 Sezon</button>
-      <button class="sub-nb" onclick="setStatScreen('katilim',this)" type="button">📅 Katılım</button>
-      <button class="sub-nb" onclick="setStatScreen('maclar',this)" type="button">🏟️ Maçlar</button>
+      <button class="sub-nb active" data-action="set-stat-screen" data-stat="hafta" type="button">📊 Hafta</button>
+      <button class="sub-nb" data-action="set-stat-screen" data-stat="trend" type="button">📈 Trend</button>
+      <button class="sub-nb" data-action="set-stat-screen" data-stat="karsi" type="button">⚔️ Karşılaştır</button>
+      <button class="sub-nb" data-action="set-stat-screen" data-stat="sezon" type="button">🏅 Sezon</button>
+      <button class="sub-nb" data-action="set-stat-screen" data-stat="katilim" type="button">📅 Katılım</button>
+      <button class="sub-nb" data-action="set-stat-screen" data-stat="maclar" type="button">🏟️ Maçlar</button>
     </div>
     <div id="stat-hafta" class="sub-screen active">
       <div id="weekSelectorWrap" style="margin-bottom:14px;"></div>
