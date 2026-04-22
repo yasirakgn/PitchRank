@@ -31,8 +31,3 @@ test('formatMoney and ratingColor produce expected buckets', () => {
   assert.deepEqual(utils.ratingColor(60), { text: '#3b82f6', bar: '#3b82f6' });
 });
 
-test('computeWeekLabel handles manual override and deterministic dates', () => {
-  assert.equal(utils.computeWeekLabel(new Date('2026-01-01T12:00:00Z')), '2026-H01');
-  assert.equal(utils.computeWeekLabel(new Date('2026-12-31T12:00:00Z')), '2026-H53');
-  assert.equal(utils.computeWeekLabel(new Date('2026-06-01T12:00:00Z'), '2026-H21'), '2026-H21');
-});

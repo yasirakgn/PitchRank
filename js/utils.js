@@ -73,19 +73,7 @@
   }
 
   function ratingColor(rating) {
-    if (rating >= 85) return { text: '#eab308', bar: '#eab308' };
-    if (rating >= 75) return { text: '#94a3b8', bar: '#94a3b8' };
-    if (rating >= 65) return { text: '#d97706', bar: '#d97706' };
-    return { text: '#3b82f6', bar: '#3b82f6' };
-  }
 
-  function computeWeekLabel(dateInput, manualWeek) {
-    if (manualWeek) return manualWeek;
-    const now = dateInput instanceof Date ? dateInput : new Date(dateInput || Date.now());
-    const start = new Date(now.getFullYear(), 0, 1);
-    const week = Math.ceil((((now - start) / 86400000) + start.getDay() + 1) / 7);
-    return now.getFullYear() + '-H' + String(week).padStart(2, '0');
-  }
 
   return {
     CRITERIA_LABELS,
@@ -95,8 +83,6 @@
     criterionShortLabel,
     toPhotoFilename,
     normPos,
-    formatMoney,
-    ratingColor,
-    computeWeekLabel
+
   };
 });
