@@ -1,5 +1,6 @@
 // ─── SABITLER ────────────────────────────────────────────────────────────────
-const GS = 'https://script.google.com/macros/s/AKfycbxn8T0QYMmZpU0NvVylCQLhIsv_HPPFODAvt3vKJ9EzolwYekv1L3ovyuos2DNCuwy3/exec';
+const APP_CONFIG = (typeof window !== 'undefined' && window.APP_CONFIG) ? window.APP_CONFIG : {};
+const GS = APP_CONFIG.gsUrl || 'https://script.google.com/macros/s/AKfycbxn8T0QYMmZpU0NvVylCQLhIsv_HPPFODAvt3vKJ9EzolwYekv1L3ovyuos2DNCuwy3/exec';
 const BASE_URL = 'assets/images/';
 
 // ─── CACHE VERSION (oyuncu + ilişkili cache temizleme) ────────────────────
@@ -114,11 +115,16 @@ function getPlayerPhoto(name) {
   return photo ? BASE_URL + photo : '';
 }
 function getWeekLabel() {
-  if (_manualWeek) return _manualWeek;
-  const now = new Date(), start = new Date(now.getFullYear(), 0, 1);
-  return now.getFullYear() + '-H' + String(Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7)).padStart(2, '0');
+  return buildWeekLabel({ useManual: true });
 }
 function getAutoWeekLabel() {
+  return buildWeekLabel({ useManual: false });
+}
+function buildWeekLabel(opts = {}) {
+  if (Utils.computeWeekLabel) {
+    return Utils.computeWeekLabel(new Date(), opts.useManual ? _manualWeek : '');
+  }
+  if (opts.useManual && _manualWeek) return _manualWeek;
   const now = new Date(), start = new Date(now.getFullYear(), 0, 1);
   return now.getFullYear() + '-H' + String(Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7)).padStart(2, '0');
 }
