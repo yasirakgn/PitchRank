@@ -2,7 +2,7 @@
 const GS = 'https://script.google.com/macros/s/AKfycbxn8T0QYMmZpU0NvVylCQLhIsv_HPPFODAvt3vKJ9EzolwYekv1L3ovyuos2DNCuwy3/exec';
 const BASE_URL = 'assets/images/';
 
-// ─── PLAYERS VERSION (cache temizleme) ────────────────────────────────────
+// ─── CACHE VERSION (oyuncu + ilişkili cache temizleme) ────────────────────
 const PLAYERS_VERSION = '4';
 if (localStorage.getItem('hs_players_version') !== PLAYERS_VERSION) {
   localStorage.removeItem('hs_players');
@@ -16,7 +16,8 @@ if (localStorage.getItem('hs_players_version') !== PLAYERS_VERSION) {
 let PLAYERS = JSON.parse(localStorage.getItem('hs_players')) || [];
 
 const CRITERIA = ['Pas','Sut','Dribling','Savunma','Hiz / Kondisyon','Fizik','Takim Oyunu'];
-const CDISP    = ['Pas','Şut','Drib.','Savunma','Hız','Fizik','Takım'];
+const Utils = window.HSUtils || {};
+const CDISP = CRITERIA.map((k) => Utils.criterionShortLabel ? Utils.criterionShortLabel(k) : k);
 const POS      = { KL: '🧤 Kaleci', DEF: '🛡️ Defans', OMO: '⚙️ Orta Saha', FRV: '⚡ Forvet' };
 const POS_GROUPS = [
   { label: '🧤 Kale', keys: ['KL'] },
@@ -80,12 +81,15 @@ function updateDarkBtn() {
 }
 function sp(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 function savePlayers() { sp('hs_players', PLAYERS); }
-function san(s) { return s.replace(/[^a-zA-Z0-9]/g, '_'); }
+function san(s) {
+  return Utils.sanitizeKey ? Utils.sanitizeKey(s) : String(s || '').replace(/[^a-zA-Z0-9]/g, '_');
+}
 function gs(p) {
   const url = GS + '?' + Object.keys(p).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(p[k])).join('&');
   return fetch(url).then(r => r.json());
 }
 function normPos(p) {
+  if (Utils.normPos) return Utils.normPos(p);
   let arr = Array.isArray(p.pos) ? p.pos : [p.pos || ''];
   let valid = arr.filter(k => VALID_POS.includes(k));
   if (valid.length) return [valid[0]];
@@ -99,6 +103,7 @@ function normPos(p) {
 function posLabel(p) { return normPos(p).map(k => POS[k] || k).join(' / '); }
 function posShort(p) { return posLabel(p); }
 function toPhotoFilename(name) {
+  if (Utils.toPhotoFilename) return Utils.toPhotoFilename(name);
   const map = { 'ç':'c','Ç':'c','ğ':'g','Ğ':'g','ı':'i','İ':'i','ö':'o','Ö':'o','ş':'s','Ş':'s','ü':'u','Ü':'u' };
   return String(name || '').toLowerCase().split('').map(c => map[c] !== undefined ? map[c] : (c === ' ' ? '' : c)).join('') + '.png';
 }
@@ -118,6 +123,7 @@ function getAutoWeekLabel() {
   return now.getFullYear() + '-H' + String(Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7)).padStart(2, '0');
 }
 function formatMoney(value) {
+  if (Utils.formatMoney) return Utils.formatMoney(value);
   if (isNaN(value)) return '€0';
   if (value >= 1000000) return '€' + (value / 1000000).toFixed(1) + 'M';
   if (value >= 1000) return '€' + Math.round(value / 1000) + 'K';
@@ -127,6 +133,7 @@ function scoreColor(v) {
   if(v>=9) return '#10b981'; if(v>=7) return '#84cc16'; if(v>=5) return '#eab308'; if(v>=3) return '#f97316'; return '#ef4444';
 }
 function ratingColor(r) {
+  if (Utils.ratingColor) return Utils.ratingColor(r);
   if (r >= 85) return { text: '#eab308', bar: '#eab308' };
   if (r >= 75) return { text: '#94a3b8', bar: '#94a3b8' };
   if (r >= 65) return { text: '#d97706', bar: '#d97706' };
@@ -1307,7 +1314,7 @@ function renderComparison() {
     const aFormTrend = (() => { const v = pa.weeklyGenels.filter(x=>x!=null); if (v.length<2) return 'stabil'; return v[v.length-1]>v[v.length-2]?'yükselen':'düşen'; })();
     const bFormTrend = (() => { const v = pb.weeklyGenels.filter(x=>x!=null); if (v.length<2) return 'stabil'; return v[v.length-1]>v[v.length-2]?'yükselen':'düşen'; })();
     const overallWinner = aRating > bRating ? a : bRating > aRating ? b : null;
-    const critLabels = { 'Pas':'Pas', 'Sut':'Şut', 'Dribling':'Dribling', 'Savunma':'Savunma', 'Hiz / Kondisyon':'Hız/Kondisyon', 'Fizik':'Fizik', 'Takim Oyunu':'Takım Oyunu' };
+    const critLabels = Object.fromEntries(CRITERIA.map((key) => [key, Utils.criterionLabel ? Utils.criterionLabel(key) : key]));
 
     const commentary = `<div style="background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--border);border-radius:20px;padding:18px;margin-top:4px;">
       <div style="font-size:11px;font-weight:800;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">🤖 Otomatik Analiz</div>
