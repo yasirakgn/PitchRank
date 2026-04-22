@@ -1,5 +1,5 @@
 async function loadIncludes() {
-  const Net = window.HSNetwork || {};
+
   const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
     '&': '&amp;',
     '<': '&lt;',
@@ -14,13 +14,7 @@ async function loadIncludes() {
     const url = node.getAttribute('data-include');
     if (!url) return;
     try {
-      if (Net.fetchTextWithRetry) {
-        node.innerHTML = await Net.fetchTextWithRetry(url, { retries: 1, timeoutMs: 10000, fetchOptions: { cache } });
-      } else {
-        const res = await fetch(url, { cache });
-        if (!res.ok) throw new Error(`${url} yüklenemedi (${res.status})`);
-        node.innerHTML = await res.text();
-      }
+
     } catch (err) {
       node.innerHTML = `<div style="padding:12px;border:1px solid #f9731680;border-radius:10px;color:#f97316;font:600 12px/1.4 Inter,sans-serif;">⚠️ Bileşen yüklenemedi: ${escapeHtml(url)}</div>`;
       console.error('[include-load-error]', url, err);
