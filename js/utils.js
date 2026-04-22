@@ -74,6 +74,7 @@
 
   function ratingColor(rating) {
 
+
   return {
     CRITERIA_LABELS,
     VALID_POS,

@@ -30,3 +30,4 @@ test('formatMoney and ratingColor produce expected buckets', () => {
   assert.deepEqual(utils.ratingColor(86), { text: '#eab308', bar: '#eab308' });
   assert.deepEqual(utils.ratingColor(60), { text: '#3b82f6', bar: '#3b82f6' });
 });
+

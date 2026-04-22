@@ -14,7 +14,9 @@ if (localStorage.getItem('hs_players_version') !== PLAYERS_VERSION) {
   localStorage.setItem('hs_players_version', PLAYERS_VERSION);
 }
 
-let PLAYERS = JSON.parse(localStorage.getItem('hs_players')) || [];
+const Store = window.HSStorage || {};
+const Net = window.HSNetwork || {};
+let PLAYERS = (Store.getJSON ? Store.getJSON('hs_players', []) : JSON.parse(localStorage.getItem('hs_players'))) || [];
 
 const CRITERIA = ['Pas','Sut','Dribling','Savunma','Hiz / Kondisyon','Fizik','Takim Oyunu'];
 const Utils = window.HSUtils || {};
@@ -60,7 +62,7 @@ function showToast(msg, isError = false) {
   const c = document.getElementById('toast-container');
   const t = document.createElement('div');
   t.className = `toast ${isError ? 'error' : ''} show`;
-  t.innerHTML = isError ? `⚠️ ${msg}` : `✅ ${msg}`;
+  t.textContent = isError ? `⚠️ ${msg}` : `✅ ${msg}`;
   c.appendChild(t);
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
 }
@@ -80,13 +82,18 @@ function updateDarkBtn() {
   const b = document.getElementById('darkBtn');
   if (b) b.textContent = darkMode ? '☀️' : '🌙';
 }
-function sp(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+function sp(k, v) {
+  if (Store.setJSON) return Store.setJSON(k, v);
+  localStorage.setItem(k, JSON.stringify(v));
+}
 function savePlayers() { sp('hs_players', PLAYERS); }
 function san(s) {
   return Utils.sanitizeKey ? Utils.sanitizeKey(s) : String(s || '').replace(/[^a-zA-Z0-9]/g, '_');
 }
 function gs(p) {
-  const url = GS + '?' + Object.keys(p).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(p[k])).join('&');
+  const query = Net.toQuery ? Net.toQuery(p) : Object.keys(p).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(p[k])).join('&');
+  const url = GS + '?' + query;
+  if (Net.fetchJsonWithRetry) return Net.fetchJsonWithRetry(url, { retries: 2, timeoutMs: 12000 });
   return fetch(url).then(r => r.json());
 }
 function normPos(p) {
