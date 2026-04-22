@@ -73,9 +73,9 @@
   }
 
   function ratingColor(rating) {
-    if (rating >= 85) return { text: '#eab308', bar: '#eab308' };
-    if (rating >= 75) return { text: '#94a3b8', bar: '#94a3b8' };
-    if (rating >= 65) return { text: '#d97706', bar: '#d97706' };
+    if (rating >= 80) return { text: '#eab308', bar: '#eab308' };
+    if (rating >= 70) return { text: '#94a3b8', bar: '#94a3b8' };
+    if (rating >= 60) return { text: '#d97706', bar: '#d97706' };
     return { text: '#3b82f6', bar: '#3b82f6' };
   }
 
