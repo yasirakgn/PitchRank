@@ -1,7 +1,7 @@
 import { CRITERIA, CDISP, TEAM_CONFIG } from './config.js';
 import { state } from './state.js';
-import { escHtml, posLabel, getPlayerPhoto, scoreColor, showToast } from './utils.js';
-import { posRating } from './rating.js';
+import { escHtml, posLabel, getPlayerPhoto, showToast } from './utils.js';
+import { CURRENT_TEAM } from './storage.js';
 
 // ── Yardımcı hesaplama fonksiyonları ─────────────────────────────────────────
 
@@ -94,7 +94,7 @@ function renderHeader(container, playerData, pObj) {
   const posText = pObj ? posLabel(pObj) : '';
   const genelOrt = playerData && playerData.genelOrt != null ? playerData.genelOrt : null;
   const rating = genelOrt !== null ? Math.min(99, Math.round(genelOrt * 10)) : '—';
-  const teamId = sessionStorage.getItem('pitchrank_selected_team') || 'haldunalagas';
+  const teamId = CURRENT_TEAM || 'haldunalagas';
   const teamColor = (TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas).color;
 
   container.innerHTML = `
@@ -145,7 +145,8 @@ function renderFormStrip(container, playerData, resultData) {
 function renderBadges(container, badges) {
   const items = badges.map(b => `
     <div class="badge-item ${b.earned ? '' : 'locked'}"
-         onclick="window.__showBadgeDesc && window.__showBadgeDesc('${escHtml(b.icon + ' ' + b.name + ': ' + b.desc)}')">
+         data-badge-desc="${escHtml(b.icon + ' ' + b.name + ': ' + b.desc)}"
+         onclick="window.__showBadgeDesc && window.__showBadgeDesc(this.dataset.badgeDesc)">
       <span class="badge-icon">${b.icon}</span>
       <span class="badge-name">${escHtml(b.name)}</span>
       ${b.earned ? '' : '<span class="badge-lock">🔒</span>'}
@@ -215,11 +216,11 @@ export function renderProfile() {
   const playerData = rd && Array.isArray(rd.players) ? rd.players.find(p => p.name === name) : null;
   const pObj = Array.isArray(state.players) ? state.players.find(p => p.name === name) : null;
 
-  renderHeader(headerEl, playerData, pObj);
-  renderFormStrip(formEl, playerData, rd);
-  renderBadges(badgesEl, computeBadges(playerData, rd, md));
-  renderCompetition(compEl, playerData, rd && rd.players);
-  renderCriteriaBar(criteriaEl, playerData);
+  if (headerEl)   renderHeader(headerEl, playerData, pObj);
+  if (formEl)     renderFormStrip(formEl, playerData, rd);
+  if (badgesEl)   renderBadges(badgesEl, computeBadges(playerData, rd, md));
+  if (compEl)     renderCompetition(compEl, playerData, rd && rd.players);
+  if (criteriaEl) renderCriteriaBar(criteriaEl, playerData);
 
   window.__showBadgeDesc = (msg) => showToast(msg);
 }
