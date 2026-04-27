@@ -1,4 +1,4 @@
-var SHEET_ID = '1V3yh8AH2GG55O9zkgTR_2yI6-J17c1x-OgN7TYC5N4M';
+var SHEET_ID = '1olxoMoQj1qoynLU756se3qPXAwFKUTE3f7nVxkyyGWE';
 
 var RATE_LIMIT_MAX       = 5;
 var RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
@@ -28,6 +28,7 @@ function doGet(e) {
   if (action === 'checkVoted')        return checkVoted(params);
   if (action === 'getManualWeek')     return getManualWeek();
   if (action === 'saveManualWeek')    return saveManualWeek(params);
+  if (action === 'saveSetting')       return saveSetting(params);
   return HtmlService.createHtmlOutput('<p>Calisiyor</p>');
 }
 
@@ -197,7 +198,7 @@ function saveRating(params) {
   var ss    = SpreadsheetApp.openById(SHEET_ID);
   var sheet = ss.getSheetByName('Puanlar');
   if (!sheet) { sheet = ss.insertSheet('Puanlar'); sheet.appendRow(['Tarih','Hafta','Puanlayan','Oyuncu','Pas','Sut','Dribling','Savunma','Hiz Kondisyon','Fizik','Takim Oyunu']); }
-  var scores = JSON.parse(decodeURIComponent(params.scores));
+  var scores = JSON.parse(params.scores);
   var week = params.week, rater = params.rater, now = new Date().toLocaleString('tr-TR');
   var data = sheet.getDataRange().getValues();
 
@@ -272,7 +273,19 @@ function getResults() {
     rows.forEach(function(r) { if (String(r[1]) === week && r[2] && raters.indexOf(String(r[2])) === -1) raters.push(String(r[2])); });
     ratersPerWeek[week] = raters;
   });
-  return json({ weeks:weeks, players:players, criteria:CRITERIA, ratersPerWeek:ratersPerWeek });
+  var minVoters = 5;
+  var ayarlarSheet2 = ss.getSheetByName('Ayarlar');
+  if (ayarlarSheet2) {
+    var ayarData = ayarlarSheet2.getDataRange().getValues();
+    for (var ai = 1; ai < ayarData.length; ai++) {
+      if (String(ayarData[ai][0]) === 'oy_gizleme_siniri') {
+        var av = parseInt(ayarData[ai][1]);
+        if (!isNaN(av) && av > 0) minVoters = av;
+        break;
+      }
+    }
+  }
+  return json({ weeks:weeks, players:players, criteria:CRITERIA, ratersPerWeek:ratersPerWeek, minVoters:minVoters });
 }
 
 function getPlayerNamesFromSheet(ss) {
@@ -418,8 +431,8 @@ function saveAttendance(params) {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getOrCreateKatilimSheet(ss);
   var now = new Date().toLocaleString('tr-TR'), week = params.week || '';
-  var presentRaw = params.present ? decodeURIComponent(params.present) : '';
-  var absentRaw  = params.absent  ? decodeURIComponent(params.absent)  : '';
+  var presentRaw = params.present || '';
+  var absentRaw  = params.absent  || '';
   presentRaw.split(',').filter(function(s){return s.trim();}).forEach(function(p){setAttendance(sheet,now,week,p.trim(),1);});
   absentRaw.split(',').filter(function(s){return s.trim();}).forEach(function(p){setAttendance(sheet,now,week,p.trim(),0);});
   return json({ success: true });
@@ -558,6 +571,33 @@ function saveManualWeek(params) {
       configSheet.getRange(lastRow, 2).setValue(week);
     }
     
+    return json({ success: true });
+  } catch(e) {
+    return json({ success: false, error: e.toString() });
+  }
+}
+
+function saveSetting(params) {
+  try {
+    var key = String(params.key || '').trim();
+    var val = String(params.value !== undefined ? params.value : '').trim();
+    if (!key) return json({ success: false, error: 'Key required' });
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var configSheet = getOrCreateAyarlarSheet(ss);
+    var data = configSheet.getDataRange().getValues();
+    var found = false;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === key) {
+        configSheet.getRange(i + 1, 2).setValue(val);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      var lastRow = configSheet.getLastRow() + 1;
+      configSheet.getRange(lastRow, 1).setValue(key);
+      configSheet.getRange(lastRow, 2).setValue(val);
+    }
     return json({ success: true });
   } catch(e) {
     return json({ success: false, error: e.toString() });

@@ -3,18 +3,76 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Halı Saha Pro</title>
+  <meta name="description" content="PitchRank: Halı saha ve futsal maçları için profesyonel oyuncu performans değerlendirme, puanlama ve istatistik takip sistemi.">
+  <meta name="keywords" content="PitchRank, futsal, halı saha, oyuncu değerlendirme, performans, istatistik, oyuncu puanlama, maç takip, amatör futbol">
+  <meta name="author" content="PitchRank">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Social Media (WhatsApp, Instagram, Facebook önizlemeleri için) -->
+  <meta property="og:title" content="PitchRank - Halı Saha & Futsal İstatistikleri">
+  <meta property="og:description" content="PitchRank ile halı saha maçlarınızı profesyonel arenaya taşıyın. Oyuncu puanlama ve detaylı performans analizi.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://pitchrank.app/">
+  <meta property="og:image" content="https://pitchrank.app/assets/images/icon-512.png">
+  <meta property="og:site_name" content="PitchRank">
+  
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PitchRank - Halı Saha & Futsal İstatistikleri">
+  <meta name="twitter:description" content="PitchRank ile halı saha maçlarınızı profesyonel arenaya taşıyın. Oyuncu puanlama ve detaylı performans analizi.">
+  <meta name="twitter:image" content="https://pitchrank.app/assets/images/icon-512.png">
+
+  <meta name="theme-color" content="#1a1a1a">
+  <link rel="canonical" href="https://pitchrank.app/">
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="PitchRank">
+  
+  <!-- Favicon ve Uygulama Logosu Etiketleri -->
+  <link rel="icon" type="image/png" href="assets/images/icon-192.png">
+  <link rel="shortcut icon" type="image/png" href="assets/images/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/images/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/images/icon-512.png">
+  <link rel="apple-touch-icon" href="assets/images/icon-192.png">
+
+  <title>PitchRank - Halı Saha ve Futsal İstatistik, Sıralama Sistemi</title>
+  <meta http-equiv="Cache-Control" content="max-age=3600, must-revalidate">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/base.css?v=2.0">
+  <link rel="stylesheet" href="css/main.css?v=2.0">
+  <!-- Structured Data for Google -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "PitchRank",
+    "description": "Halı saha ve futsal maçları için profesyonel oyuncu performans değerlendirme, puanlama ve istatistik takip sistemi.",
+    "url": "https://pitchrank.app/",
+    "applicationCategory": "SportsApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.5",
+      "ratingCount": "100"
+    }
+  }
+  </script>
 </head>
 <body class="dark">
   <div data-include="components/toast.html"></div>
+  <div data-include="components/home.html"></div>
   <div data-include="components/app.html"></div>
   <div data-include="components/nav.html"></div>
   <div data-include="components/modals.html"></div>
 
-  <script src="js/app.js" defer></script>
-  <script src="js/boot.js" defer></script>
+  <script type="module" src="js/boot.js?v=3.0"></script>
 </body>
 </html>

@@ -1,12 +1,12 @@
 {
-  "name": "halisaha-pro",
+  "name": "pitchrank",
   "version": "1.0.0",
-  "description": "Halı Saha Değerlendirme Uygulaması",
+  "description": "PitchRank - Futsal Oyuncu Performans Değerlendirme ve Sıralama Sistemi",
   "scripts": {
     "dev": "npx serve .",
     "build": "echo \"Static site, no build needed\""
   },
-  "keywords": ["halisaha", "rating", "football"],
+  "keywords": ["pitchrank", "futsal", "rating", "football", "performance", "statistics"],
   "author": "",
   "license": "MIT"
 }

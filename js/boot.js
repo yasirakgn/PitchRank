@@ -1,3 +1,21 @@
+import { initApp } from './main.js';
+
+// Automatic cache busting for instant updates
+function addCacheBusters() {
+  const now = Date.now();
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  
+  if (!isLocal) {
+    // CSS linklerine cache buster ekle
+    document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (href && !href.includes('?')) {
+        link.setAttribute('href', href + '?cb=' + now);
+      }
+    });
+  }
+}
+
 async function loadIncludes() {
   const nodes = Array.from(document.querySelectorAll('[data-include]'));
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -11,23 +29,15 @@ async function loadIncludes() {
   }));
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function startApp() {
   try {
+    addCacheBusters();
     await loadIncludes();
-    const activeKey = (document.body && document.body.dataset && document.body.dataset.page) ? document.body.dataset.page : '';
-    if (activeKey) {
-      document.querySelectorAll('.bottom-nav .bnav-item').forEach((el) => {
-        const href = el.getAttribute && el.getAttribute('href');
-        if (!href) return;
-        const key = href.replace('.html', '');
-        if (key === activeKey) el.classList.add('active');
-      });
-    }
-    if (typeof window.initApp === 'function') window.initApp();
+    initApp();
   } catch (e) {
     const msg = document.createElement('pre');
     msg.style.whiteSpace = 'pre-wrap';
-    msg.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace';
+    msg.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
     msg.style.padding = '16px';
     msg.style.margin = '16px';
     msg.style.borderRadius = '12px';
@@ -36,4 +46,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     msg.textContent = `Uygulama başlatılamadı.\n\n${String(e && e.message ? e.message : e)}`;
     document.body.appendChild(msg);
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  startApp();
+}

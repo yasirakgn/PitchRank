@@ -1,19 +1,57 @@
 // ─── SABITLER ────────────────────────────────────────────────────────────────
-const GS = 'https://script.google.com/macros/s/AKfycbxn8T0QYMmZpU0NvVylCQLhIsv_HPPFODAvt3vKJ9EzolwYekv1L3ovyuos2DNCuwy3/exec';
+const TEAM_CONFIG = {
+  haldunalagas: {
+    id: 'haldunalagas',
+    name: 'Haldunalagaş',
+    emoji: '🦅',
+    color: '#f59e0b',
+    logo: 'assets/images/icon-192.png',
+    gs: 'https://script.google.com/macros/s/AKfycbxn8T0QYMmZpU0NvVylCQLhIsv_HPPFODAvt3vKJ9EzolwYekv1L3ovyuos2DNCuwy3/exec'
+  },
+  arion: {
+    id: 'arion',
+    name: 'Arion FC',
+    emoji: '🦁',
+    color: '#6366f1',
+    logo: 'assets/images/icon-192.png',
+    gs: 'https://script.google.com/macros/s/AKfycbxDVAjBLnynV1osvQ181glA2oO2MK1hy8Ab40FWHjlQHHtXKU-z4Jt3Ex6fOjQPUT7jTA/exec'
+  }
+};
+
+let CURRENT_TEAM = localStorage.getItem('pitchrank_selected_team') || null;
+
+function getStorageKey(key) {
+  if (!CURRENT_TEAM) return key;
+  return CURRENT_TEAM + '_' + key;
+}
+
+function lGet(k) { return localStorage.getItem(getStorageKey(k)); }
+function lSet(k, v) { localStorage.setItem(getStorageKey(k), v); }
+function lRem(k) { localStorage.removeItem(getStorageKey(k)); }
+
+function sGet(k) { return sessionStorage.getItem(getStorageKey(k)); }
+function sSet(k, v) { sessionStorage.setItem(getStorageKey(k), v); }
+function sRem(k) { sessionStorage.removeItem(getStorageKey(k)); }
+
+function getGS() {
+  if (!CURRENT_TEAM || !TEAM_CONFIG[CURRENT_TEAM]) return TEAM_CONFIG.haldunalagas.gs;
+  return TEAM_CONFIG[CURRENT_TEAM].gs;
+}
+
 const BASE_URL = 'assets/images/';
 
 // ─── PLAYERS VERSION (cache temizleme) ────────────────────────────────────
-const PLAYERS_VERSION = '4';
-if (localStorage.getItem('hs_players_version') !== PLAYERS_VERSION) {
-  localStorage.removeItem('hs_players');
-  localStorage.removeItem('hs_players_cache');
-  localStorage.removeItem('hs_mevkiler_cache');
-  localStorage.removeItem('hs_today_players_cache');
-  localStorage.removeItem('hs_hakem_cache');
-  localStorage.setItem('hs_players_version', PLAYERS_VERSION);
+const PLAYERS_VERSION = '6';
+if (lGet('hs_players_version') !== PLAYERS_VERSION) {
+  lRem('hs_players');
+  lRem('hs_players_cache');
+  lRem('hs_mevkiler_cache');
+  lRem('hs_today_players_cache');
+  lRem('hs_hakem_cache');
+  lSet('hs_players_version', PLAYERS_VERSION);
 }
 
-let PLAYERS = JSON.parse(localStorage.getItem('hs_players')) || [];
+let PLAYERS = JSON.parse(lGet('hs_players')) || [];
 
 const CRITERIA = ['Pas','Sut','Dribling','Savunma','Hiz / Kondisyon','Fizik','Takim Oyunu'];
 const CDISP    = ['Pas','Şut','Drib.','Savunma','Hız','Fizik','Takım'];
@@ -37,7 +75,7 @@ let resultData = null;
 let currentScores = {};
 let completedCards = {};
 let currentRater = '';
-let darkMode = localStorage.getItem('hs_dark') === '1';
+let darkMode = lGet('hs_dark') === '1';
 let _sonucData = null;
 let _matchesData = null;
 let todaySelected = {};
@@ -54,36 +92,47 @@ let _manualWeek = null;
 if (darkMode) document.body.classList.add('dark');
 
 // ─── YARDIMCI ────────────────────────────────────────────────────────────────
-function showToast(msg, isError = false) {
-  const c = document.getElementById('toast-container');
-  const t = document.createElement('div');
-  t.className = `toast ${isError ? 'error' : ''} show`;
-  t.innerHTML = isError ? `⚠️ ${msg}` : `✅ ${msg}`;
-  c.appendChild(t);
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-function showConfirm(msg, cb) {
-  document.getElementById('confirmMsg').textContent = msg;
-  document.getElementById('confirmBg').classList.add('open');
-  document.getElementById('confirmBtn').onclick = () => { closeConfirm(); cb(); };
-}
-function closeConfirm() { document.getElementById('confirmBg').classList.remove('open'); }
-function toggleDark() {
-  darkMode = !darkMode;
-  document.body.classList.toggle('dark', darkMode);
-  localStorage.setItem('hs_dark', darkMode ? '1' : '0');
-  updateDarkBtn();
-}
-function updateDarkBtn() {
-  const b = document.getElementById('darkBtn');
-  if (b) b.textContent = darkMode ? '☀️' : '🌙';
-}
-function sp(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
-function savePlayers() { sp('hs_players', PLAYERS); }
-function san(s) { return s.replace(/[^a-zA-Z0-9]/g, '_'); }
+
 function gs(p) {
-  const url = GS + '?' + Object.keys(p).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(p[k])).join('&');
-  return fetch(url).then(r => r.json());
+  return new Promise((resolve, reject) => {
+    const runRequest = (retryCount = 0) => {
+      const baseUrl = getGS();
+      const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + Object.keys(p).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(p[k])).join('&');
+      
+      console.log(`[PitchRank] 📡 ${p.action} isteği gönderiliyor:`, url);
+
+      // Google Apps Script için JSONP benzeri bir yaklaşım veya standart fetch
+      fetch(url, {
+        method: 'GET',
+        redirect: 'follow'
+      })
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP Error: ${r.status}`);
+          return r.json();
+        })
+        .then(data => {
+          console.log(`[PitchRank] ✅ ${p.action} başarılı.`);
+          resolve(data);
+        })
+        .catch(err => {
+          if (retryCount < 2) {
+            console.warn(`[PitchRank] ⏳ ${p.action} başarısız, tekrar deneniyor (${retryCount + 1})...`);
+            setTimeout(() => runRequest(retryCount + 1), 1500 * (retryCount + 1));
+          } else {
+            console.error(`[PitchRank] ❌ ${p.action} hatası:`, err);
+            if (CURRENT_TEAM === 'arion') {
+              showToast('Arion FC bağlantı hatası! Lütfen Apps Script ayarlarını kontrol edin.', true);
+              console.warn('[PitchRank] Arion için Apps Script Dağıtım ayarlarında "Erişimi Olanlar" kısmının "Herkes (Anyone)" olduğundan emin olun.');
+            }
+            reject(err);
+          }
+        });
+    };
+    runRequest();
+  });
 }
 function normPos(p) {
   let arr = Array.isArray(p.pos) ? p.pos : [p.pos || ''];
@@ -102,6 +151,7 @@ function toPhotoFilename(name) {
   const map = { 'ç':'c','Ç':'c','ğ':'g','Ğ':'g','ı':'i','İ':'i','ö':'o','Ö':'o','ş':'s','Ş':'s','ü':'u','Ü':'u' };
   return String(name || '').toLowerCase().split('').map(c => map[c] !== undefined ? map[c] : (c === ' ' ? '' : c)).join('') + '.png';
 }
+function san(s) { return toPhotoFilename(s).replace('.png', ''); }
 function getPlayerPhoto(name) {
   const p = PLAYERS.find(x => x.name === name);
   let photo = (p && p.photo) ? String(p.photo).trim() : '';
@@ -137,21 +187,173 @@ function cardClass(r) {
   if (r >= 65) return 'fc-bronze'; return 'fc-normal';
 }
 
+// ─── TEAM SELECTION & UI ──────────────────────────────────────────────────
+function showTeamConfirm(teamId) {
+  const config = TEAM_CONFIG[teamId];
+  if (!config) return;
+  const bg = document.getElementById('teamConfirmBg');
+  if (!bg) { selectTeam(teamId); return; }
+
+  const header = document.getElementById('teamConfirmHeader');
+  const emojiEl = document.getElementById('teamConfirmEmoji');
+  const nameEl = document.getElementById('teamConfirmName');
+  const okBtn = document.getElementById('teamConfirmOkBtn');
+
+  if (header) {
+    header.style.background = config.color + '18';
+    header.style.borderBottom = `1px solid ${config.color}33`;
+  }
+  if (emojiEl) emojiEl.textContent = config.emoji;
+  if (nameEl) {
+    nameEl.textContent = config.name;
+    nameEl.style.color = config.color;
+  }
+  if (okBtn) {
+    okBtn.style.background = config.color;
+    okBtn.onclick = () => { bg.classList.remove('open'); selectTeam(teamId); };
+  }
+  bg.classList.add('open');
+}
+
+function selectTeam(teamId) {
+  localStorage.setItem('pitchrank_selected_team', teamId);
+  location.reload();
+}
+
+function resetTeam() {
+  showConfirm('Takım seçim ekranına dönmek istediğinize emin misiniz?', () => {
+    if (CURRENT_TEAM) localStorage.setItem('pitchrank_last_team', CURRENT_TEAM);
+    localStorage.removeItem('pitchrank_selected_team');
+    location.reload();
+  });
+}
+
+function markLastTeam() {
+  const lastTeam = localStorage.getItem('pitchrank_last_team');
+  if (!lastTeam || !TEAM_CONFIG[lastTeam]) return;
+  const config = TEAM_CONFIG[lastTeam];
+  const btn = document.getElementById('teamBtn-' + lastTeam);
+  if (!btn) return;
+  btn.style.border = `1.5px solid ${config.color}`;
+  btn.style.boxShadow = `0 0 0 4px ${config.color}22`;
+  const badge = document.createElement('span');
+  badge.textContent = 'Son Seçim';
+  badge.style.cssText = `position:absolute;top:-10px;right:16px;background:${config.color};color:#fff;font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;`;
+  btn.style.position = 'relative';
+  btn.appendChild(badge);
+}
+
+function updateTeamUI() {
+  const config = TEAM_CONFIG[CURRENT_TEAM] || TEAM_CONFIG.haldunalagas;
+  const logoEl = document.getElementById('teamLogo');
+  const nameEl = document.getElementById('teamName');
+  const bgNameEl = document.getElementById('bgTeamName');
+  const teamBadgeEl = document.getElementById('teamBadge');
+
+  if (logoEl) logoEl.src = config.logo;
+  if (nameEl) nameEl.innerText = config.name;
+  if (bgNameEl) bgNameEl.innerText = config.name;
+  if (teamBadgeEl) {
+    teamBadgeEl.textContent = config.emoji + ' ' + config.name;
+    teamBadgeEl.style.background = config.color + '22';
+    teamBadgeEl.style.color = config.color;
+    teamBadgeEl.style.borderColor = config.color + '44';
+  }
+}
+
+function updateDarkBtn() {
+  const btn = document.getElementById('darkBtn');
+  if (btn) btn.innerText = darkMode ? '☀️' : '🌙';
+}
+
+function toggleDark() {
+  darkMode = !darkMode;
+  lSet('hs_dark', darkMode ? '1' : '0');
+  document.body.classList.toggle('dark', darkMode);
+  updateDarkBtn();
+}
+
+function showToast(msg, isError = false) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = 'toast' + (isError ? ' error' : '');
+  toast.innerText = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function savePlayers() {
+  lSet('hs_players', JSON.stringify(PLAYERS));
+}
+
+function showConfirm(msg, onConfirm) {
+  const bg = document.getElementById('confirmBg');
+  const msgEl = document.getElementById('confirmMsg');
+  const btn = document.getElementById('confirmBtn');
+  if (!bg || !msgEl || !btn) {
+    if (confirm(msg)) onConfirm();
+    return;
+  }
+  msgEl.innerText = msg;
+  btn.onclick = () => { onConfirm(); closeConfirm(); };
+  bg.classList.add('open');
+}
+
+function closeConfirm() {
+  const bg = document.getElementById('confirmBg');
+  if (bg) bg.classList.remove('open');
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function initApp() {
+  console.log('[PitchRank] App Initializing. Current Team:', CURRENT_TEAM);
   const el = (id) => document.getElementById(id);
   const has = (id) => !!el(id);
+  
+  const homeScreen = el('screen-home');
+  const appScreen = el('app');
+  const navBar = document.querySelector('.bottom-nav');
+
+  if (!CURRENT_TEAM) {
+    console.log('[PitchRank] No team selected, showing home screen.');
+    if (homeScreen) homeScreen.style.display = 'flex';
+    if (appScreen) appScreen.style.display = 'none';
+    if (navBar) navBar.style.display = 'none';
+    document.body.classList.add('home-active');
+    markLastTeam();
+    return;
+  }
+
+  console.log('[PitchRank] Team selected:', CURRENT_TEAM, 'URL:', getGS());
+  if (homeScreen) homeScreen.style.display = 'none';
+  if (appScreen) appScreen.style.display = 'block';
+  if (navBar) navBar.style.display = 'flex';
+  document.body.classList.remove('home-active');
+
+  updateTeamUI();
   updateDarkBtn();
   loadManualWeek(() => {
+    console.log('[PitchRank] Week loaded:', getWeekLabel());
     if (has('matchWeek')) el('matchWeek').value = getWeekLabel();
     loadPlayersFromSheets(() => {
+      console.log('[PitchRank] Players loaded:', PLAYERS.length);
       loadMevkilerFromSheets(() => {
         if (has('raterSelect') || has('trendSelect') || has('cmpA') || has('cmpB')) initSelects();
         if (has('playerList')) renderPlayerList();
         if (has('goalInputs')) buildGoalInputs();
         if (has('raterSelect')) checkIdentityLock();
         setTimeout(() => {
-          if (has('fifaGrid') || has('weekContent') || has('trendContent') || has('cmpContent')) loadResults(() => {}, false);
+          if (has('fifaGrid') || has('weekContent') || has('trendContent') || has('cmpContent')) {
+            console.log('[PitchRank] Loading results...');
+            loadResults(() => {
+              console.log('[PitchRank] Results loaded.');
+            }, false);
+          }
           if (has('matchHistory')) loadMatchHistory();
         }, 500);
       });
@@ -159,14 +361,28 @@ function initApp() {
   });
 }
 window.initApp = initApp;
+window.selectTeam = selectTeam;
+window.resetTeam = resetTeam;
+window.showTeamConfirm = showTeamConfirm;
+window.markLastTeam = markLastTeam;
+window.toggleDark = toggleDark;
+window.showToast = showToast;
+window.savePlayers = savePlayers;
+window.showConfirm = showConfirm;
+window.closeConfirm = closeConfirm;
+
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.mbg.open').forEach(function(m) { m.classList.remove('open'); });
+});
 
 // ─── OYUNCU YÜKLEME ──────────────────────────────────────────────────────────
 function loadPlayersFromSheets(cb) {
-  const cached = localStorage.getItem('hs_players_cache');
+  const cached = lGet('hs_players_cache');
   if (cached) {
     try {
       const data = JSON.parse(cached);
-      if (data && data.players && data.players.length > 0) {
+      if (data && data.players) {
         PLAYERS = [];
         data.players.forEach(sp => {
           if (!PLAYERS.find(p => p.name === sp.name)) {
@@ -176,26 +392,39 @@ function loadPlayersFromSheets(cb) {
         savePlayers();
       }
     } catch(e) {}
-    if (cb) cb(); cb = null;
+    if (cb) {
+      const currentCb = cb;
+      cb = null;
+      currentCb();
+    }
   }
+
   gs({action:'getPlayers'}).then(data => {
-    if (data && data.players && data.players.length > 0) {
-      localStorage.setItem('hs_players_cache', JSON.stringify(data));
+    if (data && data.players) {
+      lSet('hs_players_cache', JSON.stringify(data));
       PLAYERS = [];
       data.players.forEach(sp => {
         PLAYERS.push({ name: sp.name, pos: sp.pos || ['OMO'], photo: sp.photo || '' });
       });
       savePlayers();
+      
+      // UI elementleri varsa güncelle
       if (document.getElementById('raterSelect') || document.getElementById('trendSelect') || document.getElementById('cmpA') || document.getElementById('cmpB')) initSelects();
       if (document.getElementById('playerList')) renderPlayerList();
       if (document.getElementById('goalInputs')) buildGoalInputs();
+    } else if (data && Array.isArray(data.players) && data.players.length === 0) {
+      // Sheet gerçekten boşsa, cache'i ve listeyi temizle
+      lSet('hs_players_cache', JSON.stringify({players: []}));
+      PLAYERS = [];
+      savePlayers();
+      if (document.getElementById('playerList')) renderPlayerList();
     }
     if (cb) cb();
   }).catch(() => { if (cb) cb(); });
 }
 
 function loadMevkilerFromSheets(cb) {
-  const cached = localStorage.getItem('hs_mevkiler_cache');
+  const cached = lGet('hs_mevkiler_cache');
   if (cached) {
     try {
       const data = JSON.parse(cached);
@@ -203,11 +432,15 @@ function loadMevkilerFromSheets(cb) {
         PLAYERS.forEach(p => { if (data.mevkiler[p.name]) p.pos = data.mevkiler[p.name]; });
       }
     } catch(e) {}
-    if (cb) cb(); cb = null;
+    if (cb) {
+      const currentCb = cb;
+      cb = null;
+      currentCb();
+    }
   }
   gs({action:'getMevkiler'}).then(data => {
     if (data && data.mevkiler) {
-      localStorage.setItem('hs_mevkiler_cache', JSON.stringify(data));
+      lSet('hs_mevkiler_cache', JSON.stringify(data));
       PLAYERS.forEach(p => { if (data.mevkiler[p.name]) p.pos = data.mevkiler[p.name]; });
       savePlayers();
     }
@@ -226,14 +459,14 @@ function initSelects() {
     const sel = document.getElementById(id);
     if (!sel) return;
     const cur = sel.value;
-    sel.innerHTML = `<option value="">${label}</option>` + PLAYERS.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+    sel.innerHTML = `<option value="">${label}</option>` + PLAYERS.map(p => `<option value="${escHtml(p.name)}">${escHtml(p.name)}</option>`).join('');
     if (cur) sel.value = cur;
   });
 }
 
 // ─── KİMLİK ──────────────────────────────────────────────────────────────────
 function checkIdentityLock() {
-  const myIdentity = localStorage.getItem('hs_my_identity');
+  const myIdentity = lGet('hs_my_identity');
   if (myIdentity) {
     const raterSel = document.getElementById('raterSelect');
     raterSel.value = myIdentity;
@@ -245,7 +478,7 @@ function checkIdentityLock() {
 }
 function resetIdentity() {
   showConfirm('Kimliğinizi değiştirmek istediğinize emin misiniz?', () => {
-    localStorage.removeItem('hs_my_identity');
+    lRem('hs_my_identity');
     const raterSel = document.getElementById('raterSelect');
     raterSel.disabled = false; raterSel.value = '';
     document.getElementById('changeIdentityBtn').style.display = 'none';
@@ -264,7 +497,7 @@ function onRaterChange(isInit = false) {
     cards.style.display = 'none'; wrap.style.display = 'none'; area.style.display = 'none'; return;
   }
   if (!isInit) {
-    localStorage.setItem('hs_my_identity', currentRater);
+    lSet('hs_my_identity', currentRater);
     raterSel.disabled = true;
     document.getElementById('changeIdentityBtn').style.display = 'inline-block';
     document.getElementById('identityLockedMsg').style.display = 'block';
@@ -281,12 +514,12 @@ function buildCards() {
   currentScores = {}; completedCards = {};
 
   const week = getWeekLabel();
-  const cached = localStorage.getItem('hs_today_players_cache');
+  const cached = lGet('hs_today_players_cache');
   let cachedWeek = null, cachedList = null;
   if (cached) {
     try { const cd = JSON.parse(cached); cachedWeek = cd.week; cachedList = cd.players; } catch(e) {}
   }
-  const hakemCached = localStorage.getItem('hs_hakem_cache');
+  const hakemCached = lGet('hs_hakem_cache');
   let cachedHakemWeek = null, cachedHakemName = '';
   if (hakemCached) {
     try { const hd = JSON.parse(hakemCached); cachedHakemWeek = hd.week; cachedHakemName = hd.hakem || ''; } catch(e) {}
@@ -356,16 +589,17 @@ function buildCards() {
       const card = document.createElement('div');
       card.className = 'pcard';
       card.id = `card-${pid}`;
+      card.dataset.pname = p.name;
       const slidersHtml = CRITERIA.map((cr, ci) => `
         <div class="crit-row">
           <span class="crit-name">${CDISP[ci]}</span>
-          <input type="range" min="1" max="10" step="1" value="5" oninput="onSlider('${pid}','${cr}',this.value,'d-${pid}-${san(cr)}','${p.name}')">
+          <input type="range" min="1" max="10" step="1" value="5" data-cr="${escHtml(cr)}" data-did="d-${pid}-${san(cr)}" oninput="onSlider(this)">
           <span class="score-num" id="d-${pid}-${san(cr)}">—</span>
         </div>`).join('');
       card.innerHTML = `
         <div class="pcard-head">
-          <div class="av">${p.name.charAt(0)}</div>
-          <span class="pcard-name">${p.name}</span>
+          <div class="av">${escHtml(p.name.charAt(0))}</div>
+          <span class="pcard-name">${escHtml(p.name)}</span>
           <span class="pos-badge">${posShort(p)}</span>
           <span class="done-badge">✓ Tamam</span>
         </div>
@@ -385,8 +619,8 @@ function buildCards() {
       gs({ action: 'getTodayPlayers', week }),
       gs({ action: 'getHakem', week })
     ]).then(([tdData, hkData]) => {
-      localStorage.setItem('hs_today_players_cache', JSON.stringify({ week, players: tdData.players || [] }));
-      localStorage.setItem('hs_hakem_cache', JSON.stringify({ week, hakem: hkData.hakem || '' }));
+      lSet('hs_today_players_cache', JSON.stringify({ week, players: tdData.players || [] }));
+      lSet('hs_hakem_cache', JSON.stringify({ week, hakem: hkData.hakem || '' }));
     }).catch(() => {});
     return;
   }
@@ -397,21 +631,26 @@ function buildCards() {
   ]).then(([tdData, hkData]) => {
     const players = tdData.players || [];
     const hakem = hkData.hakem || '';
-    localStorage.setItem('hs_today_players_cache', JSON.stringify({ week, players }));
-    localStorage.setItem('hs_hakem_cache', JSON.stringify({ week, hakem }));
+    lSet('hs_today_players_cache', JSON.stringify({ week, players }));
+    lSet('hs_hakem_cache', JSON.stringify({ week, hakem }));
     renderWithData(players, hakem);
   }).catch(() => renderWithData([], ''));
 }
 
 // ─── SLIDER / PUANLAMA ───────────────────────────────────────────────────────
-function onSlider(pid, cr, val, did, pname) {
+function onSlider(el) {
+  const cr = el.dataset.cr;
+  const did = el.dataset.did;
+  const val = el.value;
+  const card = el.closest('.pcard');
+  const pname = card ? card.dataset.pname : '';
+  const pid = card ? card.id.replace('card-', '') : '';
   const d = document.getElementById(did);
   if (d) { d.textContent = val; d.style.color = scoreColor(+val); }
   if (!currentScores[pname]) currentScores[pname] = {};
   currentScores[pname][cr] = +val;
   if (CRITERIA.every(c => currentScores[pname] && currentScores[pname][c] !== undefined)) {
     completedCards[pname] = true;
-    const card = document.getElementById(`card-${pid}`);
     if (card) card.className = 'pcard done';
   }
   updateProgress();
@@ -433,7 +672,7 @@ function submitRatings() {
     .then(d => {
       if (d.success) {
         btn.textContent = 'Puanları Gönder';
-        localStorage.removeItem('hs_results_cache');
+      lRem('hs_results_cache');
         resultData = null;
         loadResults(() => {}, true);
         document.getElementById('successPopup').style.display = 'flex';
@@ -530,13 +769,13 @@ function renderBugunList() {
   el.innerHTML = PLAYERS.map(p => {
     const on = _bugunSelected[p.name] !== false;
     const pos = normPos(p)[0] || 'OMO';
-    return `<button id="bg-${san(p.name)}" onclick="toggleBugun('${p.name}')"
+    return `<button id="bg-${san(p.name)}" data-name="${escHtml(p.name)}" onclick="toggleBugun(this.dataset.name)"
       style="font-size:13px;font-weight:700;padding:10px 16px;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .2s;
              border:2px solid ${on ? 'var(--green)' : 'var(--border)'};
              background:${on ? 'var(--green)' : 'var(--bg2)'};
              color:${on ? '#fff' : 'var(--text2)'};
              box-shadow:${on ? '0 4px 10px rgba(16,185,129,.3)' : 'var(--sh)'}">
-      ${posEmojis[pos] || ''} ${p.name}
+      ${posEmojis[pos] || ''} ${escHtml(p.name)}
     </button>`;
   }).join('');
 }
@@ -564,7 +803,7 @@ function saveBugunGelenler() {
     if (d.success) {
       msg.textContent = `✅ ${presentList.length} oyuncu kaydedildi!`;
       msg.style.display = 'block';
-      localStorage.removeItem('hs_today_players_cache');
+      lRem('hs_today_players_cache');
       showToast(`${presentList.length} oyuncu bu hafta için işaretlendi!`);
     }
   }).catch(() => { btn.disabled = false; btn.textContent = '💾 Kaydet'; showToast('Kayıt hatası.', true); });
@@ -594,13 +833,13 @@ function renderHakemPlayerList() {
   const el = document.getElementById('hakemPlayerList');
   el.innerHTML = PLAYERS.map(p => {
     const on = _selectedHakem === p.name;
-    return `<button id="hk-${san(p.name)}" onclick="selectHakem('${p.name}')"
+    return `<button id="hk-${san(p.name)}" data-name="${escHtml(p.name)}" onclick="selectHakem(this.dataset.name)"
       style="font-size:13px;font-weight:700;padding:10px 16px;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .2s;
              border:2px solid ${on?'#f59e0b':'var(--border)'};
              background:${on?'#fef3c7':'var(--bg2)'};
              color:${on?'#92400e':'var(--text2)'};
              box-shadow:${on?'0 4px 10px rgba(245,158,11,.25)':'var(--sh)'}">
-      ${on?'🟡 ':''}${p.name}
+      ${on?'🟡 ':''}${escHtml(p.name)}
     </button>`;
   }).join('');
 }
@@ -618,7 +857,7 @@ function saveHakemToSheet() {
     btn.disabled = false; btn.textContent = '💾 Kaydet';
     if (d.success) {
       _hakemData = { week, hakem: _selectedHakem };
-      localStorage.setItem('hs_hakem_cache', JSON.stringify({ week, hakem: _selectedHakem }));
+      lSet('hs_hakem_cache', JSON.stringify({ week, hakem: _selectedHakem }));
       const infoEl = document.getElementById('hakemCurrentInfo');
       if (_selectedHakem) {
         infoEl.style.display = 'block';
@@ -643,17 +882,30 @@ function clearHakem() {
 // ─── RESULTS ─────────────────────────────────────────────────────────────────
 function loadResults(cb, forceRefresh = false) {
   if (resultData && !forceRefresh) { cb(resultData); return; }
-  const cached = localStorage.getItem('hs_results_cache');
+  const cached = lGet('hs_results_cache');
   if (cached && !resultData) {
-    try { resultData = JSON.parse(cached); cb(resultData); } catch(e) {}
+    try { 
+      resultData = JSON.parse(cached); 
+      if (cb) cb(resultData);
+    } catch(e) {}
   }
   gs({action:'getResults'}).then(d => {
-    const newStr = JSON.stringify(d);
-    if (cached !== newStr) {
-      localStorage.setItem('hs_results_cache', newStr);
-      resultData = d; cb(d);
+    if (!d || (d.results && d.results.length === 0)) {
+       // Eğer data boşsa ve forceRefresh veya cache yoksa cache'i temizle
+       lSet('hs_results_cache', JSON.stringify(d || {results:[]}));
+       resultData = d || {results:[]};
+       if (cb) cb(resultData);
+       return;
     }
-  }).catch(() => { if (!resultData) cb(null); });
+    const newStr = JSON.stringify(d);
+    if (cached !== newStr || forceRefresh) {
+      lSet('hs_results_cache', newStr);
+      resultData = d; 
+      if (cb) cb(d);
+    } else if (cb) {
+      cb(resultData);
+    }
+  }).catch(() => { if (!resultData && cb) cb(null); });
 }
 
 // ─── HESAPLAMA ────────────────────────────────────────────────────────────────
@@ -745,7 +997,7 @@ function makeFifaCard(p, pObj, rank, data, overrideScore) {
   });
   const statRow = (ci) => `<div class="fc-stat"><span class="fc-stat-val" style="color:${col.text}">${statVals[ci]}</span><span class="fc-stat-lbl" style="color:${col.text}bb">${statLabels[ci]}</span></div>`;
   const photoHTML = photoUrl
-    ? `<img src="${photoUrl}" onerror="this.outerHTML='<div class=\\'fc-photo-ph\\' style=\\'color:${col.text}\\'>${p.name.charAt(0)}</div>'">`
+    ? `<img src="${photoUrl}" loading="lazy" onerror="this.outerHTML='<div class=\\'fc-photo-ph\\' style=\\'color:${col.text}\\'>${p.name.charAt(0)}</div>'">`
     : `<div class="fc-photo-ph" style="color:${col.text}">${p.name.charAt(0)}</div>`;
   const card = document.createElement('div');
   card.className = `fc ${cls}`;
@@ -949,7 +1201,7 @@ function renderWeek(week, data) {
           <!-- Avatar/foto -->
           <div style="width:40px;height:40px;border-radius:12px;overflow:hidden;flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);">
             ${photoUrl
-              ? `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;object-position:top;" onerror="this.style.display='none'">`
+              ? `<img src="${photoUrl}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;" onerror="this.style.display='none'">`
               : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:var(--green);">${p.name.charAt(0)}</div>`}
           </div>
           <!-- İsim & mevki -->
@@ -1240,8 +1492,8 @@ function renderComparison() {
     // ── Fotoğraflı header ──────────────────────────────────────────────
     const photoA = getPlayerPhoto(a);
     const photoB = getPlayerPhoto(b);
-    const avatarA = photoA ? `<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;margin:0 auto 10px;border:3px solid var(--green);box-shadow:0 4px 12px var(--gd);"><img src="${photoA}" style="width:100%;height:100%;object-fit:cover;object-position:top;" onerror="this.style.display='none'"></div>` : `<div class="av" style="width:64px;height:64px;font-size:22px;margin:0 auto 10px;border:3px solid var(--green);">${a.charAt(0)}</div>`;
-    const avatarB = photoB ? `<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;margin:0 auto 10px;border:3px solid #3b82f6;box-shadow:0 4px 12px rgba(59,130,246,.2);"><img src="${photoB}" style="width:100%;height:100%;object-fit:cover;object-position:top;" onerror="this.style.display='none'"></div>` : `<div class="av" style="width:64px;height:64px;font-size:22px;margin:0 auto 10px;border:3px solid #3b82f6;background:#eff6ff;color:#3b82f6;">${b.charAt(0)}</div>`;
+    const avatarA = photoA ? `<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;margin:0 auto 10px;border:3px solid var(--green);box-shadow:0 4px 12px var(--gd);"><img src="${photoA}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;" onerror="this.style.display='none'"></div>` : `<div class="av" style="width:64px;height:64px;font-size:22px;margin:0 auto 10px;border:3px solid var(--green);">${a.charAt(0)}</div>`;
+    const avatarB = photoB ? `<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;margin:0 auto 10px;border:3px solid #3b82f6;box-shadow:0 4px 12px rgba(59,130,246,.2);"><img src="${photoB}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;" onerror="this.style.display='none'"></div>` : `<div class="av" style="width:64px;height:64px;font-size:22px;margin:0 auto 10px;border:3px solid #3b82f6;background:#eff6ff;color:#3b82f6;">${b.charAt(0)}</div>`;
 
     el.innerHTML = `
       <!-- Header -->
@@ -1366,7 +1618,7 @@ function renderSezon() {
         html += `<div style="flex:1;max-width:120px;display:flex;flex-direction:column;align-items:center;gap:0;">
           <!-- Avatar -->
           <div style="width:${isFirst?56:46}px;height:${isFirst?56:46}px;border-radius:50%;overflow:hidden;border:2px solid ${col};box-shadow:0 4px 16px ${col}44;flex-shrink:0;background:var(--bg3);margin-bottom:6px;position:relative;">
-            ${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;object-position:top;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:${isFirst?20:16}px;font-weight:900;color:${col};">${p.name.charAt(0)}</div>`}
+            ${photo ? `<img src="${photo}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:${isFirst?20:16}px;font-weight:900;color:${col};">${p.name.charAt(0)}</div>`}
             ${isFirst ? `<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:16px;">👑</div>` : ''}
           </div>
           <div style="font-size:${isFirst?12:10}px;font-weight:800;color:var(--text);letter-spacing:-0.3px;margin-bottom:2px;text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</div>
@@ -1410,7 +1662,7 @@ function renderSezon() {
           ${isTop3 ? `<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${rCol};border-radius:3px 0 0 3px;"></div>` : ''}
           <div style="width:24px;text-align:center;flex-shrink:0;font-size:${isTop3?'18':'13'}px;font-weight:900;color:${isTop3?'var(--text)':'var(--text3)'};">${rankIcons[i]||i+1}</div>
           <div style="width:36px;height:36px;border-radius:10px;overflow:hidden;flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);">
-            ${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;object-position:top;" onerror="this.style.display='none'">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:${rCol};">${p.name.charAt(0)}</div>`}
+            ${photo ? `<img src="${photo}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;" onerror="this.style.display='none'">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:${rCol};">${p.name.charAt(0)}</div>`}
           </div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:14px;font-weight:800;letter-spacing:-0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
@@ -1569,7 +1821,7 @@ function loadMatchHistory() {
     if (elAdmin) elAdmin.innerHTML = html;
     if (elPublic) elPublic.innerHTML = html;
   };
-  const cached = localStorage.getItem('hs_matches_cache');
+  const cached = lGet('hs_matches_cache');
   if (cached) { try { _matchesData = JSON.parse(cached); render(_matchesData); } catch(e) {} }
   else {
     if (elAdmin) elAdmin.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
@@ -1577,7 +1829,7 @@ function loadMatchHistory() {
   }
   gs({action:'getMatches'}).then(data => {
     const newStr = JSON.stringify(data);
-    if (cached !== newStr) { localStorage.setItem('hs_matches_cache', newStr); _matchesData = data; render(data); }
+    if (cached !== newStr) { lSet('hs_matches_cache', newStr); _matchesData = data; render(data); }
   }).catch(() => {});
 }
 
@@ -1621,7 +1873,7 @@ function saveMatch() {
   gs({action:'saveMatch', score1:s1, score2:s2, week, note, goals:JSON.stringify(goals)}).then(d => {
     btn.disabled = false; btn.textContent = 'Veritabanına Kaydet';
     if (d.success) {
-      localStorage.removeItem('hs_matches_cache');
+      lRem('hs_matches_cache');
       loadMatchHistory();
       document.getElementById('matchNote').value = '';
       PLAYERS.forEach(p => {
@@ -1899,7 +2151,7 @@ function openProfile(p, data) {
     <!-- Fotoğraf sağda — full height -->
     <div style="position:absolute;right:0;bottom:0;height:175px;width:130px;z-index:3;overflow:hidden;">
       ${photoUrl
-        ? `<img src="${photoUrl}" style="position:absolute;bottom:0;right:0;height:175px;width:auto;max-width:160px;object-fit:contain;object-position:bottom right;filter:drop-shadow(-6px 0 16px rgba(0,0,0,0.5));" onerror="this.style.display='none'">`
+        ? `<img src="${photoUrl}" loading="lazy" style="position:absolute;bottom:0;right:0;height:175px;width:auto;max-width:160px;object-fit:contain;object-position:bottom right;filter:drop-shadow(-6px 0 16px rgba(0,0,0,0.5));" onerror="this.style.display='none'">`
         : `<div style="position:absolute;bottom:20px;right:20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:${col.text};border:2px solid rgba(255,255,255,0.2);">${p.name.charAt(0)}</div>`}
     </div>
     <!-- Alt bilgi bölümü -->
@@ -2003,7 +2255,7 @@ function shareProfile() {
   let rating = '—';
   const pData = resultData && resultData.players ? resultData.players.find(x => x.name === pName) : null;
   if(pData) { const wAvg = posRating(pData, pObj); rating = wAvg !== null ? Math.min(99, Math.round(wAvg * 10)) : (pData.genelOrt ? Math.round(pData.genelOrt * 10) : '—'); }
-  const shareText = `⚽ Halı Saha Pro\n\nOyuncu: ${pName}\nMevki: ${posLabel(pObj)}\n⭐ Rating: ${rating}\n\nİstatistiklerine göz at!`;
+  const shareText = `⚽ PitchRank\n\nOyuncu: ${pName}\nMevki: ${posLabel(pObj)}\n⭐ Rating: ${rating}\n\nİstatistiklerine göz at!`;
   if (navigator.share) { navigator.share({title:`${pName} - Oyuncu Profili`, text:shareText, url:window.location.href}).catch(console.error); }
   else { navigator.clipboard.writeText(shareText).then(() => showToast('Profil bilgileri kopyalandı!')); }
 }
@@ -2014,13 +2266,13 @@ function closeModal(e, force) {
 // ─── ADMİN GİRİŞ ─────────────────────────────────────────────────────────────
 const ADMIN_MAX_ATTEMPTS = 5;
 const ADMIN_LOCKOUT_MS   = 10 * 60 * 1000;
-function getAdminLock() { try { return JSON.parse(localStorage.getItem('hs_admin_lock') || '{}'); } catch(e) { return {}; } }
-function setAdminLock(data) { localStorage.setItem('hs_admin_lock', JSON.stringify(data)); }
+function getAdminLock() { try { return JSON.parse(lGet('hs_admin_lock') || '{}'); } catch(e) { return {}; } }
+function setAdminLock(data) { lSet('hs_admin_lock', JSON.stringify(data)); }
 function isAdminLocked() { const lock = getAdminLock(); if (!lock.until) return false; if (Date.now() < lock.until) return true; setAdminLock({}); return false; }
 function recordFailedAttempt() { const lock = getAdminLock(); const attempts = (lock.attempts || 0) + 1; if (attempts >= ADMIN_MAX_ATTEMPTS) { setAdminLock({ attempts, until: Date.now() + ADMIN_LOCKOUT_MS }); return attempts; } setAdminLock({ attempts }); return attempts; }
 function clearAdminLock() { setAdminLock({}); }
-function isAdminLoggedIn() { try { const d = JSON.parse(sessionStorage.getItem('hs_admin_session') || '{}'); if (!d.token || !d.expires) return false; if (Date.now() > d.expires) { sessionStorage.removeItem('hs_admin_session'); return false; } return true; } catch(e) { return false; } }
-function setAdminSession() { const token = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('hs_admin_session', JSON.stringify({ token, expires: Date.now() + 2 * 60 * 60 * 1000 })); }
+function isAdminLoggedIn() { try { const d = JSON.parse(sGet('hs_admin_session') || '{}'); if (!d.token || !d.expires) return false; if (Date.now() > d.expires) { sRem('hs_admin_session'); return false; } return true; } catch(e) { return false; } }
+function setAdminSession() { const token = Math.random().toString(36).slice(2) + Date.now().toString(36); sSet('hs_admin_session', JSON.stringify({ token, expires: Date.now() + 2 * 60 * 60 * 1000 })); }
 function tryAdmin(btnElement) {
   if (isAdminLoggedIn()) { switchMainScreen('admin', btnElement); setAdminTab('mac', document.querySelector('#screen-admin .sub-nb')); }
   else {
@@ -2055,7 +2307,7 @@ function checkPin() {
     }
   }).catch(() => { btn.disabled = false; btn.textContent = 'Doğrula'; document.getElementById('pinError').textContent = 'Bağlantı hatası, tekrar deneyin.'; });
 }
-function logoutAdmin() { sessionStorage.removeItem('hs_admin_session'); showToast('Güvenli çıkış yapıldı.'); document.querySelectorAll('.bnav-item')[0].click(); }
+function logoutAdmin() { sRem('hs_admin_session'); showToast('Güvenli çıkış yapıldı.'); document.querySelectorAll('.bnav-item')[0].click(); }
 
 // ─── YAYIN ────────────────────────────────────────────────────────────────────
 function getYtEmbedUrl(input) {
@@ -2088,7 +2340,7 @@ function renderVideos(videos) {
       const vid = ytVideoId(v.url);
       const thumb = vid ? `https://img.youtube.com/vi/${vid}/mqdefault.jpg` : null;
       return `<div onclick="selectVideoWeekByUrl('${v.week}','${v.url}')" style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg2);border-radius:16px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh);border:1px solid var(--border);">
-        ${thumb?`<img src="${thumb}" style="width:80px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`:`<div style="width:80px;height:52px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📺</div>`}
+        ${thumb?`<img src="${thumb}" loading="lazy" style="width:80px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`:`<div style="width:80px;height:52px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📺</div>`}
         <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;margin-bottom:4px;">${v.title||v.week+' Maç Yayını'}</div><div style="font-size:11px;color:var(--green);font-weight:700;">${v.week}</div></div>
         <div style="font-size:20px;color:var(--text3);">▶</div>
       </div>`;
@@ -2151,7 +2403,7 @@ function adminSaveVideo() {
 
 // ─── HAFFA YÖNETİMİ ────────────────────────────────────────────────────────────
 function loadManualWeek(cb) {
-  const cached = localStorage.getItem('hs_manual_week');
+  const cached = lGet('hs_manual_week');
   if (cached) {
     try {
       const data = JSON.parse(cached);
@@ -2159,11 +2411,12 @@ function loadManualWeek(cb) {
         _manualWeek = data.week;
       }
     } catch(e) {}
+        if (cb) cb(); cb = null;
   }
   gs({action:'getManualWeek'}).then(d => {
     if (d && d.week) {
       _manualWeek = d.week;
-      localStorage.setItem('hs_manual_week', JSON.stringify({ week: _manualWeek }));
+      lSet('hs_manual_week', JSON.stringify({ week: _manualWeek }));
     }
     if (cb) cb();
   }).catch(() => { if (cb) cb(); });
@@ -2178,13 +2431,13 @@ function saveCurrentWeek() {
     btn.disabled = false; btn.textContent = '💾 Kaydet';
     if (d.success) {
       _manualWeek = newWeek;
-      localStorage.setItem('hs_manual_week', JSON.stringify({ week: _manualWeek }));
+      lSet('hs_manual_week', JSON.stringify({ week: _manualWeek }));
       
       // Tüm ilgili önbellekleri temizle
-      localStorage.removeItem('hs_today_players_cache');
-      localStorage.removeItem('hs_hakem_cache');
-      localStorage.removeItem('hs_results_cache');
-      localStorage.removeItem('hs_matches_cache');
+      lRem('hs_today_players_cache');
+      lRem('hs_hakem_cache');
+      lRem('hs_results_cache');
+      lRem('hs_matches_cache');
       
       document.getElementById('currentWeekDisplay').textContent = _manualWeek;
       document.getElementById('matchWeek').value = _manualWeek;
@@ -2203,10 +2456,10 @@ function resetWeekToAuto() {
     _manualWeek = null;
     
     // Tüm ilgili önbellekleri temizle
-    localStorage.removeItem('hs_today_players_cache');
-    localStorage.removeItem('hs_hakem_cache');
-    localStorage.removeItem('hs_results_cache');
-    localStorage.removeItem('hs_matches_cache');
+    lRem('hs_today_players_cache');
+    lRem('hs_hakem_cache');
+    lRem('hs_results_cache');
+    lRem('hs_matches_cache');
     
     const autoWeek = getAutoWeekLabel();
     document.getElementById('currentWeekDisplay').textContent = autoWeek + ' (Otomatik)';

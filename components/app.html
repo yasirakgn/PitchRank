@@ -1,10 +1,19 @@
 <main class="app" id="app">
+  <div id="bgTeamName" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); font-size: 15vw; font-weight: 900; color: var(--text); opacity: 0.03; pointer-events: none; z-index: -1; white-space: nowrap; text-transform: uppercase; letter-spacing: 10px;"></div>
   <header class="hdr">
     <div class="hdr-left">
-      <div class="hdr-sub">Halı Saha Pro</div>
-      <div class="hdr-title">Yönetim &amp; İstatistik</div>
+      <img id="teamLogo" src="assets/images/icon-192.png" alt="PitchRank Logo" style="width: 32px; height: 32px; border-radius: 8px; box-shadow: var(--sh);">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span id="teamBadge" style="font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; border: 1px solid; letter-spacing: 0.3px;"></span>
+          <button onclick="resetTeam()" style="background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; color: var(--text2); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">Değiştir</button>
+        </div>
+        <div id="teamName" class="hdr-title" style="letter-spacing: 0.5px; font-size: 18px; font-weight: 900; margin-top: 2px;">PitchRank</div>
+      </div>
     </div>
-    <button class="dark-btn" id="darkBtn" onclick="toggleDark()" type="button">☀️</button>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="dark-btn" id="darkBtn" onclick="toggleDark()" type="button" style="margin: 0;">☀️</button>
+    </div>
   </header>
 
   <section id="screen-puanla" class="screen active" aria-label="Puanla">
@@ -51,6 +60,7 @@
       <button class="sub-nb" onclick="setRankTab('orta',this)" type="button">⚙️ Orta</button>
       <button class="sub-nb" onclick="setRankTab('forvet',this)" type="button">⚡ Forvet</button>
     </div>
+    <div id="siralama-gate-banner"></div>
     <div id="fifaGrid" class="fg" style="margin-bottom:12px;"></div>
     <div id="noDataSonuc" class="no-data" style="display:none">Henüz puan girilmedi.</div>
   </section>
@@ -103,20 +113,22 @@
   </section>
 
   <section id="screen-takim" class="screen" aria-label="Takım Kur">
-    <div class="sec-title">Akıllı Taktik Tahtası</div>
-    <div class="card">
-      <div class="slabel" style="margin-bottom:12px">Kadro Seçimi</div>
-      <div id="todayPlayers" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-        <button class="abtn" style="margin:0" onclick="selectAllPlayers()" type="button">Tümünü Seç</button>
-        <button class="abtn" style="margin:0" onclick="clearAllPlayers()" type="button">Temizle</button>
-        <button class="abtn pri" style="margin:0;grid-column:span 2;padding:14px;font-size:15px;" onclick="buildTeams()" type="button">⚡ Dengeli Takım Kur</button>
-        <button class="abtn" style="margin:0;grid-column:span 2;padding:14px;font-size:15px;" onclick="shuffleTeams()" type="button">🔀 Rastgele Karıştır</button>
+    <div class="tk-roster-section">
+      <div class="tk-roster-hdr">
+        <span class="tk-roster-lbl">Kadro</span>
+        <div class="tk-roster-ctrl">
+          <button class="tk-ghost-btn" onclick="selectAllPlayers()" type="button">Tümünü Seç</button>
+          <button class="tk-ghost-btn" onclick="clearAllPlayers()" type="button">Temizle</button>
+        </div>
       </div>
+      <div id="todayPlayers"></div>
     </div>
-    <div id="balanceInfo" style="margin-bottom:12px"></div>
+    <div class="tk-action-row">
+      <button class="tk-primary-btn" onclick="buildTeams()" type="button">⚡ Dengeli Kur</button>
+      <button class="tk-secondary-btn" onclick="shuffleTeams()" type="button">🔀 Rastgele</button>
+    </div>
     <div id="teamResult"></div>
-    <div id="noDataTakim" class="no-data" style="display:none">Diziliş için en az 4 oyuncu seçmelisiniz.</div>
+    <div id="noDataTakim" class="no-data" style="display:none">En az 4 oyuncu seçin.</div>
   </section>
 
   <section id="screen-admin" class="screen" aria-label="Yönetici">
@@ -283,6 +295,17 @@
           <input type="text" id="newPlayerName" placeholder="Yeni oyuncu adı..." style="flex:1;background:var(--bg2);border:none;">
           <button class="abtn pri" onclick="addPlayer()" style="margin:0;white-space:nowrap" type="button">+ Ekle</button>
         </div>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <div class="slabel">Oylama</div>
+        <div class="stitle">Oy Gizleme Sınırı</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5;">Bu haftanın sonuçları kaç kişi oy kullandıktan sonra görünsün? Sheets'teki <strong>Ayarlar</strong> tabına kaydedilir.</div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="number" id="voteThresholdInput" min="1" max="100" value="5" style="width:80px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:15px;font-weight:700;text-align:center;color:var(--text);">
+          <span style="font-size:13px;color:var(--text2);font-weight:600;">kişi oy kullanınca göster</span>
+          <button id="voteThresholdSaveBtn" class="abtn pri" onclick="saveVoteSetting()" style="margin:0;white-space:nowrap" type="button">💾 Kaydet</button>
+        </div>
+        <div id="voteThresholdMsg" style="display:none;margin-top:10px;font-size:13px;font-weight:700;color:var(--green);"></div>
       </div>
     </div>
   </section>
