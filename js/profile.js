@@ -31,11 +31,10 @@ function hasConsecutiveTop3(playerData, resultData, count) {
   if (!resultData || !Array.isArray(resultData.weeks) || !Array.isArray(resultData.players) || !playerData) return false;
   const weeks = resultData.weeks;
   if (weeks.length < count) return false;
-  const lastN = weeks.slice(-count);
-  for (const week of lastN) {
-    const weekIdx = weeks.indexOf(week);
+  const startIdx = weeks.length - count;
+  for (let i = startIdx; i < weeks.length; i++) {
     const scores = resultData.players
-      .map(p => ({ name: p.name, score: Array.isArray(p.weeklyGenels) ? p.weeklyGenels[weekIdx] : null }))
+      .map(p => ({ name: p.name, score: Array.isArray(p.weeklyGenels) ? p.weeklyGenels[i] : null }))
       .filter(p => p.score != null)
       .sort((a, b) => b.score - a.score);
     const rank = scores.findIndex(s => s.name === playerData.name);
@@ -73,8 +72,8 @@ const BADGE_DEFS = [
   { id: 'ates',     icon: '🔥', name: 'Ateş',          desc: '3 hafta üst üste ilk 3 sıra',  check: (p, rd)    => hasConsecutiveTop3(p, rd, 3) },
   { id: 'devamli',  icon: '📅', name: 'Devamlı',       desc: '5+ maça katılım',               check: (p)        => attendanceCount(p) >= 5 },
   { id: 'lider',    icon: '👑', name: 'Lider',          desc: 'Sezon genel sıralaması 1.',    check: (p, rd)    => isLeader(p, rd) },
-  { id: 'golcu',    icon: '⚽', name: 'Golcü',          desc: '5+ gol bu sezon',               check: (p, _, md) => getTotalGoals(p && p.name, md) >= 5 },
-  { id: 'asist',    icon: '🅰️', name: 'Asist Kralı',   desc: '5+ asist bu sezon',             check: (p, _, md) => getTotalAssists(p && p.name, md) >= 5 },
+  { id: 'golcu',    icon: '⚽', name: 'Golcü',          desc: '5+ gol bu sezon',               check: (p, _, md) => getTotalGoals(p.name, md) >= 5 },
+  { id: 'asist',    icon: '🅰️', name: 'Asist Kralı',   desc: '5+ asist bu sezon',             check: (p, _, md) => getTotalAssists(p.name, md) >= 5 },
 ];
 
 export function computeBadges(playerData, resultData, matchesData) {
