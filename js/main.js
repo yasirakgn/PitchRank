@@ -38,7 +38,7 @@ function updateDarkBtn() {
 
 function toggleDark() {
   state.darkMode = !state.darkMode;
-  lSet('hs_dark', state.darkMode ? '1' : '0');
+  localStorage.setItem('hs_dark', state.darkMode ? '1' : '0');
   document.body.classList.toggle('dark', state.darkMode);
   updateDarkBtn();
 }
@@ -67,14 +67,14 @@ function showTeamConfirm(teamId) {
 }
 
 function selectTeam(teamId) {
-  localStorage.setItem('pitchrank_selected_team', teamId);
+  sessionStorage.setItem('pitchrank_selected_team', teamId);
   location.reload();
 }
 
 function resetTeam() {
   showConfirm('Takım seçim ekranına dönmek istediğinize emin misiniz?', () => {
     if (CURRENT_TEAM) localStorage.setItem('pitchrank_last_team', CURRENT_TEAM);
-    localStorage.removeItem('pitchrank_selected_team');
+    sessionStorage.removeItem('pitchrank_selected_team');
     location.reload();
   });
 }
@@ -94,7 +94,7 @@ function markLastTeam() {
   btn.appendChild(badge);
 }
 
-// ─── SCREEN NAVİGASYON ───────────────────────────────────────────────────────
+// ─── SCREEN NAVIGASYON ───────────────────────────────────────────────────────
 function switchMainScreen(id, btnElement) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
@@ -150,7 +150,7 @@ function makeFifaCard(p, pObj, rank, data, overrideScore) {
   const styles = getPlayStyles(p);
   const topStyles = styles.slice(0, 2).map(s => `<span style="font-size:12px;margin-bottom:2px;" title="${s.name}">${s.icon}</span>`).join('');
   const statKeys = ['Pas','Sut','Dribling','Savunma','Hiz / Kondisyon','Fizik'];
-  const statLabels = ['PAS','ŞUT','DRB','SAV','HIZ','FİZ'];
+  const statLabels = ['PAS','ŞUT','DRB','SAV','HIZ','FIZ'];
   const statVals = statKeys.map(c => {
     let vals = [];
     if (p.weeklyKriterler) Object.values(p.weeklyKriterler).forEach(wk => { if (wk && wk[c] != null) vals.push(+wk[c]); });
@@ -187,7 +187,7 @@ function makeFifaCard(p, pObj, rank, data, overrideScore) {
   return card;
 }
 
-// ─── PROFİL MODAL ────────────────────────────────────────────────────────────
+// ─── PROFIL MODAL ────────────────────────────────────────────────────────────
 function openProfile(p, data) {
   state.currentProfileName = p.name;
   const pObjP = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
@@ -365,7 +365,7 @@ function shareProfile() {
   let rating = '—';
   const pData = state.resultData && state.resultData.players ? state.resultData.players.find(x => x.name === pName) : null;
   if (pData) { const wAvg = posRating(pData, pObj); rating = wAvg !== null ? Math.min(99, Math.round(wAvg * 10)) : (pData.genelOrt ? Math.round(pData.genelOrt * 10) : '—'); }
-  const shareText = `⚽ PitchRank\n\nOyuncu: ${pName}\nMevki: ${posLabel(pObj)}\n⭐ Rating: ${rating}\n\nİstatistiklerine göz at!`;
+  const shareText = `⚽ PitchRank\n\nOyuncu: ${pName}\nMevki: ${posLabel(pObj)}\n⭐ Rating: ${rating}\n\nIstatistiklerine göz at!`;
   if (navigator.share) { navigator.share({title:`${pName} - Oyuncu Profili`, text:shareText, url:window.location.href}).catch(console.error); }
   else { navigator.clipboard.writeText(shareText).then(() => showToast('Profil bilgileri kopyalandı!')); }
 }
@@ -374,7 +374,7 @@ function closeModal(e, force) {
   if (force || (e && e.target === document.getElementById('modalBg'))) document.getElementById('modalBg').classList.remove('open');
 }
 
-// ─── TAKTİK ───────────────────────────────────────────────────────────────────
+// ─── TAKTIK ───────────────────────────────────────────────────────────────────
 let _teamA = [], _teamB = [];
 
 function renderTodayPlayers() {

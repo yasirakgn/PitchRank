@@ -12,7 +12,7 @@ if (lGet('hs_players_version') !== PLAYERS_VERSION) {
 
 export const state = {
   players: JSON.parse(lGet('hs_players')) || [],
-  darkMode: lGet('hs_dark') === '1',
+  darkMode: localStorage.getItem('hs_dark') === '1',
   resultData: null,
   currentScores: {},
   completedCards: {},

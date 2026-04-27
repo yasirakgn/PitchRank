@@ -168,7 +168,7 @@ export function renderSonuc(makeFifaCard) {
   const infoWeekBadgeEl = document.getElementById('statsInfoWeekBadge');
   const bannerEl = document.getElementById('siralama-gate-banner');
   grid.className = 'fg'; grid.style.marginBottom = '12px';
-  grid.innerHTML = '<div class="no-data"><span class="spin"></span>İstatistikler çekiliyor...</div>';
+  grid.innerHTML = '<div class="no-data"><span class="spin"></span>Istatistikler çekiliyor...</div>';
   nd.style.display = 'none';
   if (bannerEl) bannerEl.innerHTML = '';
   loadResults(data => {
@@ -291,21 +291,11 @@ export function renderWeek(week, data) {
   const minScore = Math.min(...wp.map(p => p.r10));
   const totalVoters = data.ratersPerWeek ? (data.ratersPerWeek[week] || []).length : '?';
 
-  let html = `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
-      <div style="background:var(--bg2);border-radius:14px;padding:12px;text-align:center;box-shadow:var(--sh-card);border:1px solid var(--border2);">
-        <div style="font-size:22px;font-weight:900;color:var(--text);letter-spacing:-1px;">${wp.length}</div>
-        <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Değerlendirilen</div>
-      </div>
-      <div style="background:var(--bg2);border-radius:14px;padding:12px;text-align:center;box-shadow:var(--sh-card);border:1px solid var(--border2);">
-        <div style="font-size:22px;font-weight:900;color:var(--green);letter-spacing:-1px;">${maxScore.toFixed(0)}</div>
-        <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">En Yüksek</div>
-      </div>
-      <div style="background:var(--bg2);border-radius:14px;padding:12px;text-align:center;box-shadow:var(--sh-card);border:1px solid var(--border2);">
-        <div style="font-size:22px;font-weight:900;color:var(--text);letter-spacing:-1px;">${totalVoters}</div>
-        <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Oy Kullanan</div>
-      </div>
-    </div>`;
+  let html = `<div class="wk-summary">
+    <div class="wk-stat-box"><div class="wk-stat-val">${wp.length}</div><div class="wk-stat-lbl">Değerlendirilen</div></div>
+    <div class="wk-stat-box"><div class="wk-stat-val" style="color:var(--green)">${maxScore.toFixed(0)}</div><div class="wk-stat-lbl">En Yüksek</div></div>
+    <div class="wk-stat-box"><div class="wk-stat-val">${totalVoters}</div><div class="wk-stat-lbl">Oy Kullanan</div></div>
+  </div>`;
 
   wp.forEach((p, i) => {
     const r10 = p.r10;
@@ -313,53 +303,44 @@ export function renderWeek(week, data) {
     const pObj = p.pObj;
     const photoUrl = getPlayerPhoto(p.name);
     const posKey = normPos(pObj)[0] || 'OMO';
-    const posEmoji = { KL:'🧤', DEF:'🛡️', OMO:'⚙️', FRV:'⚡' }[posKey] || '⚽';
     const rankDisplay = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="font-size:13px;font-weight:900;color:var(--text3);">${i+1}</span>`;
     const rCol = r10 >= 80 ? '#f59e0b' : r10 >= 70 ? 'var(--green)' : r10 >= 55 ? '#60a5fa' : 'var(--text3)';
     const isTop = i < 3;
+    const topBarColor = i === 0 ? 'linear-gradient(90deg,#f59e0b,#d97706)' : i === 1 ? 'linear-gradient(90deg,#94a3b8,#cbd5e1)' : 'linear-gradient(90deg,#b45309,#d97706)';
 
     const kritBars = CRITERIA.map((c, ci) => {
       const v = p.kr[c];
       const vn = v != null ? +v : null;
       const barW = vn !== null ? Math.round(vn / 10 * 100) : 0;
       const barCol = vn !== null ? (vn >= 8 ? '#4ade80' : vn >= 6 ? '#fbbf24' : '#f87171') : 'var(--border)';
-      return `<div style="flex:1;min-width:0;">
-        <div style="font-size:7px;font-weight:700;color:var(--text3);text-align:center;margin-bottom:2px;letter-spacing:.2px;">${CDISP[ci]}</div>
-        <div style="height:3px;background:var(--border2);border-radius:2px;overflow:hidden;">
-          <div style="width:${barW}%;height:100%;background:${barCol};border-radius:2px;"></div>
-        </div>
-        <div style="font-size:7px;font-weight:800;color:${barCol};text-align:center;margin-top:2px;">${vn!==null?vn.toFixed(1):'—'}</div>
+      return `<div class="wk-krit">
+        <div class="wk-krit-lbl">${CDISP[ci]}</div>
+        <div class="wk-krit-bar"><div class="wk-krit-fill" style="width:${barW}%;background:${barCol};"></div></div>
+        <div class="wk-krit-num" style="color:${barCol}">${vn!==null?vn.toFixed(1):'—'}</div>
       </div>`;
     }).join('');
 
-    html += `
-      <div style="background:var(--bg2);border-radius:18px;padding:14px;margin-bottom:10px;
-                  box-shadow:${isTop?'0 4px 16px rgba(0,0,0,0.1)':'var(--sh-card)'};
-                  border:1px solid ${isTop?'var(--border)':'var(--border2)'};
-                  position:relative;overflow:hidden;transition:transform .2s;"
-           onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        ${isTop ? `<div style="position:absolute;top:0;left:0;right:0;height:2px;background:${i===0?'linear-gradient(90deg,#f59e0b,#d97706)':i===1?'linear-gradient(90deg,#94a3b8,#cbd5e1)':'linear-gradient(90deg,#b45309,#d97706)'};"></div>` : ''}
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="width:28px;text-align:center;flex-shrink:0;font-size:18px;">${rankDisplay}</div>
-          <div style="width:40px;height:40px;border-radius:12px;overflow:hidden;flex-shrink:0;background:var(--bg3);border:1px solid var(--border2);">
-            ${photoUrl
-              ? `<img src="${photoUrl}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:top;" onerror="this.style.display='none'">`
-              : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:var(--green);">${p.name.charAt(0)}</div>`}
-          </div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:15px;font-weight:800;letter-spacing:-0.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
-            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-top:1px;">${posEmoji} ${POS[posKey]||posKey}</div>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:28px;font-weight:900;color:${rCol};letter-spacing:-1.5px;line-height:1;">${r10.toFixed(1)}</div>
-            <div style="font-size:8px;font-weight:700;color:var(--text3);text-align:right;margin-top:1px;">PUAN</div>
-          </div>
+    html += `<div class="wk-card${isTop?' wk-top':''}">
+      ${isTop ? `<div class="wk-top-bar" style="background:${topBarColor}"></div>` : ''}
+      <div class="wk-row">
+        <div class="wk-rank">${rankDisplay}</div>
+        <div class="wk-avatar">
+          ${photoUrl
+            ? `<img src="${photoUrl}" loading="lazy" onerror="this.style.display='none'">`
+            : `<div class="wk-avatar-ph">${p.name.charAt(0)}</div>`}
         </div>
-        <div style="height:3px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:10px;">
-          <div style="width:${pct}%;height:100%;background:${rCol};border-radius:2px;transition:width .6s cubic-bezier(0.16,1,0.3,1);"></div>
+        <div class="wk-info">
+          <div class="wk-name">${escHtml(p.name)}</div>
+          <div class="wk-pos">${POS[posKey]||posKey}</div>
         </div>
-        <div style="display:flex;gap:4px;">${kritBars}</div>
-      </div>`;
+        <div class="wk-score-wrap">
+          <div class="wk-score-val" style="color:${rCol}">${r10.toFixed(1)}</div>
+          <div class="wk-score-lbl">PUAN</div>
+        </div>
+      </div>
+      <div class="wk-bar"><div class="wk-bar-fill" style="width:${pct}%;background:${rCol}"></div></div>
+      <div class="wk-krits">${kritBars}</div>
+    </div>`;
   });
 
   content.innerHTML = html;
@@ -695,7 +676,7 @@ export function renderComparison() {
       <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.7;">
         ${overallWinner
           ? `<b style="color:${overallWinner===a?'var(--green)':'#3b82f6'}">${overallWinner}</b>, <b>${Math.abs(aRating-bRating)}</b> puanlık farkla genel değerlendirmede öne çıkıyor.`
-          : `İki oyuncu da aynı genel puanda! Oldukça dengeli bir duel.`}
+          : `Iki oyuncu da aynı genel puanda! Oldukça dengeli bir duel.`}
         ${a}, <b>${aWins}</b> kriterde; ${b} ise <b>${bWins}</b> kriterde üstün.
       </div>
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text2);font-weight:600;">
@@ -824,7 +805,7 @@ export function renderSezon() {
         { col:'#cd7f32', platH:'68px',  photoSz:'54px', rankEmoji:'🥉', rankTxt:'3.' },
       ];
 
-      html += `<div class="sz-sec-hdr"><span>🥇 🥈 🥉 SEZON ŞAMPİYONLARI</span></div>
+      html += `<div class="sz-sec-hdr"><span>🥇 🥈 🥉 SEZON ŞAMPIYONLARI</span></div>
         <div class="sz-podium">` +
         podiumOrder.map((pi, slot) => {
           const p = podium[pi]; if (!p) return '';
@@ -853,7 +834,7 @@ export function renderSezon() {
     }
 
     // ── RANKING LIST ───────────────────────────────────────────
-    html += `<div class="sz-sec-hdr"><span>📊 LİG SIRALAMASI</span></div><div class="sz-rank-list">`;
+    html += `<div class="sz-sec-hdr"><span>📊 LIG SIRALAMASI</span></div><div class="sz-rank-list">`;
     sorted.forEach((p, i) => {
       const pObjS = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
       const r = Math.min(99, Math.round((posRating(p, pObjS) || 0) * 10));
@@ -900,15 +881,15 @@ export function renderSezon() {
     // ── AWARDS ─────────────────────────────────────────────────
     const awards = [
       { icon:'👑', bg:'linear-gradient(145deg,#92400e,#f59e0b)', title:'MVP',           sub:'En Yüksek Rating',   name:mvp.name,          val:Math.min(99,Math.round((posRating(mvp,state.players.find(pl=>pl.name===mvp.name)||{pos:['OMO']})||0)*10))+' puan' },
-      { icon:'💎', bg:'linear-gradient(145deg,#1e3a8a,#38bdf8)', title:'PİYASA LİDERİ', sub:'Piyasa Değeri',      name:mostValuable.name,  val:formatMoney(calcMarketValue(mostValuable,data)) },
+      { icon:'💎', bg:'linear-gradient(145deg,#1e3a8a,#38bdf8)', title:'PIYASA LIDERI', sub:'Piyasa Değeri',      name:mostValuable.name,  val:formatMoney(calcMarketValue(mostValuable,data)) },
       { icon:'🎯', bg:'linear-gradient(145deg,#064e3b,#34d399)', title:'EN TUTARLI',    sub:'En Düşük Varyans',   name:mostCon.name,       val:'σ = '+stddev(mostCon).toFixed(2) },
-      { icon:'🏃', bg:'linear-gradient(145deg,#4c1d95,#a78bfa)', title:'DEMİR ADAM',    sub:'En Çok Katılım',     name:mostAttend.name,    val:attendCount(mostAttend)+'/'+totalWeeks+' maç' },
+      { icon:'🏃', bg:'linear-gradient(145deg,#4c1d95,#a78bfa)', title:'DEMIR ADAM',    sub:'En Çok Katılım',     name:mostAttend.name,    val:attendCount(mostAttend)+'/'+totalWeeks+' maç' },
       { icon:'🧱', bg:'linear-gradient(145deg,#1f2937,#6b7280)', title:'BETON DUVAR',   sub:'Savunma Şampiyonu',  name:bestDef.name,       val:kritAvg(bestDef,'Savunma').toFixed(1)+'/10' },
-      { icon:'⚽', bg:'linear-gradient(145deg,#7f1d1d,#f87171)', title:'GOL MAKİNESİ', sub:'Şut Şampiyonu',      name:bestFwd.name,       val:kritAvg(bestFwd,'Sut').toFixed(1)+'/10' },
-      { icon:'🎩', bg:'linear-gradient(145deg,#312e81,#818cf8)', title:'MAESTRİO',      sub:'Pas Şampiyonu',      name:bestPass.name,      val:kritAvg(bestPass,'Pas').toFixed(1)+'/10' },
+      { icon:'⚽', bg:'linear-gradient(145deg,#7f1d1d,#f87171)', title:'GOL MAKINESI', sub:'Şut Şampiyonu',      name:bestFwd.name,       val:kritAvg(bestFwd,'Sut').toFixed(1)+'/10' },
+      { icon:'🎩', bg:'linear-gradient(145deg,#312e81,#818cf8)', title:'MAESTRIO',      sub:'Pas Şampiyonu',      name:bestPass.name,      val:kritAvg(bestPass,'Pas').toFixed(1)+'/10' },
       { icon:'⚡', bg:'linear-gradient(145deg,#78350f,#fbbf24)', title:'RÜZGAR',        sub:'Hız Şampiyonu',      name:bestSpeed.name,     val:kritAvg(bestSpeed,'Hiz / Kondisyon').toFixed(1)+'/10' },
-      { icon:'📈', bg:'linear-gradient(145deg,#022c22,#6ee7b7)', title:'YILDIZ DOĞUŞU', sub:'En Çok İlerleme',   name:bestProgress.name,  val:'+'+((last3Avg(bestProgress)-first3Avg(bestProgress))*10).toFixed(1) },
-      { icon:'🔥', bg:'linear-gradient(145deg,#450a0a,#ef4444)', title:'ZİRVECİ',       sub:'Tarihi En Yüksek',  name:peakPlayer.name,    val:Math.round(peakScore(peakPlayer)*10)+' puan' },
+      { icon:'📈', bg:'linear-gradient(145deg,#022c22,#6ee7b7)', title:'YILDIZ DOGUSU', sub:'En Çok Ilerleme',   name:bestProgress.name,  val:'+'+((last3Avg(bestProgress)-first3Avg(bestProgress))*10).toFixed(1) },
+      { icon:'🔥', bg:'linear-gradient(145deg,#450a0a,#ef4444)', title:'ZIRVECI',       sub:'Tarihi En Yüksek',  name:peakPlayer.name,    val:Math.round(peakScore(peakPlayer)*10)+' puan' },
     ];
 
     html += `<div class="sz-sec-hdr"><span>🏅 ÖZEL ÖDÜLLER</span></div>

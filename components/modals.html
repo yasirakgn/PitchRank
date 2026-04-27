@@ -12,11 +12,11 @@
 <div class="mbg" id="pinBg">
   <div class="modal" style="max-width:300px;padding:32px 20px;text-align:center;">
     <div class="mtitle" style="margin-bottom:10px;font-size:20px;">Yetkili Girişi</div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:24px;">İşlem yapmak için PIN kodunu girin.</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:24px;">Islem yapmak için PIN kodunu girin.</div>
     <input type="password" id="adminPinInput" placeholder="••••" maxlength="10" style="text-align:center;font-size:32px;letter-spacing:12px;margin-bottom:12px;font-weight:800;background:var(--bg3);border:none;" onkeydown="if(event.key==='Enter') checkPin()">
     <div id="pinError" style="color:#ff3b30;font-size:13px;font-weight:600;min-height:20px;margin-bottom:16px;text-align:center;"></div>
     <div style="display:flex;justify-content:center;gap:10px;">
-      <button class="abtn" style="padding:12px 20px;font-size:14px;" onclick="document.getElementById('pinBg').classList.remove('open')" type="button">İptal</button>
+      <button class="abtn" style="padding:12px 20px;font-size:14px;" onclick="document.getElementById('pinBg').classList.remove('open')" type="button">Iptal</button>
       <button class="abtn pri" style="padding:12px 20px;font-size:14px;" onclick="checkPin()" type="button">Doğrula</button>
     </div>
   </div>
@@ -41,7 +41,7 @@
     <div style="padding:20px 24px 24px;text-align:center;">
       <div style="font-size:14px;color:var(--text2);margin-bottom:24px;line-height:1.6;">Bu takımın istatistik panosuna giriş yapıyorsunuz. Devam etmek istiyor musunuz?</div>
       <div style="display:flex;gap:10px;">
-        <button class="abtn" style="flex:1;padding:14px 16px;font-size:14px;" onclick="document.getElementById('teamConfirmBg').classList.remove('open')" type="button">İptal</button>
+        <button class="abtn" style="flex:1;padding:14px 16px;font-size:14px;" onclick="document.getElementById('teamConfirmBg').classList.remove('open')" type="button">Iptal</button>
         <button class="abtn pri" id="teamConfirmOkBtn" style="flex:1;margin:0;padding:14px 16px;font-size:14px;font-weight:700;" type="button">Onaylıyorum</button>
       </div>
     </div>
@@ -53,7 +53,7 @@
     <div class="mtitle" style="margin-bottom:12px;font-size:18px;">Onay Gerekiyor</div>
     <div id="confirmMsg" style="color:var(--text2);font-size:14px;line-height:1.5;margin-bottom:24px;"></div>
     <div style="display:flex;gap:10px;">
-      <button class="abtn" style="padding:12px 16px;font-size:13px;" onclick="closeConfirm()" type="button">İptal</button>
+      <button class="abtn" style="padding:12px 16px;font-size:13px;" onclick="closeConfirm()" type="button">Iptal</button>
       <button class="abtn pri" id="confirmBtn" style="margin:0;background:#ff3b30;border:none;color:white;padding:12px 16px;font-size:13px;" type="button">Evet, Onayla</button>
     </div>
   </div>

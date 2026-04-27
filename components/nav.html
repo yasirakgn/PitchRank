@@ -1,20 +1,64 @@
 <nav class="bottom-nav" aria-label="Ana Menü">
   <button class="bnav-item active" onclick="switchMainScreen('puanla',this)" type="button">
-    <span class="bnav-icon">📝</span><span>Puanla</span>
+    <span class="bnav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+    </span>
+    <span>Puanla</span>
   </button>
+
   <button class="bnav-item" onclick="switchMainScreen('siralama',this)" type="button">
-    <span class="bnav-icon">🏆</span><span>Sıralama</span>
+    <span class="bnav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+        <path d="M4 22h16"/>
+        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>
+      </svg>
+    </span>
+    <span>Sıralama</span>
   </button>
+
   <button class="bnav-item" onclick="switchMainScreen('istatistik',this)" type="button">
-    <span class="bnav-icon">📊</span><span>Analiz</span>
+    <span class="bnav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+        <line x1="2" y1="20" x2="22" y2="20"/>
+      </svg>
+    </span>
+    <span>Analiz</span>
   </button>
+
   <button class="bnav-item" onclick="switchMainScreen('takim',this)" type="button">
-    <span class="bnav-icon">⚡</span><span>Taktik</span>
+    <span class="bnav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+      </svg>
+    </span>
+    <span>Taktik</span>
   </button>
+
   <button class="bnav-item" onclick="switchMainScreen('yayin',this);loadVideos();" type="button">
-    <span class="bnav-icon">🎬</span><span>Yayın</span>
+    <span class="bnav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="23 7 16 12 23 17 23 7"/>
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+      </svg>
+    </span>
+    <span>Yayın</span>
   </button>
+
   <button class="bnav-item" onclick="tryAdmin(this)" type="button">
-    <span class="bnav-icon">🛡️</span><span>Yönetici</span>
+    <span class="bnav-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </span>
+    <span>Yönetici</span>
   </button>
 </nav>

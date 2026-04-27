@@ -36,7 +36,7 @@
     </div>
 
     <div id="progressWrap" class="prog-wrap" style="display:none;">
-      <div class="prog-top"><span>Değerlendirme İlerlemesi</span><span class="prog-count" id="progCount">0/0</span></div>
+      <div class="prog-top"><span>Değerlendirme Ilerlemesi</span><span class="prog-count" id="progCount">0/0</span></div>
       <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
     </div>
 
@@ -55,24 +55,24 @@
       </div>
     </div>
     <div class="sub-nav">
-      <button class="sub-nb active" onclick="setRankTab('genel',this)" type="button">🏆 Genel</button>
-      <button class="sub-nb" onclick="setRankTab('defans',this)" type="button">🛡️ Defans</button>
-      <button class="sub-nb" onclick="setRankTab('orta',this)" type="button">⚙️ Orta</button>
-      <button class="sub-nb" onclick="setRankTab('forvet',this)" type="button">⚡ Forvet</button>
+      <button class="sub-nb active" onclick="setRankTab('genel',this)" type="button">Genel</button>
+      <button class="sub-nb" onclick="setRankTab('defans',this)" type="button">Defans</button>
+      <button class="sub-nb" onclick="setRankTab('orta',this)" type="button">Orta Saha</button>
+      <button class="sub-nb" onclick="setRankTab('forvet',this)" type="button">Forvet</button>
     </div>
     <div id="siralama-gate-banner"></div>
     <div id="fifaGrid" class="fg" style="margin-bottom:12px;"></div>
     <div id="noDataSonuc" class="no-data" style="display:none">Henüz puan girilmedi.</div>
   </section>
 
-  <section id="screen-istatistik" class="screen" aria-label="İstatistik">
+  <section id="screen-istatistik" class="screen" aria-label="Istatistik">
     <div class="sub-nav">
-      <button class="sub-nb active" onclick="setStatScreen('hafta',this)" type="button">📊 Hafta</button>
-      <button class="sub-nb" onclick="setStatScreen('trend',this)" type="button">📈 Trend</button>
-      <button class="sub-nb" onclick="setStatScreen('karsi',this)" type="button">⚔️ Karşılaştır</button>
-      <button class="sub-nb" onclick="setStatScreen('sezon',this)" type="button">🏅 Sezon</button>
-      <button class="sub-nb" onclick="setStatScreen('katilim',this)" type="button">📅 Katılım</button>
-      <button class="sub-nb" onclick="setStatScreen('maclar',this)" type="button">🏟️ Maçlar</button>
+      <button class="sub-nb active" onclick="setStatScreen('hafta',this)" type="button">Hafta</button>
+      <button class="sub-nb" onclick="setStatScreen('trend',this)" type="button">Trend</button>
+      <button class="sub-nb" onclick="setStatScreen('karsi',this)" type="button">Karşılaştır</button>
+      <button class="sub-nb" onclick="setStatScreen('sezon',this)" type="button">Sezon</button>
+      <button class="sub-nb" onclick="setStatScreen('katilim',this)" type="button">Katılım</button>
+      <button class="sub-nb" onclick="setStatScreen('maclar',this)" type="button">Maçlar</button>
     </div>
     <div id="stat-hafta" class="sub-screen active">
       <div id="weekSelectorWrap" style="margin-bottom:14px;"></div>
@@ -80,34 +80,25 @@
       <div id="noDataHafta" class="no-data" style="display:none">Henüz puan girilmedi.</div>
     </div>
     <div id="stat-trend" class="sub-screen">
-      <div class="card">
-        <div class="slabel">Gelişim Eğrisi</div>
-        <div class="stitle">Performans Trendi</div>
-        <select id="trendSelect" onchange="renderTrend()"><option value="">— Oyuncu Seç —</option></select>
+      <div class="stat-picker">
+        <select id="trendSelect" onchange="renderTrend()"><option value="">— Oyuncu seç —</option></select>
       </div>
       <div id="trendContent"></div>
     </div>
     <div id="stat-karsi" class="sub-screen">
-      <div class="card">
-        <div class="slabel">Analiz</div>
-        <div class="stitle">Oyuncu Karşılaştırma</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <select id="cmpA" onchange="renderComparison()"><option value="">— Oyuncu 1 —</option></select>
-          <select id="cmpB" onchange="renderComparison()"><option value="">— Oyuncu 2 —</option></select>
-        </div>
+      <div class="stat-picker-row">
+        <select id="cmpA" onchange="renderComparison()"><option value="">— 1. Oyuncu —</option></select>
+        <select id="cmpB" onchange="renderComparison()"><option value="">— 2. Oyuncu —</option></select>
       </div>
       <div id="cmpContent"></div>
     </div>
     <div id="stat-sezon" class="sub-screen">
-      <div class="sec-title">Sezon Özeti &amp; Ödüller</div>
       <div id="sezonContent"><div class="no-data"><span class="spin"></span>Yükleniyor...</div></div>
     </div>
     <div id="stat-katilim" class="sub-screen">
-      <div class="sec-title">Devamlılık Raporu</div>
       <div id="attendContent"><div class="no-data"><span class="spin"></span>Yükleniyor...</div></div>
     </div>
     <div id="stat-maclar" class="sub-screen">
-      <div class="sec-title">Geçmiş Karşılaşmalar</div>
       <div id="publicMatchHistory"><div class="no-data"><span class="spin"></span>Yükleniyor...</div></div>
     </div>
   </section>
@@ -124,8 +115,8 @@
       <div id="todayPlayers"></div>
     </div>
     <div class="tk-action-row">
-      <button class="tk-primary-btn" onclick="buildTeams()" type="button">⚡ Dengeli Kur</button>
-      <button class="tk-secondary-btn" onclick="shuffleTeams()" type="button">🔀 Rastgele</button>
+      <button class="tk-primary-btn" onclick="buildTeams()" type="button">Dengeli Kur</button>
+      <button class="tk-secondary-btn" onclick="shuffleTeams()" type="button">Rastgele</button>
     </div>
     <div id="teamResult"></div>
     <div id="noDataTakim" class="no-data" style="display:none">En az 4 oyuncu seçin.</div>
@@ -133,19 +124,23 @@
 
   <section id="screen-admin" class="screen" aria-label="Yönetici">
     <div class="card" style="text-align:center; background:var(--bg2); border:none;">
-      <div style="font-size:36px; margin-bottom:12px;">🛡️</div>
+      <div style="width:44px;height:44px;margin:0 auto 14px;color:var(--green);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%;">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
       <div class="stitle" style="color:var(--green); font-size:20px;">Yönetici Paneli</div>
       <div style="font-size:13px; color:var(--text2); margin-bottom:20px; line-height:1.4;">Maç sonuçlarını girmek ve kadroyu yönetmek için yetkili alandasınız.</div>
       <button class="abtn" style="background:var(--bg3);" onclick="logoutAdmin()" type="button">Güvenli Çıkış</button>
     </div>
 
     <div class="sub-nav">
-      <button class="sub-nb active" onclick="setAdminTab('mac',this)" type="button">⚽ Skor</button>
-      <button class="sub-nb" onclick="setAdminTab('bugun',this)" type="button">📋 Bugün Gelenler</button>
-      <button class="sub-nb" onclick="setAdminTab('hakem',this)" type="button">🟡 Hakem</button>
-      <button class="sub-nb" onclick="setAdminTab('yayin',this)" type="button">🎬 Yayın</button>
-      <button class="sub-nb" onclick="setAdminTab('hafta',this)" type="button">📅 Hafta</button>
-      <button class="sub-nb" onclick="setAdminTab('ayarlar',this)" type="button">⚙️ Oyuncular</button>
+      <button class="sub-nb active" onclick="setAdminTab('mac',this)" type="button">Skor</button>
+      <button class="sub-nb" onclick="setAdminTab('bugun',this)" type="button">Bugün</button>
+      <button class="sub-nb" onclick="setAdminTab('hakem',this)" type="button">Hakem</button>
+      <button class="sub-nb" onclick="setAdminTab('yayin',this)" type="button">Yayın</button>
+      <button class="sub-nb" onclick="setAdminTab('hafta',this)" type="button">Hafta</button>
+      <button class="sub-nb" onclick="setAdminTab('ayarlar',this)" type="button">Oyuncular</button>
     </div>
 
     <div id="admin-bugun" class="sub-screen">
@@ -196,34 +191,24 @@
     </div>
 
     <div id="admin-mac" class="sub-screen active">
-      <div class="card">
-        <div class="slabel">Müsabaka</div>
-        <div class="stitle" style="margin-bottom:16px">Maç Skoru</div>
+      <div class="card" style="padding:14px 16px;">
         <div class="match-scoreboard">
           <div class="match-team">
-            <div class="match-team-label">⚪ Beyaz Takım</div>
+            <div class="match-team-label">⚪ Beyaz</div>
             <input type="number" class="sinput" id="score1" min="0" max="99" value="0">
           </div>
           <div class="match-vs">VS</div>
           <div class="match-team">
-            <div class="match-team-label">🔵 Renkli Takım</div>
+            <div class="match-team-label">🔵 Renkli</div>
             <input type="number" class="sinput" id="score2" min="0" max="99" value="0">
           </div>
         </div>
         <div class="match-meta">
-          <div class="match-meta-item">
-            <div class="slabel">Hafta Kodu</div>
-            <input type="text" id="matchWeek">
-          </div>
-          <div class="match-meta-item">
-            <div class="slabel">Maç Notu</div>
-            <input type="text" id="matchNote" placeholder="Örn: Yağmurlu...">
-          </div>
+          <input type="text" id="matchWeek" placeholder="Hafta (örn: 2026-H15)">
+          <input type="text" id="matchNote" placeholder="Maç notu (opsiyonel)">
         </div>
       </div>
-      <div class="card">
-        <div class="slabel">Bireysel Performans</div>
-        <div class="stitle" style="margin-bottom:16px">Gol &amp; Asist Tablosu</div>
+      <div class="card" style="padding:12px 16px;">
         <div class="goal-table-header">
           <span class="goal-col-name">Oyuncu</span>
           <span class="goal-col-stat">⚽ Gol</span>
@@ -231,7 +216,7 @@
         </div>
         <div id="goalInputs"></div>
       </div>
-      <button class="sub-btn" style="width:100%;margin-bottom:24px;" onclick="saveMatch()" type="button">Veritabanına Kaydet</button>
+      <button class="sub-btn" style="width:100%;margin-bottom:24px;" onclick="saveMatch()" type="button">Kaydet</button>
       <div class="card">
         <div class="sec-title">Geçmiş Karşılaşmalar</div>
         <div id="matchHistory"><div class="no-data"><span class="spin"></span>Yükleniyor...</div></div>

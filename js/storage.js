@@ -1,6 +1,6 @@
 import { TEAM_CONFIG } from './config.js';
 
-export const CURRENT_TEAM = localStorage.getItem('pitchrank_selected_team') || null;
+export const CURRENT_TEAM = sessionStorage.getItem('pitchrank_selected_team') || null;
 
 export function getStorageKey(key) {
   if (!CURRENT_TEAM) return key;

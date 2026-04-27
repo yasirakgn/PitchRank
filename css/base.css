@@ -1,25 +1,45 @@
 :root {
-  --bg: #f8fafc; --bg2: #ffffff; --bg3: #f1f5f9;
-  --border: #e2e8f0; --border2: #f1f5f9;
-  --text: #0f172a; --text2: #475569; --text3: #94a3b8;
-  --green: #10b981; --green-dark: #047857; --gl: #ecfdf5; --gd: #10b98115;
-  --sh: 0 2px 6px -1px rgba(0,0,0,.05), 0 1px 3px -1px rgba(0,0,0,.03);
-  --sh2: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -2px rgba(0,0,0,.04);
-  --sh-card: 0 4px 12px -2px rgba(0,0,0,.05);
-  --r: 16px; --rs: 10px;
+  --bg: #d4d7e8;
+  --bg2: #dde0ef;
+  --bg3: #c8ccde;
+  --border: #b4b9d2;
+  --border2: #c8ccde;
+  --text: #080c1a;
+  --text2: #3d4870;
+  --text3: #8a94b8;
+  --green: #059669;
+  --green-dark: #047857;
+  --gl: #ecfdf5;
+  --gd: #05966914;
+  --sh: 0 1px 6px rgba(8,12,26,.06), 0 2px 4px rgba(8,12,26,.03);
+  --sh2: 0 12px 32px rgba(8,12,26,.11), 0 4px 10px rgba(8,12,26,.06);
+  --sh-card: 0 2px 16px rgba(8,12,26,.07), 0 1px 4px rgba(8,12,26,.04);
+  --r: 20px;
+  --rs: 14px;
 }
 .dark {
-  --bg: #000000; --bg2: #1c1c1e; --bg3: #2c2c2e;
-  --border: #38383a; --border2: #2c2c2e;
-  --text: #ffffff; --text2: #ebebf5; --text3: #98989d;
-  --green: #30d158; --green-dark: #34c759; --gl: #112d1b; --gd: #30d15825;
-  --sh: 0 2px 6px rgba(0,0,0,0.3);
-  --sh2: 0 10px 20px rgba(0,0,0,0.5);
-  --sh-card: 0 4px 12px rgba(0,0,0,0.3);
+  --bg: #07080f;
+  --bg2: #0e1019;
+  --bg3: #161b28;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.04);
+  --text: #edf0ff;
+  --text2: #8892b8;
+  --text3: #424d6e;
+  --green: #10b981;
+  --green-dark: #059669;
+  --gl: #052316;
+  --gd: #10b98122;
+  --sh: 0 2px 12px rgba(0,0,0,.55), 0 1px 4px rgba(0,0,0,.3);
+  --sh2: 0 18px 44px rgba(0,0,0,.7);
+  --sh-card: 0 4px 20px rgba(0,0,0,.5);
 }
+
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg); color: var(--text);
   min-height: 100vh;
   transition: background .3s, color .3s;
@@ -28,7 +48,9 @@ body {
   text-rendering: optimizeLegibility;
   letter-spacing: -0.015em;
 }
+
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--text3); border-radius: 4px; }
-h1, h2, h3, .stitle, .mtitle, .hdr-title { letter-spacing: -0.035em; }
+
+h1, h2, h3, .stitle, .mtitle, .hdr-title { letter-spacing: -0.04em; }

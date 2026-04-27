@@ -1,35 +1,33 @@
-<section id="screen-home" class="screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; background: var(--bg); text-align: center;">
-  <div style="margin-bottom: 40px; animation: popIn 0.5s ease-out;">
-    <img src="assets/images/icon-512.png" alt="PitchRank Logo" style="width: 120px; height: 120px; border-radius: 28px; box-shadow: var(--sh-card); margin-bottom: 24px;">
-    <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px;">PitchRank</h1>
-    <p style="color: var(--text2); font-size: 16px; max-width: 280px; margin: 0 auto; line-height: 1.5;">Halı saha istatistiklerinizi profesyonelce yönetin.</p>
+<section id="screen-home" class="home-hero">
+  <div class="home-glow"></div>
+
+  <div class="home-content">
+    <div class="home-logo-wrap">
+      <img src="assets/images/icon-512.png" alt="PitchRank Logo" class="home-logo">
+      <h1 class="home-title">PitchRank</h1>
+      <p class="home-sub">Halı saha istatistiklerinizi<br>profesyonelce yönetin</p>
+    </div>
+
+    <div class="home-teams">
+      <button onclick="showTeamConfirm('haldunalagas')" class="home-team-btn" type="button">
+        <div class="htb-icon">🦅</div>
+        <div class="htb-info">
+          <div class="htb-name">Haldunalagaş</div>
+          <div class="htb-sub">Takım Istatistikleri</div>
+        </div>
+        <div class="htb-arrow">→</div>
+      </button>
+
+      <button onclick="showTeamConfirm('arion')" class="home-team-btn" type="button">
+        <div class="htb-icon">🐴</div>
+        <div class="htb-info">
+          <div class="htb-name">Arion FC</div>
+          <div class="htb-sub">Takım Istatistikleri</div>
+        </div>
+        <div class="htb-arrow">→</div>
+      </button>
+    </div>
   </div>
 
-  <div style="width: 100%; max-width: 400px; display: grid; gap: 16px; animation: slideUp 0.6s ease-out;">
-    <button id="teamBtn-haldunalagas" class="sub-btn" onclick="showTeamConfirm('haldunalagas')" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; width: 100%;">
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <span style="font-size: 32px;">🦅</span>
-        <div style="text-align: left;">
-          <div style="font-weight: 700; font-size: 18px;">Haldunalagaş</div>
-          <div style="font-size: 12px; color: var(--text2);">Takım İstatistikleri</div>
-        </div>
-      </div>
-      <span style="font-size: 20px; color: var(--text3); transition: transform 0.3s;">→</span>
-    </button>
-
-    <button id="teamBtn-arion" class="sub-btn" onclick="showTeamConfirm('arion')" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; width: 100%;">
-      <div style="display: flex; align-items: center; gap: 16px;">
-        <span style="font-size: 32px;">🦁</span>
-        <div style="text-align: left;">
-          <div style="font-weight: 700; font-size: 18px;">Arion FC</div>
-          <div style="font-size: 12px; color: var(--text2);">Takım İstatistikleri</div>
-        </div>
-      </div>
-      <span style="font-size: 20px; color: var(--text3); transition: transform 0.3s;">→</span>
-    </button>
-  </div>
-
-  <footer style="margin-top: 60px; font-size: 13px; color: var(--text3);">
-    v2.1 • Profesyonel Arena
-  </footer>
+  <div class="home-footer">v3.1 · Profesyonel Arena</div>
 </section>

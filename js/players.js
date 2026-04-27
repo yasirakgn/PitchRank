@@ -310,7 +310,7 @@ export function submitRatings() {
   const btn = byId('submitBtn');
   const successPopup = byId('successPopup');
   if (!btn) return;
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>İşleniyor...';
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Isleniyor...';
   const week = getWeekLabel();
   const filtered = {};
   Object.keys(state.currentScores).forEach(p => { filtered[p] = state.currentScores[p]; });

@@ -10,7 +10,7 @@ export const TEAM_CONFIG = {
   arion: {
     id: 'arion',
     name: 'Arion FC',
-    emoji: '🦁',
+    emoji: '🐴',
     color: '#6366f1',
     logo: 'assets/images/icon-192.png',
     gs: 'https://script.google.com/macros/s/AKfycbxDVAjBLnynV1osvQ181glA2oO2MK1hy8Ab40FWHjlQHHtXKU-z4Jt3Ex6fOjQPUT7jTA/exec'
@@ -21,12 +21,12 @@ export const BASE_URL = 'assets/images/';
 export const PLAYERS_VERSION = '6';
 export const CRITERIA = ['Pas','Sut','Dribling','Savunma','Hiz / Kondisyon','Fizik','Takim Oyunu'];
 export const CDISP    = ['Pas','Şut','Drib.','Savunma','Hız','Fizik','Takım'];
-export const POS      = { KL: '🧤 Kaleci', DEF: '🛡️ Defans', OMO: '⚙️ Orta Saha', FRV: '⚡ Forvet' };
+export const POS      = { KL: 'Kaleci', DEF: 'Defans', OMO: 'Orta Saha', FRV: 'Forvet' };
 export const POS_GROUPS = [
-  { label: '🧤 Kale', keys: ['KL'] },
-  { label: '🛡️ Defans', keys: ['DEF'] },
-  { label: '⚙️ Orta Saha', keys: ['OMO'] },
-  { label: '⚡ Forvet', keys: ['FRV'] }
+  { label: 'Kale', keys: ['KL'] },
+  { label: 'Defans', keys: ['DEF'] },
+  { label: 'Orta Saha', keys: ['OMO'] },
+  { label: 'Forvet', keys: ['FRV'] }
 ];
 export const VALID_POS = ['KL','DEF','OMO','FRV'];
 export const POS_WEIGHTS = {
