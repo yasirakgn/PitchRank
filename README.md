@@ -7,7 +7,6 @@
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-spor.yagserakgun.com-10b981?style=for-the-badge&logo=vercel&logoColor=white)](https://spor.yagserakgun.com)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-6366f1?style=for-the-badge&logo=pwa&logoColor=white)](#)
 [![Vanilla JS](https://img.shields.io/badge/Built%20With-Vanilla%20JS-f59e0b?style=for-the-badge&logo=javascript&logoColor=black)](#)
-[![Google Sheets](https://img.shields.io/badge/Backend-Google%20Sheets-34a853?style=for-the-badge&logo=google-sheets&logoColor=white)](#)
 
 <br/>
 
@@ -71,7 +70,6 @@ components/
   nav.html          ← Bottom navigation (SVG icons)
   modals.html       ← Profile, PIN, confirm dialogs
   toast.html        ← Toast notification container
-app gs.txt          ← Google Apps Script source (deploy to GAS)
 ```
 
 **Module dependency graph (strict DAG — no circular imports):**
@@ -106,25 +104,6 @@ git push origin main
 The `vercel.json` handles SPA routing and cache headers automatically.
 
 ---
-
-## 🔧 Adding a New Team
-
-1. Create a new Google Sheet
-2. Open **Extensions → Apps Script**, paste the contents of `app gs.txt`
-3. Deploy as Web App (**Execute as: Me**, **Access: Anyone**)
-4. Copy the deployment URL
-5. Add an entry to `TEAM_CONFIG` in `js/config.js`:
-
-```js
-myteam: {
-  id: 'myteam',
-  name: 'My Team FC',
-  emoji: '🦅',
-  color: '#f59e0b',
-  logo: 'assets/images/icon-192.png',
-  gs: 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_URL/exec'
-}
-```
 
 6. Add a button in `components/home.html`
 
