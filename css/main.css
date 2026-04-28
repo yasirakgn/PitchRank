@@ -745,6 +745,26 @@ input[type=range]::-webkit-slider-thumb:active { transform: scale(1.22); box-sha
   letter-spacing: -0.02em;
   text-shadow: 0 1px 4px rgba(0,0,0,0.25);
 }
+.prof-share-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; margin-top: 18px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg,
+    rgba(var(--share-tc-r),var(--share-tc-g),var(--share-tc-b),0.18) 0%,
+    rgba(var(--share-tc-r),var(--share-tc-g),var(--share-tc-b),0.32) 100%);
+  border: 1.5px solid var(--share-tc);
+  border-radius: var(--r);
+  color: var(--share-tc);
+  font-size: 14px; font-weight: 800; font-family: inherit;
+  cursor: pointer; letter-spacing: 0.2px;
+  box-shadow: 0 4px 20px rgba(var(--share-tc-r),var(--share-tc-g),var(--share-tc-b),0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.prof-share-btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+  box-shadow: 0 2px 8px rgba(var(--share-tc-r),var(--share-tc-g),var(--share-tc-b),0.15);
+}
 
 /* Rank / Rekabet */
 .prof-rank-card {

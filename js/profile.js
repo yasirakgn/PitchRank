@@ -92,25 +92,44 @@ function renderHeader(container, playerData, pObj) {
   const photo = getPlayerPhoto(name);
   const posText = pObj ? posLabel(pObj) : '';
   const genelOrt = playerData && playerData.genelOrt != null ? playerData.genelOrt : null;
-  const rating = genelOrt !== null ? Math.min(99, Math.round(genelOrt * 10)) : '—';
+  const rating = genelOrt !== null ? Math.min(99, Math.round(genelOrt * 10)) : null;
   const teamId = sessionStorage.getItem('pitchrank_selected_team') || 'haldunalagas';
-  const teamColor = (TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas).color;
+  const tc = (TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas).color;
+  const r = parseInt(tc.slice(1, 3), 16);
+  const g = parseInt(tc.slice(3, 5), 16);
+  const b = parseInt(tc.slice(5, 7), 16);
+  const glow = `radial-gradient(ellipse at 85% 50%, rgba(${r},${g},${b},0.18) 0%, transparent 65%)`;
 
   container.innerHTML = `
-    <div class="profile-header" style="border-top: 3px solid ${escHtml(teamColor)};">
-      <img class="profile-avatar" src="${escHtml(photo)}" alt="${escHtml(name)}"
-           onerror="this.src='assets/images/icon-192.png'">
-      <div class="profile-header-info">
-        <div class="profile-name">${escHtml(name)}</div>
-        <div class="profile-pos">${escHtml(posText)}</div>
+    <div class="prof-hero">
+      <div class="prof-hero-glow" style="background:${glow};"></div>
+      ${rating !== null ? `<div class="prof-watermark">${rating}</div>` : ''}
+      <div class="prof-hero-body">
+        <div class="prof-avatar-wrap" style="background:${escHtml(tc)};box-shadow:0 0 0 2px var(--bg),0 0 0 5px ${escHtml(tc)};">
+          <img class="prof-avatar" src="${escHtml(photo)}" alt="${escHtml(name)}"
+               onerror="this.src='assets/images/icon-192.png'">
+        </div>
+        <div class="prof-hero-info">
+          <div class="prof-name">${escHtml(name)}</div>
+          ${posText ? `<div class="prof-pos">${escHtml(posText)}</div>` : ''}
+          ${rating !== null ? `<div class="prof-rating-pill" style="background:${escHtml(tc)};">${rating}</div>` : ''}
+        </div>
       </div>
-      <div class="profile-rating" style="color:${escHtml(teamColor)};">${escHtml(String(rating))}</div>
+      <button class="prof-share-btn" onclick="shareProfileCard()" type="button"
+              style="--share-tc:${escHtml(tc)};--share-tc-r:${r};--share-tc-g:${g};--share-tc-b:${b};">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+        Kartını Paylaş
+      </button>
     </div>`;
 }
 
 function renderFormStrip(container, playerData, resultData) {
+  const noData = '<div class="prof-section"><div class="prof-section-header"><span class="prof-section-title">Form Şeridi</span></div><div class="prof-nodata">Henüz form verisi yok.</div></div>';
   if (!playerData || !Array.isArray(playerData.weeklyGenels) || !Array.isArray(resultData && resultData.weeks)) {
-    container.innerHTML = '<div class="profile-nodata">Henüz form verisi yok.</div>';
+    container.innerHTML = noData;
     return;
   }
   const weeks = resultData.weeks;
@@ -119,79 +138,144 @@ function renderFormStrip(container, playerData, resultData) {
     .filter(e => e.score != null)
     .slice(-5);
 
-  if (!entries.length) {
-    container.innerHTML = '<div class="profile-nodata">Henüz form verisi yok.</div>';
-    return;
-  }
+  if (!entries.length) { container.innerHTML = noData; return; }
 
-  const bubbles = entries.map((e, i) => {
-    const score = Math.round(e.score * 10);
-    const cls = score >= 75 ? 'good' : score >= 50 ? 'mid' : 'low';
-    let arrow = '';
-    if (i > 0) {
-      const prev = Math.round(entries[i - 1].score * 10);
-      const delta = score - prev;
-      arrow = delta >= 2 ? '<span class="form-arrow up">↑</span>'
-            : delta <= -2 ? '<span class="form-arrow down">↓</span>'
-            : '<span class="form-arrow flat">→</span>';
-    }
-    return `<div class="form-week">${arrow}<div class="form-bubble ${escHtml(cls)}">${score}</div><div class="form-week-lbl">${escHtml(e.week.replace(/\d{4}-/, ''))}</div></div>`;
-  }).join('');
+  const W = 300, H = 80, PX = 20, PY = 14;
+  const scores = entries.map(e => Math.round(e.score * 10));
+  const minS = Math.max(0, Math.min(...scores) - 8);
+  const maxS = Math.min(100, Math.max(...scores) + 8);
+  const range = maxS - minS || 1;
+  const n = entries.length;
 
-  container.innerHTML = `<div class="form-strip">${bubbles}</div>`;
+  const pts = entries.map((e, i) => ({
+    x: PX + (n > 1 ? (i / (n - 1)) * (W - PX * 2) : (W - PX * 2) / 2),
+    y: PY + (1 - (scores[i] - minS) / range) * (H - PY * 2 - 12),
+    score: scores[i],
+    week: e.week.replace(/\d{4}-/, ''),
+  }));
+
+  const lineD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const areaD = `${lineD} L${pts[pts.length - 1].x.toFixed(1)} ${H} L${pts[0].x.toFixed(1)} ${H} Z`;
+
+  const lastScore = scores[scores.length - 1];
+  const prevScore = scores.length > 1 ? scores[scores.length - 2] : null;
+  const delta = prevScore !== null ? lastScore - prevScore : 0;
+  const trend = delta >= 2 ? { icon: '↑', cls: 'up' } : delta <= -2 ? { icon: '↓', cls: 'down' } : { icon: '→', cls: 'flat' };
+
+  const dotsHtml = pts.map(p => `
+    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" class="spark-dot"/>
+    <text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" class="spark-lbl" text-anchor="middle">${p.score}</text>
+    <text x="${p.x.toFixed(1)}" y="${(H - 1).toFixed(1)}" class="spark-week" text-anchor="middle">${escHtml(p.week)}</text>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="prof-section">
+      <div class="prof-section-header">
+        <span class="prof-section-title">Form Şeridi</span>
+        <span class="spark-trend ${escHtml(trend.cls)}">${escHtml(trend.icon)} ${lastScore}</span>
+      </div>
+      <svg class="spark-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#059669" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#059669" stop-opacity="0.02"/>
+          </linearGradient>
+        </defs>
+        <path d="${areaD}" fill="url(#sparkGrad)"/>
+        <path d="${lineD}" class="spark-line" fill="none"/>
+        ${dotsHtml}
+      </svg>
+    </div>`;
 }
 
 function renderBadges(container, badges) {
-  const items = badges.map(b => `
-    <div class="badge-item ${b.earned ? '' : 'locked'}"
+  const earned = badges.filter(b => b.earned);
+  const locked = badges.filter(b => !b.earned);
+  const sorted = [...earned, ...locked];
+
+  const items = sorted.map(b => `
+    <div class="badge-hex-item${b.earned ? ' earned' : ''}"
          data-badge-desc="${escHtml(b.icon + ' ' + b.name + ': ' + b.desc)}"
          onclick="window.__showBadgeDesc && window.__showBadgeDesc(this.dataset.badgeDesc)">
-      <span class="badge-icon">${b.icon}</span>
-      <span class="badge-name">${escHtml(b.name)}</span>
-      ${b.earned ? '' : '<span class="badge-lock">🔒</span>'}
+      <div class="badge-hex-shape ${b.earned ? 'earned' : 'locked'}">${b.icon}</div>
+      <div class="badge-hex-name">${escHtml(b.name)}</div>
     </div>`).join('');
-  container.innerHTML = `<div class="badge-grid">${items}</div>`;
+
+  container.innerHTML = `
+    <div class="prof-section">
+      <div class="prof-section-header">
+        <span class="prof-section-title">Rozetler</span>
+        <span class="prof-section-sub">${earned.length}/${badges.length} kazanıldı</span>
+      </div>
+      <div class="badge-hex-grid">${items}</div>
+    </div>`;
 }
 
 function renderCompetition(container, playerData, allPlayers) {
-  if (!playerData || !Array.isArray(allPlayers)) {
-    container.innerHTML = '';
-    return;
-  }
+  if (!playerData || !Array.isArray(allPlayers)) { container.innerHTML = ''; return; }
   const sorted = [...allPlayers]
     .filter(p => p.genelOrt != null)
     .sort((a, b) => b.genelOrt - a.genelOrt);
   const rank = sorted.findIndex(p => p.name === playerData.name);
   if (rank === -1) { container.innerHTML = ''; return; }
 
-  let html;
+  const teamId = sessionStorage.getItem('pitchrank_selected_team') || 'haldunalagas';
+  const tc = (TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas).color;
+
+  let numHtml, labelHtml, subHtml;
   if (rank === 0) {
-    html = `<div class="comp-line">👑 <strong>Bu sezon takımının liderisin!</strong></div>`;
+    numHtml = `<div class="prof-rank-num prof-rank-leader" style="color:${escHtml(tc)};">🏆</div>`;
+    labelHtml = 'Bu sezon takımının liderisin!';
+    subHtml = `Genel ortalama: <strong>${playerData.genelOrt.toFixed(1)}</strong>`;
   } else {
     const above = sorted[rank - 1];
     const diff = (above.genelOrt - playerData.genelOrt).toFixed(1);
-    html = `<div class="comp-line">Takımda <strong>${rank + 1}. sıradasın</strong> — ${escHtml(above.name)}'e <strong>${diff} puan</strong> kaldı</div>`;
+    numHtml = `<div class="prof-rank-num" style="color:${escHtml(tc)};">${rank + 1}</div>`;
+    labelHtml = `Takımda <strong>${rank + 1}. sıradasın</strong>`;
+    subHtml = `${escHtml(above.name)}'e <strong>${diff} puan</strong> kaldı`;
   }
-  container.innerHTML = html;
+
+  container.innerHTML = `
+    <div class="prof-rank-card">
+      ${numHtml}
+      <div class="prof-rank-body">
+        <div class="prof-rank-label">${labelHtml}</div>
+        <div class="prof-rank-sub">${subHtml}</div>
+      </div>
+    </div>`;
 }
 
 function renderCriteriaBar(container, playerData) {
   if (!playerData || !playerData.weeklyKriterler || !Object.keys(playerData.weeklyKriterler).length) {
-    container.innerHTML = '<div class="profile-nodata">Kriter verisi yok.</div>';
+    container.innerHTML = '<div class="prof-section"><div class="prof-section-header"><span class="prof-section-title">Kriter Ortalamaları</span></div><div class="prof-nodata">Kriter verisi yok.</div></div>';
     return;
   }
-  const rows = CRITERIA.map((c, i) => {
+
+  const R = 22, CX = 28, CY = 28, CIRC = 2 * Math.PI * R;
+
+  const arcs = CRITERIA.map((c, i) => {
     const avg = criteriaAvg(playerData, c);
-    if (!avg) return '';
-    const pct = Math.round(avg * 10);
+    if (!avg) return null;
+    const pct = Math.min(100, Math.round(avg * 10));
     const cls = pct >= 80 ? 'good' : pct >= 60 ? 'mid' : 'low';
-    return `<div class="criteria-bar">
-      <span class="criteria-lbl">${escHtml(CDISP[i])}</span>
-      <div class="criteria-track"><div class="criteria-fill ${escHtml(cls)}" style="width:${pct}%"></div></div>
-      <span class="criteria-val">${avg.toFixed(1)}</span>
-    </div>`;
+    const dash = `${(pct / 100 * CIRC).toFixed(1)} ${CIRC.toFixed(1)}`;
+    return `
+      <div class="crit-arc">
+        <svg class="crit-arc-svg" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="${CX}" cy="${CY}" r="${R}" class="crit-arc-track"/>
+          <circle cx="${CX}" cy="${CY}" r="${R}" class="crit-arc-fill ${cls}"
+                  stroke-dasharray="${dash}"
+                  stroke-dashoffset="0"
+                  transform="rotate(-90 ${CX} ${CY})"/>
+          <text x="${CX}" y="${CY}" class="crit-arc-val" text-anchor="middle" dominant-baseline="middle">${avg.toFixed(1)}</text>
+        </svg>
+        <div class="crit-arc-lbl">${escHtml(CDISP[i])}</div>
+      </div>`;
   }).filter(Boolean).join('');
-  container.innerHTML = rows || '<div class="profile-nodata">Kriter verisi yok.</div>';
+
+  container.innerHTML = arcs
+    ? `<div class="prof-section"><div class="prof-section-header"><span class="prof-section-title">Kriter Ortalamaları</span></div><div class="crit-arc-grid">${arcs}</div></div>`
+    : '<div class="prof-section"><div class="prof-section-header"><span class="prof-section-title">Kriter Ortalamaları</span></div><div class="prof-nodata">Kriter verisi yok.</div></div>';
 }
 
 export function renderProfile() {
@@ -206,7 +290,12 @@ export function renderProfile() {
   const criteriaEl = el.querySelector('#prof-criteria');
 
   if (!name) {
-    el.innerHTML = '<div class="profile-nodata" style="padding:32px;text-align:center;">Önce kimliğini seç.</div>';
+    const noIdentityHTML = '<div class="prof-section" style="padding:32px;text-align:center;"><div class="prof-nodata">Önce kimliğini seç.</div></div>';
+    if (headerEl) headerEl.innerHTML = noIdentityHTML;
+    if (compEl) compEl.innerHTML = '';
+    if (formEl) formEl.innerHTML = '';
+    if (badgesEl) badgesEl.innerHTML = '';
+    if (criteriaEl) criteriaEl.innerHTML = '';
     return;
   }
 
@@ -216,9 +305,9 @@ export function renderProfile() {
   const pObj = Array.isArray(state.players) ? state.players.find(p => p.name === name) : null;
 
   if (headerEl)   renderHeader(headerEl, playerData, pObj);
+  if (compEl)     renderCompetition(compEl, playerData, rd && rd.players);
   if (formEl)     renderFormStrip(formEl, playerData, rd);
   if (badgesEl)   renderBadges(badgesEl, computeBadges(playerData, rd, md));
-  if (compEl)     renderCompetition(compEl, playerData, rd && rd.players);
   if (criteriaEl) renderCriteriaBar(criteriaEl, playerData);
 
   window.__showBadgeDesc = (msg) => showToast(msg);
