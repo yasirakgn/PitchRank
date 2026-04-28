@@ -64,13 +64,13 @@ function getCardType(rating) {
 // ── Ego Başlığı ───────────────────────────────────────────────────────────────
 
 const STAT_TITLES = [
-  { e: '🎯', t: 'OYUNUN MİMARİ'   },   // Pas
-  { e: '🚀', t: 'GOL MAKİNESİ'    },   // Şut
-  { e: '🪄', t: 'SAHANIN CAMBAZI' },   // Dribling
-  { e: '🧱', t: 'DEMİR DUVAR'     },   // Savunma
-  { e: '⚡', t: 'SAHANIN MOTORU'  },   // Hız
-  { e: '🦍', t: 'FİZİK CANAVARI'  },   // Fizik
-  { e: '🤝', t: 'TAKIMİN KALBİ'  },   // Takım Oyunu
+  { e: '🎯', t: 'OYUNUN MİMARI'    },  // Pas
+  { e: '🚀', t: 'GOL MAKİNESİ'     },  // Şut
+  { e: '🪄', t: 'SAHANIN CAMBAZI'  },  // Dribling
+  { e: '🧱', t: 'DEMİR DUVAR'      },  // Savunma
+  { e: '⚡', t: 'SAHANIN MOTORU'   },  // Hız
+  { e: '🦍', t: 'FİZİK CANAVARI'   },  // Fizik
+  { e: '🤝', t: 'TAKIMIN KALBİ'   },  // Takım Oyunu
 ];
 
 function egoTitle(pd, rd) {
@@ -78,21 +78,113 @@ function egoTitle(pd, rd) {
     const sorted = [...rd.players].filter(p => p.genelOrt != null)
       .sort((a, b) => b.genelOrt - a.genelOrt);
     const rank = pd ? sorted.findIndex(p => p.name === pd.name) : -1;
-    if (rank === 0) return { e: '👑', t: 'SAHANIN KRALİ'     };
-    if (rank === 1) return { e: '🌟', t: 'SEZONUN YILDIZI'   };
-    if (rank === 2) return { e: '🏅', t: 'ELİT OYUNCU'       };
+    if (rank === 0) return { e: '👑', t: 'SAHANIN KRALİ'        };
+    if (rank === 1) return { e: '🌟', t: 'SEZONUN YILDIZI'      };
+    if (rank === 2) return { e: '🏅', t: 'ELİT OYUNCU'          };
+    if (rank === 3) return { e: '🔥', t: 'SEZONUN SÜRPRİZİ'    };
+    if (rank === 4) return { e: '💎', t: 'GİZLİ YETENEK'        };
   }
   if (!pd) return { e: '⭐', t: 'PİTCHRANK OYUNCUSU' };
 
+  // Stat bazlı — eğer bir kriter 8.5+ ise o kişiye özel unvan
   const avgs = CRITERIA.map(cr => criteriaAvg(pd, cr));
   const maxIdx = avgs.indexOf(Math.max(...avgs));
-  if (avgs[maxIdx] >= 8.0) return STAT_TITLES[maxIdx];
+  if (avgs[maxIdx] >= 8.5) return STAT_TITLES[maxIdx];
 
+  // Çift güçlü stat (iki kriter 7.5+)
+  const strong = avgs.filter(a => a >= 7.5).length;
+  if (strong >= 2) return { e: '💥', t: 'ÇIFT TEHLIKE'           };
+
+  // Katılım bağlılık
+  const att = pd.weeklyKriterler ? Object.keys(pd.weeklyKriterler).length : 0;
+  if (att >= 12) return { e: '🎖️', t: 'EFSANELER LIGINDEN'     };
+  if (att >= 8)  return { e: '🏃', t: 'SAHANIN DİNAMOSU'        };
+
+  // OVR bazlı
   const r = pd.genelOrt ? Math.round(pd.genelOrt * 10) : 0;
-  if (r >= 85) return { e: '🔥', t: 'ELİT PERFORMANS'       };
-  if (r >= 78) return { e: '💫', t: 'FORM OYUNCUSU'         };
-  if (r >= 70) return { e: '📈', t: 'YÜKSELİŞTEKİ YILDIZ'  };
-  return              { e: '💪', t: 'SAVAŞÇI RUHLU'          };
+  if (r >= 85) return { e: '🔥', t: 'ELİT PERFORMANS'           };
+  if (r >= 78) return { e: '💫', t: 'FORM OYUNCUSU'             };
+  if (r >= 72) return { e: '📈', t: 'YÜKSELİŞTEKİ YILDIZ'      };
+  if (r >= 65) return { e: '🐺', t: 'SAHADA KURT'               };
+  return              { e: '💪', t: 'SAVAŞÇI RUHLU'              };
+}
+
+// ── Takım İçi Stat Sıralaması ─────────────────────────────────────────────────
+
+function teamStatRanks(pd, rd) {
+  if (!pd || !rd || !Array.isArray(rd.players)) return CRITERIA.map(() => -1);
+  return CRITERIA.map(cr => {
+    const mine = criteriaAvg(pd, cr);
+    if (!mine) return -1;
+    return rd.players.filter(p => p.name !== pd.name && criteriaAvg(p, cr) > mine).length;
+  });
+}
+
+// ── Kişisel Rozetler ──────────────────────────────────────────────────────────
+
+const STAT_BEST_LABELS = [
+  { e: '🎯', t: 'PAS KRALI'          },
+  { e: '🚀', t: 'ŞUT MAKİNESİ'       },
+  { e: '🪄', t: 'DRİBLİNG DEHASI'    },
+  { e: '🧱', t: 'SAVUNMA DUVARI'     },
+  { e: '⚡', t: 'EN HIZLI OYUNCU'   },
+  { e: '🦍', t: 'FİZİK CANAVARI'    },
+  { e: '🤝', t: 'TAKIM RUHU'         },
+];
+
+function personalBadges(pd, rd, statRanks) {
+  const result = [];
+  if (!pd) return result;
+
+  // 1. Takımda #1 olduğu stat
+  const bestStatIdx = statRanks.indexOf(0);
+  if (bestStatIdx >= 0) result.push(STAT_BEST_LABELS[bestStatIdx]);
+
+  // 2. Katılım rozetleri
+  const myAtt = pd.weeklyKriterler ? Object.keys(pd.weeklyKriterler).length : 0;
+  if (rd && Array.isArray(rd.players)) {
+    const maxAtt = Math.max(...rd.players.map(p =>
+      p.weeklyKriterler ? Object.keys(p.weeklyKriterler).length : 0));
+    const totalWeeks = Array.isArray(rd.weeks) ? rd.weeks.length : 0;
+    if (myAtt > 0 && myAtt >= maxAtt && totalWeeks >= 4) {
+      result.push({ e: '💯', t: 'EN SADIK OYUNCU' });
+    } else if (totalWeeks >= 5 && myAtt === totalWeeks) {
+      result.push({ e: '🔥', t: 'TAM DEVAM' });
+    }
+  }
+
+  // 3. Form trendi (son 3 hafta ortalaması > genel ort * 1.06)
+  if (pd.weeklyGenels && Array.isArray(pd.weeklyGenels)) {
+    const all = pd.weeklyGenels.filter(v => v != null);
+    if (all.length >= 4) {
+      const overall = all.reduce((a, b) => a + b, 0) / all.length;
+      const last3   = all.slice(-3);
+      const recent  = last3.reduce((a, b) => a + b, 0) / last3.length;
+      if (recent >= overall * 1.06) {
+        result.push({ e: '📈', t: 'YÜKSELIŞ TRENDİ' });
+      } else {
+        const variance = all.reduce((s, v) => s + Math.pow(v - overall, 2), 0) / all.length;
+        if (Math.sqrt(variance) < 0.38 && all.length >= 5) {
+          result.push({ e: '🔒', t: 'İSTİKRAR ABİDESİ' });
+        }
+      }
+    }
+  }
+
+  // 4. Kişisel rekor son 3 haftada
+  if (!result.find(b => b.t === 'YÜKSELIŞ TRENDİ') && pd.weeklyGenels) {
+    const all = pd.weeklyGenels.filter(v => v != null);
+    if (all.length >= 3) {
+      const peak = Math.max(...all);
+      if (all.slice(-3).includes(peak)) result.push({ e: '⭐', t: 'KİŞİSEL REKOR' });
+    }
+  }
+
+  // 5. Deneyim rozeti (doldurmak için)
+  if (result.length < 2 && myAtt >= 10) result.push({ e: '🎖️', t: 'TECRÜBE ABİDESİ' });
+  else if (result.length < 2 && myAtt >= 6)  result.push({ e: '💪', t: 'DENEYİMLİ OYUNCU' });
+
+  return result.slice(0, 3);
 }
 
 // ── Ana Oluşturucu ────────────────────────────────────────────────────────────
@@ -111,12 +203,14 @@ async function generateCard(playerName, pd, pObj, rd) {
   const tc     = team.color;
   const { rv, gv, bv } = hexRgb(tc);
 
-  const wAvg   = pd && pObj ? posRating(pd, pObj) : null;
-  const rawOvr = wAvg !== null ? wAvg : (pd?.genelOrt ?? null);
-  const rating = rawOvr !== null ? Math.min(99, Math.round(rawOvr * 10)) : null;
-  const ct       = getCardType(rating);
-  const ctr      = hexRgb(ct.c1);
-  const fn       = (sz, wt) => `${wt} ${sz}px Inter,system-ui,sans-serif`;
+  const wAvg      = pd && pObj ? posRating(pd, pObj) : null;
+  const rawOvr    = wAvg !== null ? wAvg : (pd?.genelOrt ?? null);
+  const rating    = rawOvr !== null ? Math.min(99, Math.round(rawOvr * 10)) : null;
+  const ct        = getCardType(rating);
+  const ctr       = hexRgb(ct.c1);
+  const fn        = (sz, wt) => `${wt} ${sz}px Inter,system-ui,sans-serif`;
+  const statRanks = teamStatRanks(pd, rd);
+  const badges    = personalBadges(pd, rd, statRanks);
 
   // ──── ARKA PLAN ──────────────────────────────────────────────────────────────
   ctx.fillStyle = ct.bg;
@@ -347,6 +441,28 @@ async function generateCard(playerName, pd, pObj, rd) {
     ctx.fillText(posText.toUpperCase(), W / 2, NAME_Y + 22);
   }
 
+  // ──── KİŞİSEL ROZET ŞERİDİ ───────────────────────────────────────────────────
+  const yShift = badges.length > 0 ? 40 : 0;
+  if (badges.length) {
+    ctx.font = fn(9.5, 800);
+    const gap = 8, pH = 8, pV = 13;
+    const texts  = badges.map(b => `${b.e} ${b.t}`);
+    const widths = texts.map(t => ctx.measureText(t).width + pH * 2);
+    const totalW = widths.reduce((a, c) => a + c, 0) + gap * (badges.length - 1);
+    let bx = (W - totalW) / 2;
+    const BY = NAME_Y + 46;
+    badges.forEach((badge, i) => {
+      const bw = widths[i], bh = pV * 2;
+      rrect(ctx, bx, BY - pV, bw, bh, bh / 2);
+      ctx.fillStyle = `rgba(${ctr.rv},${ctr.gv},${ctr.bv},0.16)`; ctx.fill();
+      ctx.strokeStyle = ct.c1 + '55'; ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.fillStyle = ct.c1; ctx.textAlign = 'left';
+      ctx.fillText(texts[i], bx + pH, BY);
+      bx += bw + gap;
+    });
+    ctx.textAlign = 'center';
+  }
+
   // ──── AYIRICI ─────────────────────────────────────────────────────────────────
   const sep = (y) => {
     const sg = ctx.createLinearGradient(60, 0, W - 60, 0);
@@ -356,7 +472,7 @@ async function generateCard(playerName, pd, pObj, rd) {
     ctx.strokeStyle = sg; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W - 60, y); ctx.stroke();
   };
-  sep(490);
+  sep(490 + yShift);
 
   // ──── FIFA STİL STAT GRID (4+3) ───────────────────────────────────────────────
   const ABBR  = ['PAS', 'ŞUT', 'DRİB', 'SAV', 'HIZ', 'FİZ', 'TAK'];
@@ -370,25 +486,43 @@ async function generateCard(playerName, pd, pObj, rd) {
 
   const drawStatCell = (i, cx, topY, cellH) => {
     const v = vals[i];
-    // Büyük sayı
+    const isNo1 = statRanks[i] === 0 && v > 0;
+
+    // Takımda 1. olan stat için hafif arka plan
+    if (isNo1) {
+      rrect(ctx, cx - 30, topY + 6, 60, cellH - 12, 10);
+      ctx.fillStyle = `rgba(${ctr.rv},${ctr.gv},${ctr.bv},0.18)`; ctx.fill();
+      ctx.strokeStyle = ct.c1 + '50'; ctx.lineWidth = 0.8; ctx.stroke();
+    }
+
     ctx.textAlign = 'center';
+
+    // # 1 göstergesi
+    if (isNo1) {
+      ctx.font = fn(9, 900); ctx.fillStyle = ct.c1;
+      ctx.fillText('# 1', cx, topY + 14);
+    }
+
+    // Büyük sayı
     ctx.font = fn(44, 900);
     if (v > 0) {
       ctx.save();
-      if (v >= 88) { ctx.shadowColor = ct.c1; ctx.shadowBlur = 18; }
-      ctx.fillStyle = sColor(v);
+      ctx.shadowColor = ct.c1;
+      ctx.shadowBlur = isNo1 ? 28 : v >= 88 ? 18 : 0;
+      ctx.fillStyle = isNo1 ? ct.c1 : sColor(v);
       ctx.fillText(String(v), cx, topY + 50);
       ctx.restore();
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.18)';
       ctx.fillText('—', cx, topY + 50);
     }
+
     // Küçük etiket
     ctx.font = fn(10, 800);
-    ctx.fillStyle = v >= 88 ? ct.c1 : 'rgba(255,255,255,0.38)';
+    ctx.fillStyle = isNo1 ? ct.c1 : (v >= 88 ? ct.c1 : 'rgba(255,255,255,0.38)');
     ctx.fillText(ABBR[i], cx, topY + cellH - 8);
 
-    // Mini renkli nokta (yüksek stat vurgusu)
+    // Mini nokta (85+)
     if (v >= 85) {
       ctx.save();
       ctx.shadowColor = ct.c1; ctx.shadowBlur = 10; ctx.globalAlpha = 0.8;
@@ -399,7 +533,7 @@ async function generateCard(playerName, pd, pObj, rd) {
   };
 
   const CW4 = W / 4, CW3 = W / 3, CELL_H = 92;
-  const TOP_SY = 498, BOT_SY = TOP_SY + CELL_H + 14;
+  const TOP_SY = 498 + yShift, BOT_SY = TOP_SY + CELL_H + 14;
 
   // 4 üst stat
   for (let i = 0; i < 4; i++) {
