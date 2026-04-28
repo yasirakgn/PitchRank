@@ -70,6 +70,12 @@ export function dismissDraft() {
   if (banner) banner.style.display = 'none';
 }
 
+let _draftTimer = null;
+function saveDraftDebounced(rater, week, scores) {
+  if (_draftTimer) clearTimeout(_draftTimer);
+  _draftTimer = setTimeout(() => saveDraft(rater, week, scores), 400);
+}
+
 export function savePlayers() {
   lSet('hs_players', JSON.stringify(state.players));
 }
@@ -354,7 +360,7 @@ export function onSlider(el) {
     if (card) card.className = 'pcard done';
   }
   updateProgress();
-  saveDraft(state.currentRater, getWeekLabel(), state.currentScores);
+  saveDraftDebounced(state.currentRater, getWeekLabel(), state.currentScores);
 }
 
 export function updateProgress() {
