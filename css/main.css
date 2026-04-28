@@ -19,6 +19,8 @@
   .award-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .award-card { padding: 12px; }
   .award-icon { font-size: 26px; }
+  .bnav-item span:not(.bnav-icon) { font-size: 8px; }
+  .bnav-icon { width: 18px; height: 18px; }
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────────── */
@@ -665,12 +667,12 @@ input[type=range]::-webkit-slider-thumb:active { transform: scale(1.22); box-sha
   font-size: 13px; font-weight: 900;
   border: 2px solid transparent;
 }
-.form-bubble.good { background: #ecfdf5; color: #065f46; border-color: #10b98140; }
+.form-bubble.good { background: #ecfdf5; color: #065f46; border-color: var(--green)40; }
 .form-bubble.mid  { background: #fefce8; color: #713f12; border-color: #eab30840; }
 .form-bubble.low  { background: #fff1f2; color: #9f1239; border-color: #f4375040; }
 .form-week-lbl { font-size: 9px; font-weight: 700; color: var(--text3); text-align: center; }
 .form-arrow { font-size: 14px; font-weight: 900; line-height: 1; }
-.form-arrow.up   { color: #10b981; }
+.form-arrow.up   { color: var(--green); }
 .form-arrow.down { color: #ef4444; }
 .form-arrow.flat { color: var(--text3); }
 
@@ -697,7 +699,7 @@ input[type=range]::-webkit-slider-thumb:active { transform: scale(1.22); box-sha
 .criteria-lbl { font-size: 11px; font-weight: 800; color: var(--text3); width: 38px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.3px; }
 .criteria-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
 .criteria-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
-.criteria-fill.good { background: #10b981; }
+.criteria-fill.good { background: var(--green); }
 .criteria-fill.mid  { background: #eab308; }
 .criteria-fill.low  { background: #ef4444; }
 .criteria-val { font-size: 12px; font-weight: 800; color: var(--text2); width: 28px; text-align: right; flex-shrink: 0; }
@@ -706,12 +708,6 @@ input[type=range]::-webkit-slider-thumb:active { transform: scale(1.22); box-sha
 .profile-nodata { font-size: 13px; color: var(--text3); font-weight: 500; padding: 8px 0; }
 
 /* Dark mode — form balonları */
-body.dark .form-bubble.good { background: #052e16; color: #6ee7b7; }
-body.dark .form-bubble.mid  { background: #1c1400; color: #fde68a; }
-body.dark .form-bubble.low  { background: #1f0a0a; color: #fca5a5; }
-
-/* 7 nav item için kompakt mod */
-@media (max-width: 480px) {
-  .bnav-item span:not(.bnav-icon) { font-size: 8px; }
-  .bnav-icon svg { width: 18px; height: 18px; }
-}
+body.dark .form-bubble.good { background: #052e16; color: #6ee7b7; border-color: #6ee7b740; }
+body.dark .form-bubble.mid  { background: #1c1400; color: #fde68a; border-color: #fde68a40; }
+body.dark .form-bubble.low  { background: #1f0a0a; color: #fca5a5; border-color: #fca5a540; }
