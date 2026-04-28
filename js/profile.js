@@ -1,7 +1,6 @@
 import { CRITERIA, CDISP, TEAM_CONFIG } from './config.js';
 import { state } from './state.js';
 import { escHtml, posLabel, getPlayerPhoto, showToast } from './utils.js';
-import { CURRENT_TEAM } from './storage.js';
 
 // ── Yardımcı hesaplama fonksiyonları ─────────────────────────────────────────
 
@@ -72,8 +71,8 @@ const BADGE_DEFS = [
   { id: 'ates',     icon: '🔥', name: 'Ateş',          desc: '3 hafta üst üste ilk 3 sıra',  check: (p, rd)    => hasConsecutiveTop3(p, rd, 3) },
   { id: 'devamli',  icon: '📅', name: 'Devamlı',       desc: '5+ maça katılım',               check: (p)        => attendanceCount(p) >= 5 },
   { id: 'lider',    icon: '👑', name: 'Lider',          desc: 'Sezon genel sıralaması 1.',    check: (p, rd)    => isLeader(p, rd) },
-  { id: 'golcu',    icon: '⚽', name: 'Golcü',          desc: '5+ gol bu sezon',               check: (p, _, md) => getTotalGoals(p.name, md) >= 5 },
-  { id: 'asist',    icon: '🅰️', name: 'Asist Kralı',   desc: '5+ asist bu sezon',             check: (p, _, md) => getTotalAssists(p.name, md) >= 5 },
+  { id: 'golcu',    icon: '⚽', name: 'Golcü',          desc: '5+ gol bu sezon',               check: (p, _, md) => getTotalGoals(p?.name, md) >= 5 },
+  { id: 'asist',    icon: '🅰️', name: 'Asist Kralı',   desc: '5+ asist bu sezon',             check: (p, _, md) => getTotalAssists(p?.name, md) >= 5 },
 ];
 
 export function computeBadges(playerData, resultData, matchesData) {
@@ -94,7 +93,7 @@ function renderHeader(container, playerData, pObj) {
   const posText = pObj ? posLabel(pObj) : '';
   const genelOrt = playerData && playerData.genelOrt != null ? playerData.genelOrt : null;
   const rating = genelOrt !== null ? Math.min(99, Math.round(genelOrt * 10)) : '—';
-  const teamId = CURRENT_TEAM || 'haldunalagas';
+  const teamId = sessionStorage.getItem('pitchrank_selected_team') || 'haldunalagas';
   const teamColor = (TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas).color;
 
   container.innerHTML = `

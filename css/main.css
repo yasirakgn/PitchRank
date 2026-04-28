@@ -667,7 +667,7 @@ input[type=range]::-webkit-slider-thumb:active { transform: scale(1.22); box-sha
   font-size: 13px; font-weight: 900;
   border: 2px solid transparent;
 }
-.form-bubble.good { background: #ecfdf5; color: #065f46; border-color: var(--green)40; }
+.form-bubble.good { background: #ecfdf5; color: #065f46; border-color: #10b98140; }
 .form-bubble.mid  { background: #fefce8; color: #713f12; border-color: #eab30840; }
 .form-bubble.low  { background: #fff1f2; color: #9f1239; border-color: #f4375040; }
 .form-week-lbl { font-size: 9px; font-weight: 700; color: var(--text3); text-align: center; }
