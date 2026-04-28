@@ -639,11 +639,10 @@ async function generateCard(playerName, pd, pObj, rd) {
 
 // ── Paylaş ────────────────────────────────────────────────────────────────────
 
-// Bekleyen paylaşım — önizleme açıkken tutar
-let _pendingBlob    = null;
+// Bekleyen paylaşım — önizleme açıkken tutar (canvas referansı, blob URL yok)
+let _pendingCanvas  = null;
 let _pendingName    = null;
 let _pendingCaption = null;
-let _previewUrl     = null;
 
 export async function shareProfileCard() {
   const playerName = state.currentRater;
@@ -661,7 +660,7 @@ export async function shareProfileCard() {
   try { canvas = await generateCard(playerName, pd, pObj, rd); }
   catch (e) { showToast('Kart oluşturulamadı', true); console.error(e); return; }
 
-  // Paylaşım açıklaması — posRating ile kart üstündeki OVR ile aynı hesap
+  // Paylaşım açıklaması
   const _wAvg = pd && pObj ? posRating(pd, pObj) : null;
   const ovr   = _wAvg !== null
     ? Math.min(99, Math.round(_wAvg * 10))
@@ -684,43 +683,41 @@ export async function shareProfileCard() {
     `👇 Kendi kartına bak: ${appUrl}`,
   ].filter(l => l !== undefined).join('\n');
 
-  canvas.toBlob((blob) => {
-    _pendingBlob    = blob;
-    _pendingName    = playerName;
-    _pendingCaption = caption;
+  _pendingCanvas  = canvas;
+  _pendingName    = playerName;
+  _pendingCaption = caption;
 
-    if (_previewUrl) URL.revokeObjectURL(_previewUrl);
-    _previewUrl = URL.createObjectURL(blob);
-
-    const img = document.getElementById('shareCardPreviewImg');
-    if (img) img.src = _previewUrl;
-    document.getElementById('shareCardPreviewBg')?.classList.add('open');
-  }, 'image/png');
+  // data: URL kullan — CSP'de blob: yasak ama data: serbest
+  const img = document.getElementById('shareCardPreviewImg');
+  if (img) img.src = canvas.toDataURL('image/png');
+  document.getElementById('shareCardPreviewBg')?.classList.add('open');
 }
 
 export async function doShareCard() {
-  if (!_pendingBlob || !_pendingName) return;
-  const blob    = _pendingBlob;
+  if (!_pendingCanvas || !_pendingName) return;
+  const canvas  = _pendingCanvas;
   const name    = _pendingName;
   const caption = _pendingCaption;
   closeSharePreview();
-  const file = new File([blob], `pitchrank-${name}.png`, { type: 'image/png' });
-  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: `${name} — PitchRank`, text: caption });
-    } catch (e) { if (e.name !== 'AbortError') download(blob, name); }
-  } else {
-    download(blob, name);
-    showToast('Kart indirildi — Story\'ye ekleyebilirsin!');
-  }
+
+  canvas.toBlob(async (blob) => {
+    const file = new File([blob], `pitchrank-${name}.png`, { type: 'image/png' });
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: `${name} — PitchRank`, text: caption });
+      } catch (e) { if (e.name !== 'AbortError') download(blob, name); }
+    } else {
+      download(blob, name);
+      showToast('Kart indirildi — Story\'ye ekleyebilirsin!');
+    }
+  }, 'image/png');
 }
 
 export function closeSharePreview() {
   document.getElementById('shareCardPreviewBg')?.classList.remove('open');
-  if (_previewUrl) { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
   const img = document.getElementById('shareCardPreviewImg');
   if (img) img.src = '';
-  _pendingBlob = null; _pendingName = null; _pendingCaption = null;
+  _pendingCanvas = null; _pendingName = null; _pendingCaption = null;
 }
 
 function download(blob, name) {
