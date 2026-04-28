@@ -12,18 +12,17 @@ function hexRgb(hex) {
   };
 }
 
-function criteriaAvg(playerData, criterion) {
-  if (!playerData || !playerData.weeklyKriterler) return 0;
-  const vals = [];
-  Object.values(playerData.weeklyKriterler).forEach(wk => {
-    if (wk && wk[criterion] != null) vals.push(+wk[criterion]);
-  });
+function criteriaAvg(pd, cr) {
+  if (!pd || !pd.weeklyKriterler) return 0;
+  const vals = Object.values(pd.weeklyKriterler)
+    .map(wk => (wk && wk[cr] != null ? +wk[cr] : null))
+    .filter(v => v !== null);
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
 }
 
 function loadImg(src) {
   return new Promise(resolve => {
-    if (!src) { resolve(null); return; }
+    if (!src) return resolve(null);
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
@@ -33,9 +32,8 @@ function loadImg(src) {
 
 function rrect(ctx, x, y, w, h, r) {
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y,   x + w, y + r, r);
   ctx.lineTo(x + w, y + h - r);
   ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
   ctx.lineTo(x + r, y + h);
@@ -45,126 +43,224 @@ function rrect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function hSep(ctx, y, W, rv, gv, bv) {
-  const gr = ctx.createLinearGradient(60, 0, W - 60, 0);
-  gr.addColorStop(0,   'rgba(255,255,255,0)');
-  gr.addColorStop(0.5, `rgba(${rv},${gv},${bv},0.45)`);
-  gr.addColorStop(1,   'rgba(255,255,255,0)');
-  ctx.strokeStyle = gr;
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W - 60, y); ctx.stroke();
+// ── Kart Tipi ─────────────────────────────────────────────────────────────────
+
+const CARD_TYPES = {
+  efsane: { label: 'EFSANE',  c1: '#f59e0b', c2: '#9333ea', c3: '#ef4444', bg: '#0d0814' },
+  altin:  { label: 'ALTIN',   c1: '#fbbf24', c2: '#d97706', c3: '#fde68a', bg: '#120e00' },
+  gumus:  { label: 'GÜMÜŞ',   c1: '#e2e8f0', c2: '#94a3b8', c3: '#cbd5e1', bg: '#0d0f14' },
+  bronz:  { label: 'BRONZ',   c1: '#cd7c2f', c2: '#9a5d20', c3: '#e8924a', bg: '#100b06' },
+};
+
+function getCardType(rating) {
+  if (!rating) return CARD_TYPES.bronz;
+  if (rating >= 90) return CARD_TYPES.efsane;
+  if (rating >= 85) return CARD_TYPES.altin;
+  if (rating >= 75) return CARD_TYPES.gumus;
+  return CARD_TYPES.bronz;
 }
 
-// ── Kart Üretici ──────────────────────────────────────────────────────────────
+// ── Ego Başlığı ───────────────────────────────────────────────────────────────
 
-async function generateCard(playerName, playerData, pObj, resultData) {
-  const DPR = 2;
-  const W = 540, H = 960;
+const STAT_TITLES = [
+  { e: '🎯', t: 'OYUNUN MİMARİ'   },   // Pas
+  { e: '🚀', t: 'GOL MAKİNESİ'    },   // Şut
+  { e: '🪄', t: 'SAHANIN CAMBAZI' },   // Dribling
+  { e: '🧱', t: 'DEMİR DUVAR'     },   // Savunma
+  { e: '⚡', t: 'SAHANIN MOTORU'  },   // Hız
+  { e: '🦍', t: 'FİZİK CANAVARI'  },   // Fizik
+  { e: '🤝', t: 'TAKIMİN KALBİ'  },   // Takım Oyunu
+];
+
+function egoTitle(pd, rd) {
+  if (rd && Array.isArray(rd.players)) {
+    const sorted = [...rd.players].filter(p => p.genelOrt != null)
+      .sort((a, b) => b.genelOrt - a.genelOrt);
+    const rank = pd ? sorted.findIndex(p => p.name === pd.name) : -1;
+    if (rank === 0) return { e: '👑', t: 'SAHANIN KRALİ'     };
+    if (rank === 1) return { e: '🌟', t: 'SEZONUN YILDIZI'   };
+    if (rank === 2) return { e: '🏅', t: 'ELİT OYUNCU'       };
+  }
+  if (!pd) return { e: '⭐', t: 'PİTCHRANK OYUNCUSU' };
+
+  const avgs = CRITERIA.map(cr => criteriaAvg(pd, cr));
+  const maxIdx = avgs.indexOf(Math.max(...avgs));
+  if (avgs[maxIdx] >= 8.0) return STAT_TITLES[maxIdx];
+
+  const r = pd.genelOrt ? Math.round(pd.genelOrt * 10) : 0;
+  if (r >= 85) return { e: '🔥', t: 'ELİT PERFORMANS'       };
+  if (r >= 78) return { e: '💫', t: 'FORM OYUNCUSU'         };
+  if (r >= 70) return { e: '📈', t: 'YÜKSELİŞTEKİ YILDIZ'  };
+  return              { e: '💪', t: 'SAVAŞÇI RUHLU'          };
+}
+
+// ── Ana Oluşturucu ────────────────────────────────────────────────────────────
+
+async function generateCard(playerName, pd, pObj, rd) {
+  const DPR = 2, W = 540, H = 960;
   const canvas = document.createElement('canvas');
-  canvas.width  = W * DPR;
-  canvas.height = H * DPR;
+  canvas.width = W * DPR; canvas.height = H * DPR;
   const ctx = canvas.getContext('2d');
   ctx.scale(DPR, DPR);
 
   const teamId = sessionStorage.getItem('pitchrank_selected_team') || 'haldunalagas';
-  const team = TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas;
-  const tc = team.color;
+  const team   = TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas;
+  const tc     = team.color;
   const { rv, gv, bv } = hexRgb(tc);
-  const fn = (sz, wt) => `${wt} ${sz}px system-ui,-apple-system,sans-serif`;
 
-  // ── ARKA PLAN ─────────────────────────────────────────────────────────────
-  ctx.fillStyle = '#07080e';
+  const genelOrt = pd?.genelOrt ?? null;
+  const rating   = genelOrt !== null ? Math.min(99, Math.round(genelOrt * 10)) : null;
+  const ct       = getCardType(rating);
+  const ctr      = hexRgb(ct.c1);
+  const fn       = (sz, wt) => `${wt} ${sz}px system-ui,-apple-system,sans-serif`;
+
+  // ──── ARKA PLAN ──────────────────────────────────────────────────────────────
+  ctx.fillStyle = ct.bg;
   ctx.fillRect(0, 0, W, H);
 
-  // Çok ince grid dokusu
-  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  // İnce grid doku
+  ctx.strokeStyle = 'rgba(255,255,255,0.022)';
   ctx.lineWidth = 1;
-  for (let x = 0; x <= W; x += 40) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-  }
-  for (let y = 0; y <= H; y += 40) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-  }
+  for (let x = 0; x <= W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0);  ctx.lineTo(x, H);  ctx.stroke(); }
+  for (let y = 0; y <= H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y);  ctx.lineTo(W, y);  ctx.stroke(); }
 
-  // Sağ üst köşe dekoratif çizgi
+  // Köşe diamond dekor (çok soluk)
   ctx.save();
-  ctx.globalAlpha = 0.07;
-  ctx.strokeStyle = tc;
-  ctx.lineWidth = 110;
-  ctx.beginPath(); ctx.moveTo(W + 20, -20); ctx.lineTo(W - 190, 190); ctx.stroke();
+  ctx.globalAlpha = 0.04;
+  ctx.strokeStyle = ct.c1;
+  ctx.lineWidth = 1.5;
+  const diam = (cx, cy, s) => {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - s); ctx.lineTo(cx + s, cy);
+    ctx.lineTo(cx, cy + s); ctx.lineTo(cx - s, cy);
+    ctx.closePath(); ctx.stroke();
+  };
+  diam(28, 80, 22); diam(W - 28, 80, 22);
+  diam(28, H - 80, 18); diam(W - 28, H - 80, 18);
   ctx.restore();
 
-  // Fotoğraf arkası büyük renk glow
-  const grd1 = ctx.createRadialGradient(W / 2, 200, 0, W / 2, 200, 280);
-  grd1.addColorStop(0,   `rgba(${rv},${gv},${bv},0.42)`);
-  grd1.addColorStop(0.5, `rgba(${rv},${gv},${bv},0.14)`);
-  grd1.addColorStop(1,   'rgba(0,0,0,0)');
-  ctx.fillStyle = grd1;
-  ctx.fillRect(0, 0, W, 480);
+  // Star particle dağılımı (golden angle)
+  for (let i = 0; i < 32; i++) {
+    const a = i * 137.508 * Math.PI / 180;
+    const d = Math.sqrt(i / 32) * 520;
+    const px = W / 2 + Math.cos(a) * d, py = H / 2 + Math.sin(a) * d;
+    ctx.globalAlpha = 0.08 + (i % 4) * 0.04;
+    ctx.beginPath();
+    ctx.arc(px, py, i % 6 === 0 ? 2.2 : i % 4 === 0 ? 1.5 : 0.9, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Takım rengi ana glow (fotoğraf arkası)
+  const g1 = ctx.createRadialGradient(W / 2, 215, 0, W / 2, 215, 310);
+  g1.addColorStop(0,    `rgba(${rv},${gv},${bv},0.52)`);
+  g1.addColorStop(0.45, `rgba(${rv},${gv},${bv},0.18)`);
+  g1.addColorStop(1,    'rgba(0,0,0,0)');
+  ctx.fillStyle = g1; ctx.fillRect(0, 0, W, 520);
+
+  // Kart tipi renk glow
+  const g2 = ctx.createRadialGradient(W / 2, 215, 0, W / 2, 215, 240);
+  g2.addColorStop(0,   `rgba(${ctr.rv},${ctr.gv},${ctr.bv},0.32)`);
+  g2.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g2; ctx.fillRect(0, 0, W, 520);
 
   // Alt glow
-  const grd2 = ctx.createRadialGradient(W / 2, H, 0, W / 2, H, 240);
-  grd2.addColorStop(0,   `rgba(${rv},${gv},${bv},0.18)`);
-  grd2.addColorStop(1,   'rgba(0,0,0,0)');
-  ctx.fillStyle = grd2;
-  ctx.fillRect(0, H - 240, W, 240);
+  const g3 = ctx.createRadialGradient(W / 2, H, 0, W / 2, H, 260);
+  g3.addColorStop(0, `rgba(${rv},${gv},${bv},0.20)`);
+  g3.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g3; ctx.fillRect(0, H - 260, W, 260);
 
-  // Üst kenar accent bar
-  ctx.fillStyle = tc;
-  ctx.fillRect(0, 0, W, 4);
+  // Bokeh glow topları
+  [
+    [0.08, 0.12, 85], [0.90, 0.09, 70], [0.15, 0.72, 78],
+    [0.87, 0.65, 72], [0.06, 0.42, 52], [0.92, 0.38, 48],
+  ].forEach(([bx, by, br]) => {
+    const bg = ctx.createRadialGradient(bx * W, by * H, 0, bx * W, by * H, br);
+    bg.addColorStop(0, `rgba(${rv},${gv},${bv},0.10)`);
+    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(bx * W - br, by * H - br, br * 2, br * 2);
+  });
 
-  // Dış çerçeve
-  ctx.strokeStyle = `rgba(${rv},${gv},${bv},0.28)`;
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(1, 1, W - 2, H - 2);
+  // Parlak bokeh noktalar
+  [
+    [0.10, 0.16], [0.87, 0.21], [0.05, 0.52], [0.93, 0.46],
+    [0.22, 0.87], [0.78, 0.83], [0.44, 0.06], [0.67, 0.92],
+  ].forEach(([bx, by]) => {
+    ctx.save();
+    ctx.shadowColor = ct.c1; ctx.shadowBlur = 16; ctx.globalAlpha = 0.55;
+    ctx.beginPath(); ctx.arc(bx * W, by * H, 2.0, 0, Math.PI * 2);
+    ctx.fillStyle = ct.c1; ctx.fill();
+    ctx.restore();
+  });
 
-  // ── ÜST ÇUBUK ────────────────────────────────────────────────────────────
-  ctx.textAlign = 'left';
-  ctx.fillStyle = tc;
-  ctx.font = fn(15, 900);
-  ctx.fillText('⚡', 28, 52);
+  // Diagonal holografik şerit
+  ctx.save();
+  ctx.globalAlpha = 0.045;
+  ctx.translate(W * 0.80, 0); ctx.rotate(-0.30);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-28, -100, 52, H + 200);
+  ctx.fillRect(38,  -100, 26, H + 200);
+  ctx.restore();
 
-  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  // ──── ÜST METALIK BAR + ETIKETLER ────────────────────────────────────────────
+  const topGrd = ctx.createLinearGradient(0, 0, W, 0);
+  topGrd.addColorStop(0,    ct.c1 + '00');
+  topGrd.addColorStop(0.25, ct.c1);
+  topGrd.addColorStop(0.5,  ct.c3);
+  topGrd.addColorStop(0.75, ct.c1);
+  topGrd.addColorStop(1,    ct.c1 + '00');
+  ctx.fillStyle = topGrd; ctx.fillRect(0, 0, W, 5);
+  ctx.fillStyle = topGrd; ctx.fillRect(0, H - 5, W, 5);
+
+  ctx.textAlign = 'center';
   ctx.font = fn(12, 900);
-  ctx.fillText('PITCHRANK', 50, 52);
+  ctx.fillStyle = ct.c1;
+  ctx.fillText(ct.label, W / 2, 26);
+
+  ctx.textAlign = 'left';
+  ctx.font = fn(10, 700);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillText('⚡ PITCHRANK', 24, 26);
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.font = fn(12, 700);
-  ctx.fillText(`${team.emoji} ${team.name.toUpperCase()}`, W - 28, 52);
+  ctx.font = fn(10, 700);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillText(`${team.emoji} ${team.name.toUpperCase()}`, W - 24, 26);
 
-  const topSep = ctx.createLinearGradient(28, 0, W - 28, 0);
-  topSep.addColorStop(0,   'rgba(255,255,255,0)');
-  topSep.addColorStop(0.5, `rgba(${rv},${gv},${bv},0.38)`);
-  topSep.addColorStop(1,   'rgba(255,255,255,0)');
-  ctx.strokeStyle = topSep;
-  ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(28, 66); ctx.lineTo(W - 28, 66); ctx.stroke();
+  const topSep = ctx.createLinearGradient(24, 0, W - 24, 0);
+  topSep.addColorStop(0, 'rgba(255,255,255,0)');
+  topSep.addColorStop(0.5, ct.c1 + '50');
+  topSep.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.strokeStyle = topSep; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(24, 34); ctx.lineTo(W - 24, 34); ctx.stroke();
 
-  // ── FOTOĞRAF ─────────────────────────────────────────────────────────────
-  const photoSrc = getPlayerPhoto(playerName);
+  // ──── FOTOĞRAF ────────────────────────────────────────────────────────────────
   const [photoImg, fallImg] = await Promise.all([
-    loadImg(photoSrc),
+    loadImg(getPlayerPhoto(playerName)),
     loadImg('assets/images/icon-192.png'),
   ]);
   const img = photoImg || fallImg;
+  const CX = W / 2, CY = 218, CR = 108;
 
-  const CX = W / 2, CY = 204, CR = 92;
+  // Çok katmanlı glow halkaları
+  [[CR + 22, 0.10], [CR + 12, 0.22], [CR + 5, 0.48]].forEach(([r, a]) => {
+    ctx.save();
+    ctx.shadowColor = ct.c1; ctx.shadowBlur = 28;
+    ctx.globalAlpha = a;
+    ctx.beginPath(); ctx.arc(CX, CY, r, 0, Math.PI * 2);
+    ctx.strokeStyle = ct.c1; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.restore();
+  });
 
-  // Glow halkası
-  ctx.save();
-  ctx.shadowColor = tc;
-  ctx.shadowBlur = 40;
-  ctx.beginPath(); ctx.arc(CX, CY, CR + 4, 0, Math.PI * 2);
-  ctx.strokeStyle = tc;
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.beginPath(); ctx.arc(CX, CY, CR + 1.5, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
+  // Metalik halka gradient
+  const ringGrd = ctx.createLinearGradient(CX - CR, CY - CR, CX + CR, CY + CR);
+  ringGrd.addColorStop(0,   ct.c1);
+  ringGrd.addColorStop(0.5, ct.c3);
+  ringGrd.addColorStop(1,   ct.c2);
+  ctx.beginPath(); ctx.arc(CX, CY, CR + 3, 0, Math.PI * 2);
+  ctx.strokeStyle = ringGrd; ctx.lineWidth = 5; ctx.stroke();
 
   // Fotoğraf clip
   ctx.save();
@@ -175,193 +271,265 @@ async function generateCard(playerName, playerData, pObj, resultData) {
     if (ar > 1) dw = dh * ar; else dh = dw / ar;
     ctx.drawImage(img, CX - dw / 2, CY - dh / 2, dw, dh);
   } else {
-    ctx.fillStyle = `rgba(${rv},${gv},${bv},0.35)`;
+    ctx.fillStyle = `rgba(${rv},${gv},${bv},0.4)`;
     ctx.fillRect(CX - CR, CY - CR, CR * 2, CR * 2);
   }
   ctx.restore();
 
-  // ── GENEL PUAN ────────────────────────────────────────────────────────────
-  const genelOrt = playerData?.genelOrt ?? null;
-  const rating = genelOrt !== null ? Math.min(99, Math.round(genelOrt * 10)) : null;
-
+  // ──── DEVASA OVR SAYISI ────────────────────────────────────────────────────────
+  ctx.textAlign = 'center';
   if (rating !== null) {
-    ctx.textAlign = 'center';
     // Glow katmanı
     ctx.save();
-    ctx.shadowColor = tc;
-    ctx.shadowBlur = 44;
-    ctx.fillStyle = tc;
-    ctx.font = fn(118, 900);
-    ctx.fillText(String(rating), W / 2, 362);
+    ctx.shadowColor = ct.c1; ctx.shadowBlur = 60;
+    ctx.fillStyle = ct.c1; ctx.font = fn(112, 900);
+    ctx.fillText(String(rating), W / 2, 374);
     ctx.restore();
-    // Net üst katman
-    ctx.globalAlpha = 0.92;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = fn(118, 900);
-    ctx.fillText(String(rating), W / 2, 362);
+    // Beyaz üst katman
+    ctx.globalAlpha = 0.96;
+    ctx.fillStyle = '#ffffff'; ctx.font = fn(112, 900);
+    ctx.fillText(String(rating), W / 2, 374);
     ctx.globalAlpha = 1;
-
-    ctx.fillStyle = `rgba(${rv},${gv},${bv},0.7)`;
-    ctx.font = fn(11, 800);
-    ctx.fillText('GENEL PUAN', W / 2, 382);
+    ctx.fillStyle = ct.c1; ctx.font = fn(11, 800);
+    ctx.fillText('OVR', W / 2, 393);
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = fn(112, 900);
+    ctx.fillText('—', W / 2, 374);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.font = fn(11, 800);
+    ctx.fillText('HENÜZ PUAN YOK', W / 2, 393);
   }
 
-  // ── İSİM ─────────────────────────────────────────────────────────────────
+  // ──── EGO BAŞLIĞI ─────────────────────────────────────────────────────────────
+  const ego = egoTitle(pd, rd);
+  const EGO_Y = 422;
+
+  ctx.font = fn(13, 900);
+  const egoFull = `${ego.e}  ${ego.t}`;
+  const egoW = ctx.measureText(egoFull).width;
+  const lineLen = (W - egoW - 100) / 2;
+
+  const lGrd = ctx.createLinearGradient(40, 0, 40 + lineLen, 0);
+  lGrd.addColorStop(0, 'rgba(255,255,255,0)'); lGrd.addColorStop(1, ct.c1 + 'cc');
+  ctx.strokeStyle = lGrd; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(40, EGO_Y - 5); ctx.lineTo(40 + lineLen, EGO_Y - 5); ctx.stroke();
+
+  const rGrd = ctx.createLinearGradient(W - 40 - lineLen, 0, W - 40, 0);
+  rGrd.addColorStop(0, ct.c1 + 'cc'); rGrd.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.strokeStyle = rGrd;
+  ctx.beginPath(); ctx.moveTo(W - 40 - lineLen, EGO_Y - 5); ctx.lineTo(W - 40, EGO_Y - 5); ctx.stroke();
+
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#ffffff';
-  let nfs = 38;
+  ctx.fillStyle = ct.c1; ctx.font = fn(13, 900);
+  ctx.fillText(egoFull, W / 2, EGO_Y);
+
+  // ──── İSİM + POZİSYON ────────────────────────────────────────────────────────
+  const NAME_Y = 458;
+  let nfs = 42;
   ctx.font = fn(nfs, 900);
-  while (ctx.measureText(playerName).width > W - 80 && nfs > 22) {
-    nfs -= 2;
-    ctx.font = fn(nfs, 900);
+  while (ctx.measureText(playerName.toUpperCase()).width > W - 56 && nfs > 24) {
+    nfs -= 2; ctx.font = fn(nfs, 900);
   }
-  ctx.fillText(playerName, W / 2, 426);
+  // Glow
+  ctx.save();
+  ctx.shadowColor = `rgba(${rv},${gv},${bv},0.8)`; ctx.shadowBlur = 18;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(playerName.toUpperCase(), W / 2, NAME_Y);
+  ctx.restore();
 
-  // ── POZİSYON + HAFTA PILL ────────────────────────────────────────────────
-  const posArr  = pObj ? normPos(pObj) : [];
-  const posText = posArr.map(k => POS[k] || k).join(' / ');
-  const weekArr = resultData?.weeks;
-  const weekLbl = Array.isArray(weekArr) && weekArr.length
-    ? weekArr[weekArr.length - 1].replace(/\d{4}-/, '')
-    : '';
-  const pills = [posText, weekLbl].filter(Boolean);
-
-  if (pills.length) {
-    ctx.font = fn(11, 700);
-    const pillH = 26, gap = 10;
-    const pws = pills.map(t => ctx.measureText(t.toUpperCase()).width + 28);
-    const totalW = pws.reduce((s, w) => s + w, 0) + gap * (pills.length - 1);
-    let px = W / 2 - totalW / 2;
-    pills.forEach((txt, i) => {
-      const pw = pws[i];
-      rrect(ctx, px, 440, pw, pillH, 13);
-      ctx.fillStyle = i === 0 ? `rgba(${rv},${gv},${bv},0.22)` : 'rgba(255,255,255,0.07)';
-      ctx.fill();
-      ctx.strokeStyle = i === 0 ? `rgba(${rv},${gv},${bv},0.55)` : 'rgba(255,255,255,0.12)';
-      ctx.lineWidth = 1; ctx.stroke();
-      ctx.fillStyle   = i === 0 ? tc : 'rgba(255,255,255,0.6)';
-      ctx.textAlign   = 'center';
-      ctx.font        = fn(11, 700);
-      ctx.fillText(txt.toUpperCase(), px + pw / 2, 457);
-      px += pw + gap;
-    });
+  const posText = pObj ? normPos(pObj).map(k => POS[k] || k).join(' / ') : '';
+  if (posText) {
+    ctx.fillStyle = `rgba(${rv},${gv},${bv},0.9)`;
+    ctx.font = fn(12, 700);
+    ctx.fillText(posText.toUpperCase(), W / 2, NAME_Y + 22);
   }
 
-  // ── KRİTER BARLARI ───────────────────────────────────────────────────────
-  hSep(ctx, 484, W, rv, gv, bv);
+  // ──── AYIRICI ─────────────────────────────────────────────────────────────────
+  const sep = (y) => {
+    const sg = ctx.createLinearGradient(60, 0, W - 60, 0);
+    sg.addColorStop(0, 'rgba(255,255,255,0)');
+    sg.addColorStop(0.5, ct.c1 + '70');
+    sg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.strokeStyle = sg; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W - 60, y); ctx.stroke();
+  };
+  sep(490);
 
-  const BX = 44, BW = W - 88, RH = 46, SY = 500;
-  const CLBLS = ['Pas', 'Şut', 'Dribling', 'Savunma', 'Hız/Kond.', 'Fizik', 'Takım Oyunu'];
+  // ──── FIFA STİL STAT GRID (4+3) ───────────────────────────────────────────────
+  const ABBR  = ['PAS', 'ŞUT', 'DRİB', 'SAV', 'HIZ', 'FİZ', 'TAK'];
+  const avgs  = CRITERIA.map(cr => criteriaAvg(pd, cr));
+  const vals  = avgs.map(a => a > 0 ? Math.min(99, Math.round(a * 9.9)) : 0);
 
-  CRITERIA.forEach((cr, i) => {
-    const avg  = criteriaAvg(playerData, cr);
-    const pct  = avg > 0 ? Math.min(avg / 10, 1) : 0;
-    const y    = SY + i * RH;
+  const sColor = (v) =>
+    v >= 88 ? ct.c1 :
+    v >= 78 ? '#f3f4f6' :
+    v >= 65 ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.3)';
 
-    ctx.textAlign = 'left';
-    ctx.font      = fn(13, 600);
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.fillText(CLBLS[i], BX, y + 16);
+  const drawStatCell = (i, cx, topY, cellH) => {
+    const v = vals[i];
+    // Büyük sayı
+    ctx.textAlign = 'center';
+    ctx.font = fn(44, 900);
+    if (v > 0) {
+      ctx.save();
+      if (v >= 88) { ctx.shadowColor = ct.c1; ctx.shadowBlur = 18; }
+      ctx.fillStyle = sColor(v);
+      ctx.fillText(String(v), cx, topY + 50);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillText('—', cx, topY + 50);
+    }
+    // Küçük etiket
+    ctx.font = fn(10, 800);
+    ctx.fillStyle = v >= 88 ? ct.c1 : 'rgba(255,255,255,0.38)';
+    ctx.fillText(ABBR[i], cx, topY + cellH - 8);
 
-    ctx.textAlign = 'right';
-    ctx.font      = fn(15, 900);
-    ctx.fillStyle = avg >= 8 ? tc : avg >= 6 ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.35)';
-    ctx.fillText(avg > 0 ? avg.toFixed(1) : '—', BX + BW, y + 16);
+    // Mini renkli nokta (yüksek stat vurgusu)
+    if (v >= 85) {
+      ctx.save();
+      ctx.shadowColor = ct.c1; ctx.shadowBlur = 10; ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.arc(cx, topY + cellH - 20, 3, 0, Math.PI * 2);
+      ctx.fillStyle = ct.c1; ctx.fill();
+      ctx.restore();
+    }
+  };
 
-    rrect(ctx, BX, y + 22, BW, 5, 3);
-    ctx.fillStyle = 'rgba(255,255,255,0.07)';
-    ctx.fill();
+  const CW4 = W / 4, CW3 = W / 3, CELL_H = 92;
+  const TOP_SY = 498, BOT_SY = TOP_SY + CELL_H + 14;
 
-    if (pct > 0) {
-      rrect(ctx, BX, y + 22, BW * pct, 5, 3);
-      const bg = ctx.createLinearGradient(BX, 0, BX + BW * pct, 0);
-      bg.addColorStop(0, `rgba(${rv},${gv},${bv},0.45)`);
-      bg.addColorStop(1, tc);
-      ctx.fillStyle = bg;
-      ctx.fill();
+  // 4 üst stat
+  for (let i = 0; i < 4; i++) {
+    drawStatCell(i, CW4 * i + CW4 / 2, TOP_SY, CELL_H);
+    if (i < 3) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(CW4 * (i + 1), TOP_SY + 10);
+      ctx.lineTo(CW4 * (i + 1), TOP_SY + CELL_H - 10);
+      ctx.stroke();
+    }
+  }
+
+  sep(BOT_SY - 6);
+
+  // 3 alt stat
+  for (let i = 0; i < 3; i++) {
+    drawStatCell(4 + i, CW3 * i + CW3 / 2, BOT_SY, CELL_H);
+    if (i < 2) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(CW3 * (i + 1), BOT_SY + 10);
+      ctx.lineTo(CW3 * (i + 1), BOT_SY + CELL_H - 10);
+      ctx.stroke();
+    }
+  }
+
+  const AFTER_STATS = BOT_SY + CELL_H + 12;
+  sep(AFTER_STATS);
+
+  // ──── SIRALAMA ROZETI ──────────────────────────────────────────────────────────
+  const RANK_Y = AFTER_STATS + 18;
+
+  if (rd && Array.isArray(rd.players) && pd) {
+    const sorted = [...rd.players].filter(p => p.genelOrt != null)
+      .sort((a, b) => b.genelOrt - a.genelOrt);
+    const rank = sorted.findIndex(p => p.name === pd.name);
+
+    ctx.textAlign = 'center';
+    if (rank === 0) {
+      ctx.save(); ctx.shadowColor = ct.c1; ctx.shadowBlur = 24;
+      ctx.font = fn(17, 900); ctx.fillStyle = ct.c1;
+      ctx.fillText('🏆  SEZONUN LİDERİ', W / 2, RANK_Y + 28);
+      ctx.restore();
+    } else if (rank > 0) {
+      const lbl = `# ${rank + 1}  SIRALAMA`;
+      ctx.font = fn(14, 800);
+      const bw = ctx.measureText(lbl).width + 36;
+      rrect(ctx, W / 2 - bw / 2, RANK_Y + 10, bw, 30, 15);
+      ctx.fillStyle = `rgba(${ctr.rv},${ctr.gv},${ctr.bv},0.18)`; ctx.fill();
+      ctx.strokeStyle = ct.c1 + '80'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = ct.c1; ctx.fillText(lbl, W / 2, RANK_Y + 30);
+    }
+  }
+
+  // ──── SEZON ÖZET ÇUBUGU ────────────────────────────────────────────────────────
+  const SUM_Y = AFTER_STATS + 74;
+  const attendance = pd && pd.weeklyKriterler
+    ? Object.keys(pd.weeklyKriterler).length : 0;
+  const bestScore = pd && Array.isArray(pd.weeklyGenels)
+    ? Math.max(...pd.weeklyGenels.filter(v => v != null).map(v => Math.round(v * 10)))
+    : null;
+
+  const summaries = [
+    { lbl: 'KATILIM', val: attendance ? `${attendance} MAÇH` : '—' },
+    { lbl: 'EN YÜKSEK', val: bestScore ? String(bestScore) : '—' },
+    { lbl: 'GENEL ORT', val: rating ? String(rating) : '—' },
+  ];
+
+  const SW = W / 3;
+  summaries.forEach(({ lbl, val }, i) => {
+    const cx = SW * i + SW / 2;
+    ctx.textAlign = 'center';
+    ctx.font = fn(22, 900);
+    ctx.fillStyle = ct.c1;
+    ctx.fillText(val, cx, SUM_Y + 28);
+    ctx.font = fn(9, 700);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillText(lbl, cx, SUM_Y + 44);
+    if (i < 2) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(SW * (i + 1), SUM_Y + 4); ctx.lineTo(SW * (i + 1), SUM_Y + 48);
+      ctx.stroke();
     }
   });
 
-  // ── SIRALAMA ─────────────────────────────────────────────────────────────
-  const FY = SY + CRITERIA.length * RH + 16;
-  hSep(ctx, FY, W, rv, gv, bv);
+  sep(SUM_Y + 58);
 
-  if (resultData && Array.isArray(resultData.players) && playerData) {
-    const sorted = [...resultData.players]
-      .filter(p => p.genelOrt != null)
-      .sort((a, b) => b.genelOrt - a.genelOrt);
-    const rank = sorted.findIndex(p => p.name === playerData.name);
-    if (rank !== -1) {
-      ctx.textAlign = 'center';
-      if (rank === 0) {
-        ctx.font      = fn(15, 800);
-        ctx.fillStyle = tc;
-        ctx.fillText('🏆  SEZONUN LİDERİ', W / 2, FY + 30);
-      } else {
-        const badgeTxt = `# ${rank + 1}  SIRALAMA`;
-        ctx.font = fn(13, 800);
-        const bw = ctx.measureText(badgeTxt).width + 32;
-        rrect(ctx, W / 2 - bw / 2, FY + 12, bw, 28, 14);
-        ctx.fillStyle  = `rgba(${rv},${gv},${bv},0.18)`;
-        ctx.fill();
-        ctx.strokeStyle = `rgba(${rv},${gv},${bv},0.45)`;
-        ctx.lineWidth   = 1; ctx.stroke();
-        ctx.fillStyle   = tc;
-        ctx.fillText(badgeTxt, W / 2, FY + 31);
-      }
-    }
-  }
+  // ──── HAFTA ETIKETI + ALT MARKA ───────────────────────────────────────────────
+  const weekArr = rd?.weeks;
+  const weekLbl = Array.isArray(weekArr) && weekArr.length
+    ? weekArr[weekArr.length - 1] : '';
 
-  // ── ALT MARKA ────────────────────────────────────────────────────────────
   ctx.textAlign = 'center';
-  ctx.font      = fn(11, 600);
-  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.font = fn(10, 600);
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  if (weekLbl) ctx.fillText(weekLbl, W / 2, H - 38);
   ctx.fillText('pitchrank.app', W / 2, H - 22);
 
   return canvas;
 }
 
-// ── Public API ───────────────────────────────────────────────────────────────
+// ── Paylaş ────────────────────────────────────────────────────────────────────
 
 export async function shareProfileCard() {
   const playerName = state.currentRater;
   if (!playerName) { showToast('Önce kimliğini seç'); return; }
 
-  const rd         = state.resultData;
-  const playerData = rd && Array.isArray(rd.players)
-    ? rd.players.find(p => p.name === playerName)
-    : null;
+  const rd = state.resultData;
+  const pd = rd && Array.isArray(rd.players)
+    ? rd.players.find(p => p.name === playerName) : null;
   const pObj = Array.isArray(state.players)
-    ? state.players.find(p => p.name === playerName)
-    : null;
+    ? state.players.find(p => p.name === playerName) : null;
 
-  showToast('Kart hazırlanıyor...');
+  showToast('Kart oluşturuluyor...');
 
   let canvas;
-  try {
-    canvas = await generateCard(playerName, playerData, pObj, rd);
-  } catch (e) {
-    showToast('Kart oluşturulamadı', true);
-    console.error(e);
-    return;
-  }
+  try { canvas = await generateCard(playerName, pd, pObj, rd); }
+  catch (e) { showToast('Kart oluşturulamadı', true); console.error(e); return; }
 
   canvas.toBlob(async (blob) => {
     const file = new File([blob], `pitchrank-${playerName}.png`, { type: 'image/png' });
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: `${playerName} — PitchRank` });
-      } catch (e) {
-        if (e.name !== 'AbortError') { downloadBlob(blob, playerName); }
-      }
+      try { await navigator.share({ files: [file], title: `${playerName} — PitchRank` }); }
+      catch (e) { if (e.name !== 'AbortError') download(blob, playerName); }
     } else {
-      downloadBlob(blob, playerName);
+      download(blob, playerName);
       showToast('Kart indirildi — Story\'ye ekleyebilirsin!');
     }
   }, 'image/png');
 }
 
-function downloadBlob(blob, name) {
+function download(blob, name) {
   const url = URL.createObjectURL(blob);
   const a   = document.createElement('a');
   a.href = url; a.download = `pitchrank-${name}.png`;
