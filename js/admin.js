@@ -9,6 +9,16 @@ import { loadMatchHistory } from './stats.js';
 let _pendingPos = {};
 let _bugunSelected = {};
 
+function escJsSingle(value) {
+  return String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\u0022')
+    .replace(/'/g, "\\'")
+    .replace(/</g, '\\u003C')
+    .replace(/>/g, '\\u003E')
+    .replace(/\r?\n/g, ' ');
+}
+
 // ─── ADMİN GİRİŞ ─────────────────────────────────────────────────────────────
 const ADMIN_MAX_ATTEMPTS = 5;
 const ADMIN_LOCKOUT_MS   = 10 * 60 * 1000;
@@ -67,7 +77,9 @@ export function logoutAdmin() { sRem('hs_admin_session'); showToast('Güvenli ç
 export function setAdminTab(id, btnElement) {
   document.querySelectorAll('#screen-admin .sub-screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('#screen-admin .sub-nb').forEach(b => b.classList.remove('active'));
-  document.getElementById(`admin-${id}`).classList.add('active');
+  const screen = document.getElementById(`admin-${id}`);
+  if (!screen) return;
+  screen.classList.add('active');
   if (btnElement) btnElement.classList.add('active');
   if (id === 'mac') loadMatchHistory();
   if (id === 'ayarlar') { renderPlayerList(); loadVoteSetting(); }
@@ -380,9 +392,14 @@ function renderVideos(videos) {
       ? `<div class="sec-title" style="margin-top:8px">Tüm Yayınlar</div>` + sorted.map(v => {
           const vid = ytVideoId(v.url);
           const thumb = vid ? `https://img.youtube.com/vi/${vid}/mqdefault.jpg` : null;
-          return `<div onclick="selectVideoWeekByUrl('${v.week}','${v.url}')" style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg2);border-radius:16px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh);border:1px solid var(--border);">
+          const safeWeek = escJsSingle(v.week);
+          const safeUrl = escJsSingle(v.url);
+          const safeTitle = escJsSingle(v.title || '');
+          const displayTitle = escHtml(v.title || (v.week + ' Maç Yayını'));
+          const displayWeek = escHtml(v.week);
+          return `<div onclick="selectVideoWeekByUrl('${safeWeek}','${safeUrl}','${safeTitle}')" style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg2);border-radius:16px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh);border:1px solid var(--border);">
             ${thumb?`<img src="${thumb}" loading="lazy" style="width:80px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`:`<div style="width:80px;height:52px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📺</div>`}
-            <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;margin-bottom:4px;">${v.title||v.week+' Maç Yayını'}</div><div style="font-size:11px;color:var(--green);font-weight:700;">${v.week}</div></div>
+            <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;margin-bottom:4px;">${displayTitle}</div><div style="font-size:11px;color:var(--green);font-weight:700;">${displayWeek}</div></div>
             <div style="font-size:20px;color:var(--text3);">▶</div>
           </div>`;
         }).join('')
@@ -425,11 +442,19 @@ export function loadAdminVideos() {
   gs({action:'getVideos'}).then(data => {
     const videos = (data.videos || []).sort((a,b) => b.week.localeCompare(a.week));
     if (!videos.length) { el.innerHTML = '<div class="no-data">Henüz yayın eklenmedi.</div>'; return; }
-    el.innerHTML = videos.map(v => `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:14px;margin-bottom:8px;">
+    el.innerHTML = videos.map(v => {
+      const safeWeek = escJsSingle(v.week);
+      const safeUrl = escJsSingle(v.url);
+      const safeTitle = escJsSingle(v.title || '');
+      const displayTitle = escHtml(v.title || v.week);
+      const displayWeek = escHtml(v.week);
+      const displayUrl = escHtml(v.url);
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:14px;margin-bottom:8px;">
       <div style="font-size:20px;">📺</div>
-      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;">${v.title||v.week}</div><div style="font-size:11px;color:var(--green);font-weight:700;margin-top:2px;">${v.week}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.url}</div></div>
-      <button onclick="document.getElementById('adminVideoWeek').value='${v.week}';document.getElementById('adminVideoUrl').value='${v.url}';document.getElementById('adminVideoTitle').value='${v.title||''}'" style="font-size:11px;padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit;font-weight:700;">✏️</button>
-    </div>`).join('');
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;">${displayTitle}</div><div style="font-size:11px;color:var(--green);font-weight:700;margin-top:2px;">${displayWeek}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${displayUrl}</div></div>
+      <button onclick="document.getElementById('adminVideoWeek').value='${safeWeek}';document.getElementById('adminVideoUrl').value='${safeUrl}';document.getElementById('adminVideoTitle').value='${safeTitle}'" style="font-size:11px;padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;font-family:inherit;font-weight:700;">✏️</button>
+    </div>`;
+    }).join('');
   }).catch(() => { el.innerHTML = '<div class="no-data">Yüklenemedi.</div>'; });
 }
 
