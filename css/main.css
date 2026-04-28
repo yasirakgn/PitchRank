@@ -134,12 +134,20 @@ body.home-active header { display: none !important; }
 .sub-nb:not(.active):hover { border-color: var(--text3); transform: translateY(-1px); }
 
 /* ── Screens & Animations ────────────────────────────────────────────────────── */
-.screen { display: none; animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+.screen { display: none; }
 .screen.active { display: block; }
-.sub-screen { display: none; animation: fadeIn 0.25s ease; }
+.screen.leaving { animation: screenLeave 0.18s ease forwards; pointer-events: none; }
+.screen.is-entering { animation: screenEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+#screen-profil.is-entering { animation: screenSlideUp 0.44s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.sub-screen { display: none; }
 .sub-screen.active { display: block; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.sub-screen.is-entering { animation: subEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes screenEnter  { from { opacity: 0; transform: translateY(22px); }  to { opacity: 1; transform: translateY(0); } }
+@keyframes screenLeave  { from { opacity: 1; transform: translateY(0); }      to { opacity: 0; transform: translateY(-8px); } }
+@keyframes screenSlideUp { from { opacity: 0; transform: translateY(52px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes subEnter     { from { opacity: 0; transform: translateY(10px); }  to { opacity: 1; transform: translateY(0); } }
 @keyframes popIn { from { transform: scale(0.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 /* ── Cards ───────────────────────────────────────────────────────────────────── */

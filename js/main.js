@@ -97,36 +97,52 @@ function markLastTeam() {
 
 // ─── SCREEN NAVIGASYON ───────────────────────────────────────────────────────
 function switchMainScreen(id, btnElement) {
-  // Guard: prevent profil access without identity
   if (id === 'profil' && !state.currentRater) {
     showToast('Önce kimliğini seç');
     switchMainScreen('puanla', document.querySelector('.bnav-item[onclick*="puanla"]'));
     return;
   }
 
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const current = document.querySelector('.screen.active:not(.leaving)');
+  const next = document.getElementById(`screen-${id}`);
+  if (!next || next === current) return;
+
   document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
-  const screen = document.getElementById(`screen-${id}`);
-  if (!screen) return;
-  screen.classList.add('active');
   if (btnElement) btnElement.classList.add('active');
-  window.scrollTo({top: 0, behavior: 'smooth'});
-  if (id === 'siralama') renderSonuc(makeFifaCard);
-  if (id === 'istatistik') {
-    const activeSub = document.querySelector('#screen-istatistik .sub-screen.active');
-    if (activeSub) {
-      const sid = activeSub.id.replace('stat-','');
-      if (sid === 'hafta') renderHafta();
-      else if (sid === 'trend' && document.getElementById('trendSelect').value) renderTrend();
-      else if (sid === 'karsi') renderComparison();
-      else if (sid === 'sezon') renderSezon();
-      else if (sid === 'katilim') renderKatilim();
-      else if (sid === 'maclar') loadMatchHistory();
+
+  const doEnter = () => {
+    document.querySelectorAll('.screen:not(.leaving)').forEach(s => s.classList.remove('active', 'is-entering'));
+    next.classList.add('active', 'is-entering');
+    setTimeout(() => next.classList.remove('is-entering'), 440);
+    window.scrollTo({ top: 0 });
+    if (id === 'siralama') renderSonuc(makeFifaCard);
+    if (id === 'istatistik') {
+      const activeSub = document.querySelector('#screen-istatistik .sub-screen.active');
+      if (activeSub) {
+        const sid = activeSub.id.replace('stat-', '');
+        if (sid === 'hafta') renderHafta();
+        else if (sid === 'trend' && document.getElementById('trendSelect').value) renderTrend();
+        else if (sid === 'karsi') renderComparison();
+        else if (sid === 'sezon') renderSezon();
+        else if (sid === 'katilim') renderKatilim();
+        else if (sid === 'maclar') loadMatchHistory();
+        else if (sid === 'denge') renderDenge();
+      }
     }
-  }
-  if (id === 'takim') { renderTodayPlayers(); if (!state.resultData) loadResults(() => {}); }
-  if (id === 'profil') {
-    if (!state.resultData) { loadResults(() => { renderProfile(); }); } else { renderProfile(); }
+    if (id === 'takim') { renderTodayPlayers(); if (!state.resultData) loadResults(() => {}); }
+    if (id === 'profil') {
+      if (!state.resultData) { loadResults(() => { renderProfile(); }); } else { renderProfile(); }
+    }
+  };
+
+  if (current) {
+    current.classList.add('leaving');
+    setTimeout(() => {
+      current.classList.remove('active', 'leaving');
+      doEnter();
+    }, 160);
+  } else {
+    doEnter();
   }
 }
 
@@ -173,11 +189,12 @@ function refreshData() {
 }
 
 function setStatScreen(id, btnElement) {
-  document.querySelectorAll('#screen-istatistik .sub-screen').forEach(s => s.classList.remove('active'));
+  const next = document.getElementById(`stat-${id}`);
+  if (!next) return;
+  document.querySelectorAll('#screen-istatistik .sub-screen').forEach(s => s.classList.remove('active', 'is-entering'));
   document.querySelectorAll('#screen-istatistik .sub-nb').forEach(b => b.classList.remove('active'));
-  const screen = document.getElementById(`stat-${id}`);
-  if (!screen) return;
-  screen.classList.add('active');
+  next.classList.add('active', 'is-entering');
+  setTimeout(() => next.classList.remove('is-entering'), 300);
   if (btnElement) btnElement.classList.add('active');
   if (id === 'hafta') renderHafta();
   if (id === 'trend' && document.getElementById('trendSelect').value) renderTrend();
