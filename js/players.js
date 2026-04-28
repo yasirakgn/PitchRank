@@ -9,6 +9,67 @@ function byId(id) {
   return document.getElementById(id);
 }
 
+// ── Taslak yardımcıları ───────────────────────────────────────────────────────
+function draftKey(rater, week) {
+  return `hs_draft_${rater}_${week}`;
+}
+
+function saveDraft(rater, week, scores) {
+  if (!rater || !week || !scores || !Object.keys(scores).length) return;
+  lSet(draftKey(rater, week), JSON.stringify(scores));
+}
+
+function clearDraft(rater, week) {
+  if (!rater || !week) return;
+  lRem(draftKey(rater, week));
+}
+
+function getDraft(rater, week) {
+  const raw = lGet(draftKey(rater, week));
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) { clearDraft(rater, week); return null; }
+}
+
+function checkDraftBanner() {
+  const draft = getDraft(state.currentRater, getWeekLabel());
+  const banner = byId('draft-banner');
+  if (banner) banner.style.display = (draft && Object.keys(draft).length) ? 'flex' : 'none';
+}
+
+export function restoreDraft() {
+  const draft = getDraft(state.currentRater, getWeekLabel());
+  if (!draft) return;
+  document.querySelectorAll('#ratingCards .pcard').forEach(card => {
+    const pname = card.dataset.pname;
+    const scores = draft[pname];
+    if (!scores) return;
+    if (!state.currentScores[pname]) state.currentScores[pname] = {};
+    CRITERIA.forEach(cr => {
+      if (scores[cr] == null) return;
+      const val = +scores[cr];
+      state.currentScores[pname][cr] = val;
+      const slider = card.querySelector(`input[data-cr="${cr}"]`);
+      if (!slider) return;
+      slider.value = val;
+      const display = document.getElementById(slider.dataset.did);
+      if (display) { display.textContent = val; display.style.color = scoreColor(val); }
+    });
+    if (CRITERIA.every(c => state.currentScores[pname]?.[c] !== undefined)) {
+      state.completedCards[pname] = true;
+      card.className = 'pcard done';
+    }
+  });
+  updateProgress();
+  const banner = byId('draft-banner');
+  if (banner) banner.style.display = 'none';
+}
+
+export function dismissDraft() {
+  clearDraft(state.currentRater, getWeekLabel());
+  const banner = byId('draft-banner');
+  if (banner) banner.style.display = 'none';
+}
+
 export function savePlayers() {
   lSet('hs_players', JSON.stringify(state.players));
 }
