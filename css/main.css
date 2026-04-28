@@ -864,3 +864,38 @@ body.dark .draft-banner-text { color: #fcd34d; }
   font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
 }
 .draft-btn-reset:active { opacity: 0.8; }
+
+/* ── Denge Ekranı ───────────────────────────────────────────────────────────── */
+.denge-summary {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px; margin-bottom: 16px;
+}
+.denge-stat {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--bg2); border-radius: var(--rs);
+  padding: 12px 6px; border: 1px solid var(--border); box-shadow: var(--sh-card);
+}
+.denge-stat-val { font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; line-height: 1; }
+.denge-stat-lbl { font-size: 9px; font-weight: 800; color: var(--text3); text-transform: uppercase; letter-spacing: 0.3px; text-align: center; }
+.denge-chart { width: 100%; display: block; margin-bottom: 16px; overflow: visible; }
+.denge-zero-line { stroke: var(--text3); stroke-width: 1; stroke-dasharray: 3 3; }
+.denge-trend-line { stroke: var(--text2); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; opacity: 0.45; }
+.denge-chart-lbl { font-size: 8px; font-weight: 700; fill: var(--text3); }
+.denge-list { display: flex; flex-direction: column; gap: 8px; }
+.denge-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg2); border-radius: var(--rs);
+  padding: 10px 14px; border: 1px solid var(--border); box-shadow: var(--sh);
+}
+.denge-week { font-size: 11px; font-weight: 800; color: var(--green); background: var(--gd); padding: 3px 8px; border-radius: 8px; flex-shrink: 0; border: 1px solid #10b98130; }
+.denge-score { font-size: 16px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; flex: 1; text-align: center; }
+.denge-diff { font-size: 13px; font-weight: 800; width: 32px; text-align: center; flex-shrink: 0; }
+.denge-diff.pos { color: var(--green); }
+.denge-diff.neg { color: #ef4444; }
+.denge-diff.zero { color: var(--text3); }
+.denge-badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 10px; flex-shrink: 0; white-space: nowrap; }
+.denge-badge.cekismeli { background: var(--gl); color: var(--green); }
+.denge-badge.dengeli { background: #fefce8; color: #713f12; }
+.denge-badge.tektarafli { background: #fff1f2; color: #9f1239; }
+body.dark .denge-badge.dengeli { background: #1c1400; color: #fde68a; }
+body.dark .denge-badge.tektarafli { background: #1f0a0a; color: #fca5a5; }
