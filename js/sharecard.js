@@ -1,6 +1,7 @@
 import { CRITERIA, TEAM_CONFIG, POS } from './config.js';
 import { state } from './state.js';
 import { getPlayerPhoto, normPos, posLabel, showToast } from './utils.js';
+import { posRating } from './rating.js';
 
 // ── Yardımcılar ───────────────────────────────────────────────────────────────
 
@@ -97,6 +98,8 @@ function egoTitle(pd, rd) {
 // ── Ana Oluşturucu ────────────────────────────────────────────────────────────
 
 async function generateCard(playerName, pd, pObj, rd) {
+  await document.fonts.ready;
+
   const DPR = 2, W = 540, H = 960;
   const canvas = document.createElement('canvas');
   canvas.width = W * DPR; canvas.height = H * DPR;
@@ -108,11 +111,12 @@ async function generateCard(playerName, pd, pObj, rd) {
   const tc     = team.color;
   const { rv, gv, bv } = hexRgb(tc);
 
-  const genelOrt = pd?.genelOrt ?? null;
-  const rating   = genelOrt !== null ? Math.min(99, Math.round(genelOrt * 10)) : null;
+  const wAvg   = pd && pObj ? posRating(pd, pObj) : null;
+  const rawOvr = wAvg !== null ? wAvg : (pd?.genelOrt ?? null);
+  const rating = rawOvr !== null ? Math.min(99, Math.round(rawOvr * 10)) : null;
   const ct       = getCardType(rating);
   const ctr      = hexRgb(ct.c1);
-  const fn       = (sz, wt) => `${wt} ${sz}px system-ui,-apple-system,sans-serif`;
+  const fn       = (sz, wt) => `${wt} ${sz}px Inter,system-ui,sans-serif`;
 
   // ──── ARKA PLAN ──────────────────────────────────────────────────────────────
   ctx.fillStyle = ct.bg;
@@ -517,8 +521,11 @@ export async function shareProfileCard() {
   try { canvas = await generateCard(playerName, pd, pObj, rd); }
   catch (e) { showToast('Kart oluşturulamadı', true); console.error(e); return; }
 
-  // Paylaşım açıklaması
-  const ovr     = pd ? Math.min(99, Math.round((pd.genelOrt || 0) * 10)) : 0;
+  // Paylaşım açıklaması — posRating ile kart üstündeki OVR ile aynı hesap
+  const _wAvg = pd && pObj ? posRating(pd, pObj) : null;
+  const ovr   = _wAvg !== null
+    ? Math.min(99, Math.round(_wAvg * 10))
+    : (pd ? Math.min(99, Math.round((pd.genelOrt || 0) * 10)) : 0);
   const pos     = pObj ? posLabel(pObj.pos) : '';
   const players = rd && Array.isArray(rd.players) ? rd.players : [];
   const rankIdx = players.findIndex(p => p.name === playerName);
