@@ -3,10 +3,10 @@ import { CURRENT_TEAM, lGet, lSet, lRem } from './storage.js';
 import { state } from './state.js';
 import { escHtml, normPos, posLabel, san, getPlayerPhoto, getWeekLabel, getAutoWeekLabel, formatMoney, scoreColor, ratingColor, cardClass, showToast, showConfirm, closeConfirm } from './utils.js';
 import { calcStdDev, posRating, calcMarketValue, getPlayStyles } from './rating.js';
-import { savePlayers, loadPlayersFromSheets, loadMevkilerFromSheets, initSelects, checkIdentityLock, resetIdentity, onRaterChange, buildCards, onSlider, updateProgress, submitRatings, closeSuccessPopup, buildGoalInputs, stepGoal } from './players.js';
+import { savePlayers, loadPlayersFromSheets, loadMevkilerFromSheets, initSelects, checkIdentityLock, resetIdentity, onRaterChange, buildCards, onSlider, updateProgress, submitRatings, closeSuccessPopup, buildGoalInputs, stepGoal, restoreDraft, dismissDraft } from './players.js';
 import { loadResults, loadManualWeek, setRankTab, renderSonuc, renderHafta, selectWeekBtn, renderTrend, renderComparison, renderSezon, renderKatilim, loadMatchHistory } from './stats.js';
 import { renderProfile } from './profile.js';
-import { tryAdmin, checkPin, logoutAdmin, setAdminTab, loadBugunTab, toggleBugun, bugunSelectAll, bugunClearAll, saveBugunGelenler, loadHakemTab, selectHakem, saveHakemToSheet, clearHakem, renderPlayerList, selectPos, confirmPos, togglePosDropdown, closePosDropdown, addPlayer, removePlayer, saveMatch, loadVideos, selectVideoWeek, selectVideoWeekByUrl, adminSaveVideo, saveCurrentWeek, resetWeekToAuto, loadVoteSetting, saveVoteSetting } from './admin.js';
+import { tryAdmin, checkPin, logoutAdmin, setAdminTab, loadBugunTab, toggleBugun, bugunSelectAll, bugunClearAll, saveBugunGelenler, loadHakemTab, selectHakem, saveHakemToSheet, clearHakem, renderPlayerList, selectPos, confirmPos, togglePosDropdown, closePosDropdown, addPlayer, removePlayer, saveMatch, loadVideos, loadAdminVideos, selectVideoWeek, selectVideoWeekByUrl, adminSaveVideo, saveCurrentWeek, resetWeekToAuto, loadVoteSetting, saveVoteSetting } from './admin.js';
 
 if (state.darkMode) document.body.classList.add('dark');
 
@@ -128,6 +128,47 @@ function switchMainScreen(id, btnElement) {
   if (id === 'profil') {
     if (!state.resultData) { loadResults(() => { renderProfile(); }); } else { renderProfile(); }
   }
+}
+
+function updateRefreshTime() {
+  const timeEl = document.getElementById('refreshTime');
+  if (!timeEl) return;
+  if (!state.lastRefreshTime) { timeEl.textContent = ''; return; }
+  const mins = Math.floor((Date.now() - state.lastRefreshTime) / 60000);
+  if (mins < 1) timeEl.textContent = 'az önce';
+  else if (mins < 60) timeEl.textContent = `${mins} dk`;
+  else timeEl.textContent = `${Math.floor(mins / 60)} sa`;
+}
+
+function refreshData() {
+  const btn = document.getElementById('refreshBtn');
+  const icon = btn?.querySelector('.refresh-icon');
+  if (btn?.disabled) return;
+  if (btn) btn.disabled = true;
+  if (icon) icon.classList.add('spinning');
+
+  loadResults(() => {
+    state.lastRefreshTime = Date.now();
+    updateRefreshTime();
+    if (icon) icon.classList.remove('spinning');
+    if (btn) btn.disabled = false;
+
+    const active = document.querySelector('.screen.active');
+    const sid = active?.id?.replace('screen-', '');
+    if (sid === 'siralama') renderSonuc(makeFifaCard);
+    else if (sid === 'profil' && state.currentRater) renderProfile();
+    else if (sid === 'istatistik') {
+      const sub = document.querySelector('#screen-istatistik .sub-screen.active');
+      const ssid = sub?.id?.replace('stat-', '');
+      if (ssid === 'hafta') renderHafta();
+      else if (ssid === 'trend' && document.getElementById('trendSelect')?.value) renderTrend();
+      else if (ssid === 'karsi') renderComparison();
+      else if (ssid === 'sezon') renderSezon();
+      else if (ssid === 'katilim') renderKatilim();
+      else if (ssid === 'maclar') loadMatchHistory();
+    }
+    showToast('Veriler güncellendi');
+  }, true);
 }
 
 function setStatScreen(id, btnElement) {
@@ -598,6 +639,7 @@ export function initApp() {
 
   updateTeamUI();
   updateDarkBtn();
+  setInterval(updateRefreshTime, 60000);
   loadManualWeek(() => {
     console.log('[PitchRank] Week loaded:', getWeekLabel());
     if (has('matchWeek')) el('matchWeek').value = getWeekLabel();
@@ -611,7 +653,7 @@ export function initApp() {
         setTimeout(() => {
           if (has('fifaGrid') || has('weekContent') || has('trendContent') || has('cmpContent')) {
             console.log('[PitchRank] Loading results...');
-            loadResults(() => { console.log('[PitchRank] Results loaded.'); }, false);
+            loadResults(() => { console.log('[PitchRank] Results loaded.'); state.lastRefreshTime = Date.now(); updateRefreshTime(); }, false);
           }
           if (has('matchHistory')) loadMatchHistory();
         }, 500);
@@ -643,6 +685,9 @@ window.closeModal = closeModal;
 window.updateTeamUI = updateTeamUI;
 window.updateDarkBtn = updateDarkBtn;
 window.toggleDark = toggleDark;
+window.refreshData = refreshData;
+window.restoreDraft = restoreDraft;
+window.dismissDraft = dismissDraft;
 window.showTeamConfirm = showTeamConfirm;
 window.selectTeam = selectTeam;
 window.resetTeam = resetTeam;
@@ -694,6 +739,7 @@ window.addPlayer = addPlayer;
 window.removePlayer = removePlayer;
 window.saveMatch = saveMatch;
 window.loadVideos = loadVideos;
+window.loadAdminVideos = loadAdminVideos;
 window.selectVideoWeek = selectVideoWeek;
 window.selectVideoWeekByUrl = selectVideoWeekByUrl;
 window.adminSaveVideo = adminSaveVideo;

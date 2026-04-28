@@ -173,6 +173,7 @@ export function checkIdentityLock() {
 
 export function resetIdentity() {
   showConfirm('Kimliğinizi değiştirmek istediğinize emin misiniz?', () => {
+    clearDraft(state.currentRater, getWeekLabel());
     lRem('hs_my_identity');
     const raterSel = byId('raterSelect');
     const changeBtn = byId('changeIdentityBtn');
@@ -309,6 +310,7 @@ export function buildCards() {
       c.appendChild(card);
     });
     updateProgress();
+    checkDraftBanner();
   };
 
   const useCache = !state.manualWeek && (cachedWeek === week && cachedList) && (cachedHakemWeek === week);
@@ -352,6 +354,7 @@ export function onSlider(el) {
     if (card) card.className = 'pcard done';
   }
   updateProgress();
+  saveDraft(state.currentRater, getWeekLabel(), state.currentScores);
 }
 
 export function updateProgress() {
@@ -379,6 +382,7 @@ export function submitRatings() {
     .then(d => {
       if (d.success) {
         btn.textContent = 'Puanları Gönder';
+        clearDraft(state.currentRater, getWeekLabel());
         lRem('hs_results_cache');
         state.resultData = null;
         loadResults(() => {}, true);
