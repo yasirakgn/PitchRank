@@ -5,6 +5,7 @@ import { escHtml, normPos, posLabel, san, getPlayerPhoto, getWeekLabel, getAutoW
 import { calcStdDev, posRating, calcMarketValue, getPlayStyles } from './rating.js';
 import { savePlayers, loadPlayersFromSheets, loadMevkilerFromSheets, initSelects, checkIdentityLock, resetIdentity, onRaterChange, buildCards, onSlider, updateProgress, submitRatings, closeSuccessPopup, buildGoalInputs, stepGoal } from './players.js';
 import { loadResults, loadManualWeek, setRankTab, renderSonuc, renderHafta, selectWeekBtn, renderTrend, renderComparison, renderSezon, renderKatilim, loadMatchHistory } from './stats.js';
+import { renderProfile } from './profile.js';
 import { tryAdmin, checkPin, logoutAdmin, setAdminTab, loadBugunTab, toggleBugun, bugunSelectAll, bugunClearAll, saveBugunGelenler, loadHakemTab, selectHakem, saveHakemToSheet, clearHakem, renderPlayerList, selectPos, confirmPos, togglePosDropdown, closePosDropdown, addPlayer, removePlayer, saveMatch, loadVideos, selectVideoWeek, selectVideoWeekByUrl, adminSaveVideo, saveCurrentWeek, resetWeekToAuto, loadVoteSetting, saveVoteSetting } from './admin.js';
 
 if (state.darkMode) document.body.classList.add('dark');
@@ -117,6 +118,10 @@ function switchMainScreen(id, btnElement) {
     }
   }
   if (id === 'takim') { renderTodayPlayers(); if (!state.resultData) loadResults(() => {}); }
+  if (id === 'profil') {
+    if (!state.currentRater) { showToast('Önce kimliğini seç'); switchMainScreen('puanla', document.querySelector('.bnav-item')); return; }
+    if (!state.resultData) { loadResults(data => { state.resultData = data; renderProfile(); }); } else { renderProfile(); }
+  }
 }
 
 function setStatScreen(id, btnElement) {
@@ -623,6 +628,7 @@ document.addEventListener('keydown', function(e) {
 // main.js functions
 window.initApp = initApp;
 window.switchMainScreen = switchMainScreen;
+window.renderProfile = renderProfile;
 window.setStatScreen = setStatScreen;
 window.makeFifaCard = makeFifaCard;
 window.openProfile = openProfile;
