@@ -12,6 +12,15 @@
       </div>
     </div>
     <div style="display: flex; align-items: center; gap: 8px;">
+      <div class="refresh-wrap">
+        <button class="refresh-btn" id="refreshBtn" onclick="refreshData()" type="button" title="Verileri yenile">
+          <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 4v6h-6"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </button>
+        <span class="refresh-time" id="refreshTime"></span>
+      </div>
       <button class="dark-btn" id="darkBtn" onclick="toggleDark()" type="button" style="margin: 0;">☀️</button>
     </div>
   </header>
@@ -38,6 +47,17 @@
     <div id="progressWrap" class="prog-wrap" style="display:none;">
       <div class="prog-top"><span>Değerlendirme Ilerlemesi</span><span class="prog-count" id="progCount">0/0</span></div>
       <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+
+    <div id="draft-banner" class="draft-banner" style="display:none;">
+      <div class="draft-banner-body">
+        <span class="draft-banner-icon">⚡</span>
+        <span class="draft-banner-text">Geçen sefer kaldığın yer kaydedildi</span>
+      </div>
+      <div class="draft-banner-actions">
+        <button onclick="restoreDraft()" type="button" class="draft-btn-continue">Devam Et</button>
+        <button onclick="dismissDraft()" type="button" class="draft-btn-reset">Sıfırla</button>
+      </div>
     </div>
 
     <div id="ratingCards" style="display:none;"></div>
@@ -318,38 +338,11 @@
     <div id="vAllVideos" style="margin-top:4px;"></div>
   </section>
 
-  <section id="screen-profil" class="screen" aria-label="Profilim">
-    <div class="card" style="margin-bottom:12px;">
-      <div class="slabel">Kişisel</div>
-      <div class="stitle" style="margin-bottom:4px;">👤 Profilim</div>
-      <div style="font-size:13px;color:var(--text3);font-weight:500;">Rozet, form ve rekabet durumun</div>
-    </div>
-
-    <div class="card" style="padding:0;overflow:hidden;margin-bottom:12px;">
-      <div id="prof-header"></div>
-    </div>
-
-    <div class="card" style="margin-bottom:12px;">
-      <div class="slabel">Son 5 Hafta</div>
-      <div class="stitle" style="margin-bottom:12px;font-size:15px;">Form Şeridi</div>
-      <div id="prof-form"></div>
-    </div>
-
-    <div class="card" style="margin-bottom:12px;">
-      <div class="slabel">Koleksiyon</div>
-      <div class="stitle" style="margin-bottom:12px;font-size:15px;">Rozetler</div>
-      <div id="prof-badges"></div>
-    </div>
-
-    <div class="card" style="margin-bottom:12px;">
-      <div class="slabel">Rekabet</div>
-      <div id="prof-competition" style="font-size:14px;font-weight:600;color:var(--text2);padding:4px 0;"></div>
-    </div>
-
-    <div class="card" style="margin-bottom:24px;">
-      <div class="slabel">Kriter Gelişimi</div>
-      <div class="stitle" style="margin-bottom:12px;font-size:15px;">Sezon Ortalamaları</div>
-      <div id="prof-criteria"></div>
-    </div>
+  <section id="screen-profil" class="screen prof-screen" aria-label="Profilim">
+    <div id="prof-header"></div>
+    <div id="prof-competition"></div>
+    <div id="prof-form"></div>
+    <div id="prof-badges"></div>
+    <div id="prof-criteria"></div>
   </section>
 </main>
