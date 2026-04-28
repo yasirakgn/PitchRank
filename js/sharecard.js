@@ -505,6 +505,12 @@ async function generateCard(playerName, pd, pObj, rd) {
 
 // ── Paylaş ────────────────────────────────────────────────────────────────────
 
+// Bekleyen paylaşım — önizleme açıkken tutar
+let _pendingBlob    = null;
+let _pendingName    = null;
+let _pendingCaption = null;
+let _previewUrl     = null;
+
 export async function shareProfileCard() {
   const playerName = state.currentRater;
   if (!playerName) { showToast('Önce kimliğini seç'); return; }
@@ -544,22 +550,43 @@ export async function shareProfileCard() {
     `👇 Kendi kartına bak: ${appUrl}`,
   ].filter(l => l !== undefined).join('\n');
 
-  canvas.toBlob(async (blob) => {
-    const file = new File([blob], `pitchrank-${playerName}.png`, { type: 'image/png' });
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: `${playerName} — PitchRank`,
-          text: caption,
-        });
-      }
-      catch (e) { if (e.name !== 'AbortError') download(blob, playerName); }
-    } else {
-      download(blob, playerName);
-      showToast('Kart indirildi — Story\'ye ekleyebilirsin!');
-    }
+  canvas.toBlob((blob) => {
+    _pendingBlob    = blob;
+    _pendingName    = playerName;
+    _pendingCaption = caption;
+
+    if (_previewUrl) URL.revokeObjectURL(_previewUrl);
+    _previewUrl = URL.createObjectURL(blob);
+
+    const img = document.getElementById('shareCardPreviewImg');
+    if (img) img.src = _previewUrl;
+    document.getElementById('shareCardPreviewBg')?.classList.add('open');
   }, 'image/png');
+}
+
+export async function doShareCard() {
+  if (!_pendingBlob || !_pendingName) return;
+  const blob    = _pendingBlob;
+  const name    = _pendingName;
+  const caption = _pendingCaption;
+  closeSharePreview();
+  const file = new File([blob], `pitchrank-${name}.png`, { type: 'image/png' });
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: `${name} — PitchRank`, text: caption });
+    } catch (e) { if (e.name !== 'AbortError') download(blob, name); }
+  } else {
+    download(blob, name);
+    showToast('Kart indirildi — Story\'ye ekleyebilirsin!');
+  }
+}
+
+export function closeSharePreview() {
+  document.getElementById('shareCardPreviewBg')?.classList.remove('open');
+  if (_previewUrl) { URL.revokeObjectURL(_previewUrl); _previewUrl = null; }
+  const img = document.getElementById('shareCardPreviewImg');
+  if (img) img.src = '';
+  _pendingBlob = null; _pendingName = null; _pendingCaption = null;
 }
 
 function download(blob, name) {

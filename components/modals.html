@@ -48,6 +48,25 @@
   </div>
 </div>
 
+<div class="mbg" id="shareCardPreviewBg" onclick="if(event.target===this)closeSharePreview()">
+  <div class="share-preview-modal">
+    <div class="share-preview-header">
+      <span>Kart Önizleme</span>
+      <button class="xcls" style="width:32px;height:32px;font-size:18px;" onclick="closeSharePreview()" type="button">×</button>
+    </div>
+    <div class="share-preview-img-wrap">
+      <img id="shareCardPreviewImg" src="" alt="Kart önizleme" />
+    </div>
+    <div class="share-preview-actions">
+      <button class="abtn" style="flex:1;padding:14px;font-size:15px;" onclick="closeSharePreview()" type="button">İptal</button>
+      <button class="abtn pri" style="flex:1;margin:0;padding:14px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:7px;" onclick="doShareCard()" type="button">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Paylaş
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="mbg" id="confirmBg">
   <div class="modal" style="max-width:320px;padding:24px;">
     <div class="mtitle" style="margin-bottom:12px;font-size:18px;">Onay Gerekiyor</div>
