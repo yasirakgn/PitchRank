@@ -97,6 +97,13 @@ function markLastTeam() {
 
 // ─── SCREEN NAVIGASYON ───────────────────────────────────────────────────────
 function switchMainScreen(id, btnElement) {
+  // Guard: prevent profil access without identity
+  if (id === 'profil' && !state.currentRater) {
+    showToast('Önce kimliğini seç');
+    switchMainScreen('puanla', document.querySelector('.bnav-item[onclick*="puanla"]'));
+    return;
+  }
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
   const screen = document.getElementById(`screen-${id}`);
@@ -119,8 +126,7 @@ function switchMainScreen(id, btnElement) {
   }
   if (id === 'takim') { renderTodayPlayers(); if (!state.resultData) loadResults(() => {}); }
   if (id === 'profil') {
-    if (!state.currentRater) { showToast('Önce kimliğini seç'); switchMainScreen('puanla', document.querySelector('.bnav-item')); return; }
-    if (!state.resultData) { loadResults(data => { state.resultData = data; renderProfile(); }); } else { renderProfile(); }
+    if (!state.resultData) { loadResults(() => { renderProfile(); }); } else { renderProfile(); }
   }
 }
 
