@@ -1,6 +1,6 @@
 import { CRITERIA, TEAM_CONFIG, POS } from './config.js';
 import { state } from './state.js';
-import { getPlayerPhoto, normPos, showToast } from './utils.js';
+import { getPlayerPhoto, normPos, posLabel, showToast } from './utils.js';
 
 // ── Yardımcılar ───────────────────────────────────────────────────────────────
 
@@ -517,10 +517,36 @@ export async function shareProfileCard() {
   try { canvas = await generateCard(playerName, pd, pObj, rd); }
   catch (e) { showToast('Kart oluşturulamadı', true); console.error(e); return; }
 
+  // Paylaşım açıklaması
+  const ovr     = pd ? Math.min(99, Math.round((pd.genelOrt || 0) * 10)) : 0;
+  const pos     = pObj ? posLabel(pObj.pos) : '';
+  const players = rd && Array.isArray(rd.players) ? rd.players : [];
+  const rankIdx = players.findIndex(p => p.name === playerName);
+  const rank    = rankIdx >= 0 ? rankIdx + 1 : null;
+  const total   = players.length || null;
+  const ego     = egoTitle(pd, rd);
+  const appUrl  = window.location.origin;
+
+  const rankLine = rank ? `🏆 ${rank}. sıra${total ? '/' + total : ''}` : '';
+  const statLine = [ovr ? `${ovr} OVR` : '', pos, rankLine].filter(Boolean).join(' · ');
+  const caption  = [
+    `⚽ ${playerName} — PitchRank`,
+    ego,
+    statLine ? `📊 ${statLine}` : '',
+    '',
+    `👇 Kendi kartına bak: ${appUrl}`,
+  ].filter(l => l !== undefined).join('\n');
+
   canvas.toBlob(async (blob) => {
     const file = new File([blob], `pitchrank-${playerName}.png`, { type: 'image/png' });
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: `${playerName} — PitchRank` }); }
+      try {
+        await navigator.share({
+          files: [file],
+          title: `${playerName} — PitchRank`,
+          text: caption,
+        });
+      }
       catch (e) { if (e.name !== 'AbortError') download(blob, playerName); }
     } else {
       download(blob, playerName);
