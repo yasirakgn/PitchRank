@@ -1084,6 +1084,102 @@ export function loadMatchHistory() {
 
 export function renderDenge() {
   const el = document.getElementById('dengeContent');
-  if (el) el.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
+  if (!el) return;
+
+  const renderContent = (data) => {
+    if (!data || !data.matches || !data.matches.length) {
+      el.innerHTML = '<div class="no-data">Henüz maç kaydı yok.</div>';
+      return;
+    }
+    const matches = data.matches.filter(m => m.score1 != null && m.score2 != null && m.score1 !== '' && m.score2 !== '');
+    if (!matches.length) {
+      el.innerHTML = '<div class="no-data">Skor verisi olan maç bulunamadı.</div>';
+      return;
+    }
+
+    const diffs = matches.map(m => +m.score1 - +m.score2);
+    const absDiffs = diffs.map(d => Math.abs(d));
+    const avgDiff = (absDiffs.reduce((a, b) => a + b, 0) / absDiffs.length).toFixed(1);
+    const cekismeli = diffs.filter(d => d === 0).length;
+    const dengeli = diffs.filter(d => Math.abs(d) >= 1 && Math.abs(d) <= 2).length;
+    const tekTarafli = diffs.filter(d => Math.abs(d) >= 3).length;
+
+    const W = 300, H = 110, PX = 24, PY = 14;
+    const maxAbs = Math.max(...absDiffs, 1);
+    const n = matches.length;
+    const slotW = (W - PX * 2) / Math.max(n, 1);
+    const barW = Math.max(4, Math.min(18, slotW * 0.6));
+    const zeroY = PY + (H - PY * 2) / 2;
+    const scale = (H - PY * 2) / 2 / maxAbs;
+
+    const bars = matches.map((m, i) => {
+      const diff = +m.score1 - +m.score2;
+      const cx = PX + i * slotW + slotW / 2;
+      const absH = Math.max(Math.abs(diff) * scale, diff !== 0 ? 3 : 1);
+      const y = diff >= 0 ? zeroY - absH : zeroY;
+      const fill = diff > 0 ? 'var(--green)' : diff < 0 ? '#ef4444' : 'var(--text3)';
+      return `<rect x="${(cx - barW / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${absH.toFixed(1)}" rx="2" fill="${fill}" opacity="0.82"/>`;
+    }).join('');
+
+    const trendPts = matches.map((m, i) => {
+      const cx = PX + i * slotW + slotW / 2;
+      const y = zeroY - (+m.score1 - +m.score2) * scale;
+      return `${cx.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    const labels = matches.map((m, i) => {
+      const cx = PX + i * slotW + slotW / 2;
+      const lbl = (m.week || '').replace(/\d{4}-/, '');
+      return `<text x="${cx.toFixed(1)}" y="${H - 1}" class="denge-chart-lbl" text-anchor="middle">${escHtml(lbl)}</text>`;
+    }).join('');
+
+    const listRows = matches.slice().reverse().map(m => {
+      const diff = +m.score1 - +m.score2;
+      const abs = Math.abs(diff);
+      const [emoji, label, cls] = abs === 0
+        ? ['🟢', 'Çekişmeli', 'cekismeli']
+        : abs <= 2
+        ? ['🟡', 'Dengeli', 'dengeli']
+        : ['🔴', 'Tek Taraflı', 'tektarafli'];
+      const wk = (m.week || '').replace(/\d{4}-/, '');
+      return `<div class="denge-row">
+        <span class="denge-week">${escHtml(wk)}</span>
+        <span class="denge-score">${escHtml(String(+m.score1))}–${escHtml(String(+m.score2))}</span>
+        <span class="denge-diff ${diff > 0 ? 'pos' : diff < 0 ? 'neg' : 'zero'}">${diff > 0 ? '+' : ''}${diff}</span>
+        <span class="denge-badge ${cls}">${emoji} ${escHtml(label)}</span>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="denge-summary">
+        <div class="denge-stat"><span class="denge-stat-val">${avgDiff}</span><span class="denge-stat-lbl">ort. fark</span></div>
+        <div class="denge-stat"><span class="denge-stat-val" style="color:var(--green)">${cekismeli}</span><span class="denge-stat-lbl">🟢 çekişmeli</span></div>
+        <div class="denge-stat"><span class="denge-stat-val" style="color:#eab308">${dengeli}</span><span class="denge-stat-lbl">🟡 dengeli</span></div>
+        <div class="denge-stat"><span class="denge-stat-val" style="color:#ef4444">${tekTarafli}</span><span class="denge-stat-lbl">🔴 tek taraflı</span></div>
+      </div>
+      <svg class="denge-chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+        <line x1="${PX}" y1="${zeroY.toFixed(1)}" x2="${W - PX}" y2="${zeroY.toFixed(1)}" class="denge-zero-line"/>
+        ${bars}
+        ${n > 1 ? `<polyline points="${trendPts}" class="denge-trend-line" fill="none"/>` : ''}
+        ${labels}
+      </svg>
+      <div class="denge-list">${listRows}</div>`;
+  };
+
+  if (state.matchesData) { renderContent(state.matchesData); return; }
+
+  el.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
+  const cached = lGet('hs_matches_cache');
+  if (cached) {
+    try { state.matchesData = normalizeMatchesData(JSON.parse(cached)); renderContent(state.matchesData); } catch (e) {}
+  }
+  gs({ action: 'getMatches' }).then(data => {
+    const normalized = normalizeMatchesData(data);
+    lSet('hs_matches_cache', JSON.stringify(normalized));
+    state.matchesData = normalized;
+    renderContent(normalized);
+  }).catch(() => {
+    if (!state.matchesData) el.innerHTML = '<div class="no-data">Veri yüklenemedi.</div>';
+  });
 }
 
