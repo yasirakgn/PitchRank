@@ -464,7 +464,7 @@ async function generateCard(playerName, pd, pObj, rd) {
     : null;
 
   const summaries = [
-    { lbl: 'KATILIM', val: attendance ? `${attendance} MAÇH` : '—' },
+    { lbl: 'KATILIM', val: attendance ? `${attendance} MAÇ` : '—' },
     { lbl: 'EN YÜKSEK', val: bestScore ? String(bestScore) : '—' },
     { lbl: 'GENEL ORT', val: rating ? String(rating) : '—' },
   ];
