@@ -1082,3 +1082,8 @@ export function loadMatchHistory() {
   }).catch(() => {});
 }
 
+export function renderDenge() {
+  const el = document.getElementById('dengeContent');
+  if (el) el.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
+}
+

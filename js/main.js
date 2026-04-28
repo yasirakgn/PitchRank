@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { escHtml, normPos, posLabel, san, getPlayerPhoto, getWeekLabel, getAutoWeekLabel, formatMoney, scoreColor, ratingColor, cardClass, showToast, showConfirm, closeConfirm } from './utils.js';
 import { calcStdDev, posRating, calcMarketValue, getPlayStyles } from './rating.js';
 import { savePlayers, loadPlayersFromSheets, loadMevkilerFromSheets, initSelects, checkIdentityLock, resetIdentity, onRaterChange, buildCards, onSlider, updateProgress, submitRatings, closeSuccessPopup, buildGoalInputs, stepGoal, restoreDraft, dismissDraft } from './players.js';
-import { loadResults, loadManualWeek, setRankTab, renderSonuc, renderHafta, selectWeekBtn, renderTrend, renderComparison, renderSezon, renderKatilim, loadMatchHistory } from './stats.js';
+import { loadResults, loadManualWeek, setRankTab, renderSonuc, renderHafta, selectWeekBtn, renderTrend, renderComparison, renderSezon, renderKatilim, loadMatchHistory, renderDenge } from './stats.js';
 import { renderProfile } from './profile.js';
 import { tryAdmin, checkPin, logoutAdmin, setAdminTab, loadBugunTab, toggleBugun, bugunSelectAll, bugunClearAll, saveBugunGelenler, loadHakemTab, selectHakem, saveHakemToSheet, clearHakem, renderPlayerList, selectPos, confirmPos, togglePosDropdown, closePosDropdown, addPlayer, removePlayer, saveMatch, loadVideos, loadAdminVideos, selectVideoWeek, selectVideoWeekByUrl, adminSaveVideo, saveCurrentWeek, resetWeekToAuto, loadVoteSetting, saveVoteSetting } from './admin.js';
 
@@ -166,6 +166,7 @@ function refreshData() {
       else if (ssid === 'sezon') renderSezon();
       else if (ssid === 'katilim') renderKatilim();
       else if (ssid === 'maclar') loadMatchHistory();
+      else if (ssid === 'denge') renderDenge();
     }
     showToast('Veriler güncellendi');
   }, true);
@@ -184,6 +185,7 @@ function setStatScreen(id, btnElement) {
   if (id === 'sezon') renderSezon();
   if (id === 'katilim') renderKatilim();
   if (id === 'maclar') loadMatchHistory();
+  if (id === 'denge') renderDenge();
 }
 
 // ─── FIFA KART ────────────────────────────────────────────────────────────────
