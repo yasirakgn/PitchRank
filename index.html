@@ -104,90 +104,25 @@
   </script>
 </head>
 <body class="dark">
-
-  <section id="screen-home" class="home-hero">
-    <div class="home-content">
-      <div class="home-logo-wrap">
-        <img
-          src="assets/images/icon-512.png"
-          alt="PitchRank Logo"
-          class="home-logo"
-          width="92"
-          height="92"
-          loading="eager"
-          fetchpriority="high"
-        >
-        <div class="home-product-label">Sports Performance OS</div>
-        <h1 class="home-title">PitchRank</h1>
-        <h2 class="home-sub">Takim performansini puanla,<br>rekabeti ve gelisimi takip et.</h2>
-      </div>
-
-      <div class="home-teams">
-        <a href="/app?team=haldunalagas" class="home-team-btn">
-          <div class="htb-icon">PR</div>
-          <div class="htb-info">
-            <div class="htb-name">Haldunalagas</div>
-            <div class="htb-sub">Lig, analiz ve oyuncu panosu</div>
-          </div>
-          <div class="htb-arrow">Enter</div>
-        </a>
-
-        <a href="/app?team=arion" class="home-team-btn">
-          <div class="htb-icon">FC</div>
-          <div class="htb-info">
-            <div class="htb-name">Arion FC</div>
-            <div class="htb-sub">Lig, analiz ve oyuncu panosu</div>
-          </div>
-          <div class="htb-arrow">Enter</div>
-        </a>
-      </div>
-    </div>
-
-    <div class="home-footer">v3.1 / Performance Arena</div>
-  </section>
-
-  <section id="screen-home-legacy" class="home-hero" style="display:none">
-    <div class="home-glow"></div>
-
-    <div class="home-content">
-      <div class="home-logo-wrap">
-        <img
-          src="assets/images/icon-512.png"
-          alt="PitchRank Logo"
-          class="home-logo"
-          width="92"
-          height="92"
-          loading="eager"
-          fetchpriority="high"
-        >
-        <div class="home-product-label">Sports Performance OS</div>
-        <h1 class="home-title">PitchRank</h1>
-        <h2 class="home-sub">Halı saha istatistiklerinizi<br>profesyonelce yönetin</h2>
-      </div>
-
-      <div class="home-teams">
-        <a href="/app?team=haldunalagas" class="home-team-btn">
-          <div class="htb-icon">🦅</div>
-          <div class="htb-info">
-            <div class="htb-name">Haldunalagaş</div>
-            <div class="htb-sub">Takım İstatistikleri</div>
-          </div>
-          <div class="htb-arrow">→</div>
-        </a>
-
-        <a href="/app?team=arion" class="home-team-btn">
-          <div class="htb-icon">🐴</div>
-          <div class="htb-info">
-            <div class="htb-name">Arion FC</div>
-            <div class="htb-sub">Takım İstatistikleri</div>
-          </div>
-          <div class="htb-arrow">→</div>
-        </a>
-      </div>
-    </div>
-
-    <div class="home-footer">v3.1 · Profesyonel Arena</div>
-  </section>
-
+  <div data-include="components/toast.html"></div>
+  <div data-include="components/home.html"></div>
+  <div data-include="components/app.html"></div>
+  <div data-include="components/nav.html"></div>
+  <div data-include="components/modals.html"></div>
+  <noscript>
+    <p style="text-align:center;padding:16px;font-size:13px;color:#666;font-family:sans-serif;">
+      PitchRank'ı kullanmak için tarayıcınızda JavaScript'i etkinleştirin.
+    </p>
+  </noscript>
+  <script>
+  (function() {
+    var t = new URL(location.href).searchParams.get('team');
+    if (t === 'haldunalagas' || t === 'arion') {
+      sessionStorage.setItem('pitchrank_selected_team', t);
+      history.replaceState(null, '', location.pathname);
+    }
+  }());
+  </script>
+  <script type="module" src="js/boot.js?v=3.2"></script>
 </body>
 </html>
