@@ -34,7 +34,11 @@ export function getPlayerPhoto(name) {
   const p = state.players.find(x => x.name === name);
   let photo = (p && p.photo) ? String(p.photo).trim() : '';
   if (!photo) photo = toPhotoFilename(name);
-  const v = localStorage.getItem('hs_photo_version') || '1';
+  let v = localStorage.getItem('hs_photo_version');
+  if (!v) {
+    v = Date.now().toString();
+    localStorage.setItem('hs_photo_version', v);
+  }
   return photo ? BASE_URL + photo + '?v=' + v : '';
 }
 

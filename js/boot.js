@@ -29,10 +29,23 @@ async function loadIncludes() {
   }));
 }
 
+function applyPhotoVersion() {
+  let v = localStorage.getItem('hs_photo_version');
+  if (!v) {
+    v = Date.now().toString();
+    localStorage.setItem('hs_photo_version', v);
+  }
+  document.querySelectorAll('img[src*="assets/images/"]').forEach(img => {
+    const src = img.getAttribute('src') || '';
+    if (!src.includes('?')) img.setAttribute('src', src + '?v=' + v);
+  });
+}
+
 async function startApp() {
   try {
     addCacheBusters();
     await loadIncludes();
+    applyPhotoVersion();
     initApp();
   } catch (e) {
     const msg = document.createElement('pre');
