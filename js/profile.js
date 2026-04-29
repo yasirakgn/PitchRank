@@ -1,6 +1,7 @@
 import { CRITERIA, CDISP, TEAM_CONFIG } from './config.js';
 import { state } from './state.js';
 import { escHtml, posLabel, getPlayerPhoto, showToast } from './utils.js';
+import { posRating } from './rating.js';
 
 // ── Yardımcı hesaplama fonksiyonları ─────────────────────────────────────────
 
@@ -22,7 +23,11 @@ function isLeader(playerData, resultData) {
   if (!resultData || !Array.isArray(resultData.players) || !playerData) return false;
   const sorted = [...resultData.players]
     .filter(p => p.genelOrt != null)
-    .sort((a, b) => b.genelOrt - a.genelOrt);
+    .sort((a, b) => {
+      const aObj = state.players.find(pl => pl.name === a.name) || { pos: ['OMO'] };
+      const bObj = state.players.find(pl => pl.name === b.name) || { pos: ['OMO'] };
+      return (posRating(b, bObj) || 0) - (posRating(a, aObj) || 0);
+    });
   return sorted.length > 0 && sorted[0].name === playerData.name;
 }
 
@@ -91,8 +96,12 @@ function renderHeader(container, playerData, pObj) {
   const name = playerData ? playerData.name : (pObj ? pObj.name : '?');
   const photo = getPlayerPhoto(name);
   const posText = pObj ? posLabel(pObj) : '';
-  const genelOrt = playerData && playerData.genelOrt != null ? playerData.genelOrt : null;
-  const rating = genelOrt !== null ? Math.min(99, Math.round(genelOrt * 10)) : null;
+  let rating = null;
+  if (playerData) {
+    const wAvg = pObj ? posRating(playerData, pObj) : null;
+    if (wAvg !== null) rating = Math.min(99, Math.round(wAvg * 10));
+    else if (playerData.genelOrt != null) rating = Math.min(99, Math.round(playerData.genelOrt * 10));
+  }
   const teamId = sessionStorage.getItem('pitchrank_selected_team') || 'haldunalagas';
   const tc = (TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas).color;
   const r = parseInt(tc.slice(1, 3), 16);
@@ -126,7 +135,7 @@ function renderHeader(container, playerData, pObj) {
     </div>`;
 }
 
-function renderFormStrip(container, playerData, resultData) {
+function renderFormStrip(container, playerData, resultData, pObj) {
   const noData = '<div class="prof-section"><div class="prof-section-header"><span class="prof-section-title">Form Şeridi</span></div><div class="prof-nodata">Henüz form verisi yok.</div></div>';
   if (!playerData || !Array.isArray(playerData.weeklyGenels) || !Array.isArray(resultData && resultData.weeks)) {
     container.innerHTML = noData;
@@ -141,7 +150,12 @@ function renderFormStrip(container, playerData, resultData) {
   if (!entries.length) { container.innerHTML = noData; return; }
 
   const W = 300, H = 80, PX = 20, PY = 14;
-  const scores = entries.map(e => Math.round(e.score * 10));
+  const scores = entries.map(e => {
+    const kr = playerData.weeklyKriterler?.[e.week] || {};
+    const swd = { weeklyKriterler: { [e.week]: kr }, weeklyGenels: [e.score] };
+    const w = posRating(swd, pObj || { pos: ['OMO'] });
+    return w !== null ? Math.min(99, Math.round(w * 10)) : Math.round(e.score * 10);
+  });
   const minS = Math.max(0, Math.min(...scores) - 8);
   const maxS = Math.min(100, Math.max(...scores) + 8);
   const range = maxS - minS || 1;
@@ -213,23 +227,29 @@ function renderBadges(container, badges) {
 
 function renderCompetition(container, playerData, allPlayers) {
   if (!playerData || !Array.isArray(allPlayers)) { container.innerHTML = ''; return; }
+  const getScore = (p) => {
+    const pObj = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
+    return posRating(p, pObj) || 0;
+  };
   const sorted = [...allPlayers]
     .filter(p => p.genelOrt != null)
-    .sort((a, b) => b.genelOrt - a.genelOrt);
+    .sort((a, b) => getScore(b) - getScore(a));
   const rank = sorted.findIndex(p => p.name === playerData.name);
   if (rank === -1) { container.innerHTML = ''; return; }
 
   const teamId = sessionStorage.getItem('pitchrank_selected_team') || 'haldunalagas';
   const tc = (TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas).color;
+  const myScore = getScore(playerData);
+  const myRating = Math.min(99, Math.round(myScore * 10));
 
   let numHtml, labelHtml, subHtml;
   if (rank === 0) {
     numHtml = `<div class="prof-rank-num prof-rank-leader" style="color:${escHtml(tc)};">🏆</div>`;
     labelHtml = 'Bu sezon takımının liderisin!';
-    subHtml = `Genel ortalama: <strong>${playerData.genelOrt.toFixed(1)}</strong>`;
+    subHtml = `Genel rating: <strong>${myRating}</strong>`;
   } else {
     const above = sorted[rank - 1];
-    const diff = (above.genelOrt - playerData.genelOrt).toFixed(1);
+    const diff = ((getScore(above) - myScore) * 10).toFixed(1);
     numHtml = `<div class="prof-rank-num" style="color:${escHtml(tc)};">${rank + 1}</div>`;
     labelHtml = `Takımda <strong>${rank + 1}. sıradasın</strong>`;
     subHtml = `${escHtml(above.name)}'e <strong>${diff} puan</strong> kaldı`;
@@ -306,7 +326,7 @@ export function renderProfile() {
 
   if (headerEl)   renderHeader(headerEl, playerData, pObj);
   if (compEl)     renderCompetition(compEl, playerData, rd && rd.players);
-  if (formEl)     renderFormStrip(formEl, playerData, rd);
+  if (formEl)     renderFormStrip(formEl, playerData, rd, pObj);
   if (badgesEl)   renderBadges(badgesEl, computeBadges(playerData, rd, md));
   if (criteriaEl) renderCriteriaBar(criteriaEl, playerData);
 

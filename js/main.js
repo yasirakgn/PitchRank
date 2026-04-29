@@ -52,14 +52,14 @@ function showTeamConfirm(teamId) {
   const bg = document.getElementById('teamConfirmBg');
   if (!bg) { selectTeam(teamId); return; }
   const header = document.getElementById('teamConfirmHeader');
-  const emojiEl = document.getElementById('teamConfirmEmoji');
+  const logoEl = document.getElementById('teamConfirmLogo');
   const nameEl = document.getElementById('teamConfirmName');
   const okBtn = document.getElementById('teamConfirmOkBtn');
   if (header) {
     header.style.background = config.color + '18';
     header.style.borderBottom = `1px solid ${config.color}33`;
   }
-  if (emojiEl) emojiEl.textContent = config.emoji;
+  if (logoEl) { logoEl.src = config.logo; logoEl.alt = config.name; }
   if (nameEl) { nameEl.textContent = config.name; nameEl.style.color = config.color; }
   if (okBtn) {
     okBtn.style.background = config.color;

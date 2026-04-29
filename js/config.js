@@ -4,7 +4,7 @@ export const TEAM_CONFIG = {
     name: 'Haldunalagaş',
     emoji: '🦅',
     color: '#f59e0b',
-    logo: 'assets/images/icon-192.png',
+    logo: 'assets/images/logo-haldunalagas.png',
     gs: 'https://script.google.com/macros/s/AKfycbxn8T0QYMmZpU0NvVylCQLhIsv_HPPFODAvt3vKJ9EzolwYekv1L3ovyuos2DNCuwy3/exec'
   },
   arion: {
@@ -12,7 +12,7 @@ export const TEAM_CONFIG = {
     name: 'Arion FC',
     emoji: '🐴',
     color: '#6366f1',
-    logo: 'assets/images/icon-192.png',
+    logo: 'assets/images/logo-arion.png',
     gs: 'https://script.google.com/macros/s/AKfycbxDVAjBLnynV1osvQ181glA2oO2MK1hy8Ab40FWHjlQHHtXKU-z4Jt3Ex6fOjQPUT7jTA/exec'
   }
 };

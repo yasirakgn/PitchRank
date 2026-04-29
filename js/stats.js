@@ -358,11 +358,16 @@ export function renderTrend() {
     if (!pdata) { el.innerHTML = '<div class="no-data">Oyuncu bulunamadı.</div>'; return; }
     const weeks = asArray(data.weeks);
     if (!weeks.length) { el.innerHTML = '<div class="no-data">Yeterli veri yok.</div>'; return; }
+    const pObj = state.players.find(pl => pl.name === pname) || { pos: ['OMO'] };
     const last5weeks = weeks.slice(-5);
     const scores = last5weeks.map(w => {
       const wi = weeks.indexOf(w);
       const s = pdata.weeklyGenels[wi];
-      return { week: w, score: s != null ? +(s * 10).toFixed(1) : null };
+      if (s == null) return { week: w, score: null };
+      const kr = pdata.weeklyKriterler?.[w] || {};
+      const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [s] };
+      const r = posRating(swd, pObj);
+      return { week: w, score: r !== null ? +Math.min(99, r * 10).toFixed(1) : +(s * 10).toFixed(1) };
     });
     const valid = scores.filter(s => s.score !== null);
     if (!valid.length) { el.innerHTML = '<div class="no-data">Yeterli veri yok.</div>'; return; }
@@ -607,20 +612,36 @@ export function renderComparison() {
     const TW = 300, TH = 110, tPL = 22, tPR = 12, tPT = 18, tPB = 22;
     const tChartW = TW - tPL - tPR, tChartH = TH - tPT - tPB;
     const allTrendVals = [];
-    [pa, pb].forEach(pd => last5.forEach(w => {
-      const wi = data.weeks.indexOf(w);
-      const v = pd.weeklyGenels[wi];
-      if (v != null) allTrendVals.push(v * 10);
-    }));
+    [pa, pb].forEach(pd => {
+      const pObjT = state.players.find(pl => pl.name === pd.name) || { pos: ['OMO'] };
+      last5.forEach(w => {
+        const wi = data.weeks.indexOf(w);
+        const rawV = pd.weeklyGenels[wi];
+        if (rawV != null) {
+          const kr = pd.weeklyKriterler?.[w] || {};
+          const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [rawV] };
+          const r = posRating(swd, pObjT);
+          allTrendVals.push(r !== null ? Math.min(99, r * 10) : rawV * 10);
+        }
+      });
+    });
     const tMax = allTrendVals.length ? Math.min(99, Math.max(...allTrendVals) + 5) : 99;
     const tMin = allTrendVals.length ? Math.max(0, Math.min(...allTrendVals) - 5) : 0;
     const tToX = (i) => tPL + (i / Math.max(last5.length - 1, 1)) * tChartW;
     const tToY = (v) => tPT + tChartH - ((v - tMin) / (tMax - tMin || 1)) * tChartH;
     const trendLine = (pdata, color) => {
+      const pObjT = state.players.find(pl => pl.name === pdata.name) || { pos: ['OMO'] };
       const pts = last5.map((w,i) => {
         const wi = data.weeks.indexOf(w);
-        const v = pdata.weeklyGenels[wi];
-        return { x: tToX(i), y: v !== null ? tToY(v * 10) : null, v: v !== null ? +(v * 10).toFixed(1) : null };
+        const rawV = pdata.weeklyGenels[wi];
+        let v = null;
+        if (rawV != null) {
+          const kr = pdata.weeklyKriterler?.[w] || {};
+          const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [rawV] };
+          const r = posRating(swd, pObjT);
+          v = r !== null ? +Math.min(99, r * 10).toFixed(1) : +(rawV * 10).toFixed(1);
+        }
+        return { x: tToX(i), y: v !== null ? tToY(v) : null, v };
       });
       const valid = pts.filter(p=>p.y!==null);
       if (!valid.length) return '';
@@ -745,9 +766,20 @@ export function renderSezon() {
     const kritAvg = (p, c) => { let vals = []; if (p.weeklyKriterler) Object.values(p.weeklyKriterler).forEach(wk => { if (wk && wk[c] != null) vals.push(+wk[c]); }); return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
     const attendCount = (p) => p.weeklyGenels.filter(v => v != null).length;
     const stddev = (p) => { const vals = p.weeklyGenels.filter(v => v != null); if (vals.length < 2) return 999; const avg = vals.reduce((a,b)=>a+b,0)/vals.length; return Math.sqrt(vals.reduce((a,v)=>a+Math.pow(v-avg,2),0)/vals.length); };
-    const last3Avg = (p) => { const vals = p.weeklyGenels.filter(v => v != null).slice(-3); return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
-    const first3Avg = (p) => { const vals = p.weeklyGenels.filter(v => v != null).slice(0,3); return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
-    const peakScore = (p) => Math.max(...p.weeklyGenels.filter(v => v != null), 0);
+    const weekRating = (p, weekIdx) => {
+      const pObjS = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
+      const w = data.weeks[weekIdx];
+      const rawV = p.weeklyGenels[weekIdx];
+      if (rawV == null) return null;
+      const kr = p.weeklyKriterler?.[w] || {};
+      const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [rawV] };
+      const r = posRating(swd, pObjS);
+      return r !== null ? Math.min(99, r * 10) : rawV * 10;
+    };
+    const weekRatings = (p) => data.weeks.map((_, i) => weekRating(p, i)).filter(v => v !== null);
+    const last3Avg = (p) => { const vals = weekRatings(p).slice(-3); return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
+    const first3Avg = (p) => { const vals = weekRatings(p).slice(0,3); return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
+    const peakScore = (p) => Math.max(...weekRatings(p), 0);
 
     const sorted = [...players].sort((a, b) => {
       const paObj = state.players.find(pl => pl.name === a.name) || { pos: ['OMO'] };
@@ -813,7 +845,7 @@ export function renderSezon() {
           const pObjS = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
           const r = Math.min(99, Math.round((posRating(p, pObjS) || 0) * 10));
           const photo = getPlayerPhoto(p.name);
-          const prog = ((last3Avg(p) - first3Avg(p)) * 10).toFixed(1);
+          const prog = (last3Avg(p) - first3Avg(p)).toFixed(1);
           return `<div class="sz-pod-col" style="--pc:${meta.col};animation-delay:${slot*0.12}s">
             <div class="sz-pod-crown">${meta.rankEmoji}</div>
             <div class="sz-pod-photo" style="width:${meta.photoSz};height:${meta.photoSz};border-color:${meta.col};box-shadow:0 6px 20px ${meta.col}55">
@@ -841,7 +873,7 @@ export function renderSezon() {
       const mv = calcMarketValue(p, data);
       const att = attendCount(p);
       const photo = getPlayerPhoto(p.name);
-      const trend = ((last3Avg(p) - first3Avg(p)) * 10);
+      const trend = (last3Avg(p) - first3Avg(p));
       const trendDir = trend > 1 ? '↑' : trend < -1 ? '↓' : '→';
       const trendCol = trend > 1 ? 'var(--green)' : trend < -1 ? '#f97316' : 'var(--text3)';
       const rankIcons = ['🥇','🥈','🥉'];
@@ -888,8 +920,8 @@ export function renderSezon() {
       { icon:'⚽', bg:'linear-gradient(145deg,#7f1d1d,#f87171)', title:'GOL MAKINESI', sub:'Şut Şampiyonu',      name:bestFwd.name,       val:kritAvg(bestFwd,'Sut').toFixed(1)+'/10' },
       { icon:'🎩', bg:'linear-gradient(145deg,#312e81,#818cf8)', title:'MAESTRIO',      sub:'Pas Şampiyonu',      name:bestPass.name,      val:kritAvg(bestPass,'Pas').toFixed(1)+'/10' },
       { icon:'⚡', bg:'linear-gradient(145deg,#78350f,#fbbf24)', title:'RÜZGAR',        sub:'Hız Şampiyonu',      name:bestSpeed.name,     val:kritAvg(bestSpeed,'Hiz / Kondisyon').toFixed(1)+'/10' },
-      { icon:'📈', bg:'linear-gradient(145deg,#022c22,#6ee7b7)', title:'YILDIZ DOGUSU', sub:'En Çok Ilerleme',   name:bestProgress.name,  val:'+'+((last3Avg(bestProgress)-first3Avg(bestProgress))*10).toFixed(1) },
-      { icon:'🔥', bg:'linear-gradient(145deg,#450a0a,#ef4444)', title:'ZIRVECI',       sub:'Tarihi En Yüksek',  name:peakPlayer.name,    val:Math.round(peakScore(peakPlayer)*10)+' puan' },
+      { icon:'📈', bg:'linear-gradient(145deg,#022c22,#6ee7b7)', title:'YILDIZ DOGUSU', sub:'En Çok Ilerleme',   name:bestProgress.name,  val:'+'+(last3Avg(bestProgress)-first3Avg(bestProgress)).toFixed(1) },
+      { icon:'🔥', bg:'linear-gradient(145deg,#450a0a,#ef4444)', title:'ZIRVECI',       sub:'Tarihi En Yüksek',  name:peakPlayer.name,    val:Math.round(peakScore(peakPlayer))+' puan' },
     ];
 
     html += `<div class="sz-sec-hdr"><span>🏅 ÖZEL ÖDÜLLER</span></div>

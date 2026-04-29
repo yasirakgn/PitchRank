@@ -38,10 +38,12 @@
   <meta name="apple-mobile-web-app-title" content="PitchRank">
 
   <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/images/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/images/icon-512.png">
-  <link rel="shortcut icon" type="image/png" href="assets/images/icon-192.png">
-  <link rel="apple-touch-icon" href="assets/images/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
 
   <!-- Performance hints -->
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -50,9 +52,9 @@
   <link rel="preload" as="image" href="assets/images/icon-512.png" fetchpriority="high">
 
   <!-- Styles -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/base.css?v=4.4">
-  <link rel="stylesheet" href="css/main.css?v=4.4">
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css?v=5.3">
+  <link rel="stylesheet" href="css/main.css?v=5.3">
 
   <style>a.home-team-btn { text-decoration: none; color: inherit; }</style>
 
@@ -104,6 +106,47 @@
 <body class="dark">
 
   <section id="screen-home" class="home-hero">
+    <div class="home-content">
+      <div class="home-logo-wrap">
+        <img
+          src="assets/images/icon-512.png"
+          alt="PitchRank Logo"
+          class="home-logo"
+          width="92"
+          height="92"
+          loading="eager"
+          fetchpriority="high"
+        >
+        <div class="home-product-label">Sports Performance OS</div>
+        <h1 class="home-title">PitchRank</h1>
+        <h2 class="home-sub">Takim performansini puanla,<br>rekabeti ve gelisimi takip et.</h2>
+      </div>
+
+      <div class="home-teams">
+        <a href="/app?team=haldunalagas" class="home-team-btn">
+          <div class="htb-icon">PR</div>
+          <div class="htb-info">
+            <div class="htb-name">Haldunalagas</div>
+            <div class="htb-sub">Lig, analiz ve oyuncu panosu</div>
+          </div>
+          <div class="htb-arrow">Enter</div>
+        </a>
+
+        <a href="/app?team=arion" class="home-team-btn">
+          <div class="htb-icon">FC</div>
+          <div class="htb-info">
+            <div class="htb-name">Arion FC</div>
+            <div class="htb-sub">Lig, analiz ve oyuncu panosu</div>
+          </div>
+          <div class="htb-arrow">Enter</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="home-footer">v3.1 / Performance Arena</div>
+  </section>
+
+  <section id="screen-home-legacy" class="home-hero" style="display:none">
     <div class="home-glow"></div>
 
     <div class="home-content">
@@ -117,6 +160,7 @@
           loading="eager"
           fetchpriority="high"
         >
+        <div class="home-product-label">Sports Performance OS</div>
         <h1 class="home-title">PitchRank</h1>
         <h2 class="home-sub">Halı saha istatistiklerinizi<br>profesyonelce yönetin</h2>
       </div>

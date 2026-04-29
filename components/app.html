@@ -26,6 +26,17 @@
   </header>
 
   <section id="screen-puanla" class="screen active" aria-label="Puanla">
+    <div class="screen-intro screen-intro-primary">
+      <div>
+        <div class="screen-kicker">Haftalik Gorev</div>
+        <h2>Oyuncu performansini puanla</h2>
+        <p>Once kimligini sec, sonra bu haftaki kadroyu 7 kriterle degerlendir.</p>
+      </div>
+      <div class="screen-metric">
+        <span>7</span>
+        <small>Kriter</small>
+      </div>
+    </div>
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
@@ -68,6 +79,17 @@
   </section>
 
   <section id="screen-siralama" class="screen" aria-label="Sıralama">
+    <div class="screen-intro">
+      <div>
+        <div class="screen-kicker">Lig Tablosu</div>
+        <h2>En formda oyuncular</h2>
+        <p>Genel ve mevki bazli ratingleri karsilastir.</p>
+      </div>
+      <div class="screen-metric">
+        <span>99</span>
+        <small>Rating</small>
+      </div>
+    </div>
     <div id="statsInfoBand" class="card" style="display:none; margin-bottom:14px; padding:12px 16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div id="statsInfoText" style="font-size:13px;font-weight:700;color:var(--text2);"></div>
@@ -86,6 +108,17 @@
   </section>
 
   <section id="screen-istatistik" class="screen" aria-label="Istatistik">
+    <div class="screen-intro">
+      <div>
+        <div class="screen-kicker">Performans Merkezi</div>
+        <h2>Trendleri ve detaylari oku</h2>
+        <p>Hafta, sezon, karsilastirma ve katilim verilerini tek panoda incele.</p>
+      </div>
+      <div class="screen-metric">
+        <span>360</span>
+        <small>Analiz</small>
+      </div>
+    </div>
     <div class="sub-nav">
       <button class="sub-nb active" onclick="setStatScreen('hafta',this)" type="button">Hafta</button>
       <button class="sub-nb" onclick="setStatScreen('trend',this)" type="button">Trend</button>
@@ -128,6 +161,17 @@
   </section>
 
   <section id="screen-takim" class="screen" aria-label="Takım Kur">
+    <div class="screen-intro">
+      <div>
+        <div class="screen-kicker">Mac Hazirligi</div>
+        <h2>Dengeli takim kur</h2>
+        <p>Bugunku kadroyu sec, rating ve mevki dengesine gore takimi olustur.</p>
+      </div>
+      <div class="screen-metric">
+        <span>VS</span>
+        <small>Denge</small>
+      </div>
+    </div>
     <div class="tk-roster-section">
       <div class="tk-roster-hdr">
         <span class="tk-roster-lbl">Kadro</span>
@@ -147,6 +191,17 @@
   </section>
 
   <section id="screen-admin" class="screen" aria-label="Yönetici">
+    <div class="screen-intro">
+      <div>
+        <div class="screen-kicker">Kontrol Paneli</div>
+        <h2>Mac ve kadro yonetimi</h2>
+        <p>Skor, katilim, hakem, yayin ve hafta ayarlarini yonet.</p>
+      </div>
+      <div class="screen-metric">
+        <span>OPS</span>
+        <small>Admin</small>
+      </div>
+    </div>
     <div class="card" style="text-align:center; background:var(--bg2); border:none;">
       <div style="width:44px;height:44px;margin:0 auto 14px;color:var(--green);">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%;">
@@ -320,6 +375,17 @@
   </section>
 
   <section id="screen-yayin" class="screen" aria-label="Yayınlar">
+    <div class="screen-intro">
+      <div>
+        <div class="screen-kicker">Mac Arsivi</div>
+        <h2>Yayinlari izle</h2>
+        <p>Haftalik mac kayitlarini sec, izle ve gecmise don.</p>
+      </div>
+      <div class="screen-metric">
+        <span>HD</span>
+        <small>Arsiv</small>
+      </div>
+    </div>
     <div class="card" style="margin-bottom:12px;">
       <div class="slabel">Canlı Arşiv</div>
       <div class="stitle" style="margin-bottom:4px;">🎬 Maç Yayınları</div>
@@ -343,6 +409,17 @@
   </section>
 
   <section id="screen-profil" class="screen prof-screen" aria-label="Profilim">
+    <div class="screen-intro">
+      <div>
+        <div class="screen-kicker">Oyuncu Profili</div>
+        <h2>Kendi performans kartin</h2>
+        <p>Form, rozetler, kriterler ve rekabet durumunu takip et.</p>
+      </div>
+      <div class="screen-metric">
+        <span>PR</span>
+        <small>Profil</small>
+      </div>
+    </div>
     <div id="prof-header"></div>
     <div id="prof-competition"></div>
     <div id="prof-form"></div>

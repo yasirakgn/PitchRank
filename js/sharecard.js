@@ -30,7 +30,11 @@ function getSeasonRank(pd, rd) {
   if (!pd || !rd || !Array.isArray(rd.players)) return -1;
   const sorted = [...rd.players]
     .filter(p => p.genelOrt != null)
-    .sort((a, b) => b.genelOrt - a.genelOrt);
+    .sort((a, b) => {
+      const aObj = state.players.find(pl => pl.name === a.name) || { pos: ['OMO'] };
+      const bObj = state.players.find(pl => pl.name === b.name) || { pos: ['OMO'] };
+      return (posRating(b, bObj) || 0) - (posRating(a, aObj) || 0);
+    });
   return sorted.findIndex(p => p.name === pd.name);
 }
 
@@ -558,9 +562,19 @@ async function generateCard(playerName, pd, pObj, rd) {
   // ── SEZON ÖZETİ ───────────────────────────────────────────────────────────────
   const SUM_Y     = AFTER_STATS + 74;
   const attendance = attCount(pd);
-  const bestScore  = pd && Array.isArray(pd.weeklyGenels)
-    ? Math.max(...pd.weeklyGenels.filter(v => v != null).map(v => Math.round(v * 10)))
-    : null;
+  const weeks = rd && Array.isArray(rd.weeks) ? rd.weeks : [];
+  const bestScore = (() => {
+    if (!pd || !Array.isArray(pd.weeklyGenels)) return null;
+    const scores = pd.weeklyGenels.map((v, i) => {
+      if (v == null) return null;
+      const week = weeks[i];
+      const kr = (week && pd.weeklyKriterler?.[week]) || {};
+      const swd = { weeklyKriterler: week ? { [week]: kr } : {}, weeklyGenels: [v] };
+      const w = posRating(swd, pObj || { pos: ['OMO'] });
+      return w !== null ? Math.min(99, Math.round(w * 10)) : Math.round(v * 10);
+    }).filter(v => v !== null);
+    return scores.length ? Math.max(...scores) : null;
+  })();
 
   const summaries = [
     { lbl: 'KATILIM',   val: attendance ? `${attendance} MAÇ` : '—' },
