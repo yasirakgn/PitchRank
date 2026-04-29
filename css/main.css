@@ -1074,20 +1074,21 @@ body.dark::before {
 }
 
 .bottom-nav {
-  left: 50%;
-  right: auto;
-  bottom: 10px;
-  width: min(calc(100% - 20px), 680px);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
   min-height: 70px;
-  transform: translateX(-50%);
-  border-radius: 24px;
+  transform: none;
+  border-radius: 0;
   gap: 2px;
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   background:
     linear-gradient(135deg, rgba(255,255,255,0.82), rgba(255,255,255,0.56)),
     rgba(255,255,255,0.70);
   border: 1px solid rgba(255,255,255,0.56);
-  box-shadow: 0 18px 52px rgba(18,27,53,0.16), 0 1px 0 rgba(255,255,255,0.76) inset;
+  border-bottom: none;
+  box-shadow: 0 -4px 28px rgba(18,27,53,0.10);
 }
 
 .dark .bottom-nav {
@@ -1587,7 +1588,7 @@ input[type=range]::-webkit-slider-thumb {
 .home-hero::after {
   content: '';
   position: absolute;
-  inset: auto -20% -40% -20%;
+  inset: auto 0 -40% 0;
   height: 54%;
   pointer-events: none;
   background: radial-gradient(ellipse at center, rgba(33,230,154,0.10), transparent 62%);
@@ -1871,9 +1872,9 @@ input[type=range]::-webkit-slider-thumb {
   }
 
   .bottom-nav {
-    bottom: 8px;
-    width: calc(100% - 14px);
-    border-radius: 22px;
+    bottom: 0;
+    width: 100%;
+    border-radius: 0;
   }
 
   .bnav-item {
