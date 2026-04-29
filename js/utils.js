@@ -25,14 +25,17 @@ export function toPhotoFilename(name) {
   return String(name || '').toLowerCase().split('').map(c => map[c] !== undefined ? map[c] : (c === ' ' ? '' : c)).join('') + '.png';
 }
 
-export function san(s) { return toPhotoFilename(s).replace('.png', ''); }
+export function san(s) {
+  const map = { 'ç':'c','Ç':'c','ğ':'g','Ğ':'g','ı':'i','İ':'i','ö':'o','Ö':'o','ş':'s','Ş':'s','ü':'u','Ü':'u' };
+  return String(s || '').toLowerCase().split('').map(c => map[c] !== undefined ? map[c] : (c === ' ' ? '_' : c)).join('');
+}
 
 export function getPlayerPhoto(name) {
   const p = state.players.find(x => x.name === name);
   let photo = (p && p.photo) ? String(p.photo).trim() : '';
   if (!photo) photo = toPhotoFilename(name);
-  // Cache-buster: her seferinde güncel fotoğraf yüklenir
-  return photo ? BASE_URL + photo + '?v=' + Date.now() : '';
+  const v = localStorage.getItem('hs_photo_version') || '1';
+  return photo ? BASE_URL + photo + '?v=' + v : '';
 }
 
 export function getWeekLabel() {

@@ -23,7 +23,7 @@ function criteriaAvg(pd, cr) {
 }
 
 function attCount(pd) {
-  return pd?.weeklyKriterler ? Object.keys(pd.weeklyKriterler).length : 0;
+  return Array.isArray(pd?.weeklyGenels) ? pd.weeklyGenels.filter(v => v != null).length : 0;
 }
 
 function getSeasonRank(pd, rd) {

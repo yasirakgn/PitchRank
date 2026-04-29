@@ -57,7 +57,7 @@ export function checkPin() {
       clearAdminLock(); setAdminSession();
       document.getElementById('pinBg').classList.remove('open');
       showToast('✅ Yönetici girişi başarılı.');
-      const adminBtn = document.querySelectorAll('.bnav-item')[5];
+      const adminBtn = document.querySelectorAll('.bnav-item')[6];
       window.switchMainScreen('admin', adminBtn);
       setAdminTab('mac', document.querySelector('#screen-admin .sub-nb'));
     } else {
@@ -364,7 +364,7 @@ export function getYtEmbedUrl(input) {
   input = input.trim();
   const srcMatch = input.match(/src=["']([^"']+)["']/);
   if (srcMatch) input = srcMatch[1];
-  if (input.includes('/embed/')) { const part = input.split('/embed/')[1]; const videoId = part.split('?')[0].split('&')[0].split('/')[0].trim(); if (videoId.length >= 11) return 'https://www.youtube.com/embed/' + videoId; }
+  if (input.includes('/embed/')) { const part = input.split('/embed/')[1]; const videoId = part.split('?')[0].split('&')[0].split('/')[0].trim(); if (videoId.length === 11) return 'https://www.youtube.com/embed/' + videoId; }
   if (input.includes('v=')) { const videoId = input.split('v=')[1].split('&')[0].split('?')[0].trim(); if (videoId.length >= 11) return 'https://www.youtube.com/embed/' + videoId.substring(0,11); }
   if (input.includes('youtu.be/')) { const videoId = input.split('youtu.be/')[1].split('?')[0].split('/')[0].trim(); if (videoId.length >= 11) return 'https://www.youtube.com/embed/' + videoId.substring(0,11); }
   const liveMatch = input.match(/\/(live|shorts)\/([A-Za-z0-9_-]{11})/);
@@ -528,6 +528,16 @@ export function loadVoteSetting() {
     el.disabled = false;
     el.value = (d && d.minVoters > 0) ? d.minVoters : 5;
   }).catch(() => { el.disabled = false; el.value = 5; });
+}
+
+export function refreshPhotos() {
+  const v = Date.now().toString();
+  localStorage.setItem('hs_photo_version', v);
+  document.querySelectorAll('img[src*="assets/images/"]').forEach(img => {
+    const base = img.src.split('?')[0];
+    img.src = base + '?v=' + v;
+  });
+  showToast('Fotoğraflar güncellendi! ✓');
 }
 
 export function saveVoteSetting() {

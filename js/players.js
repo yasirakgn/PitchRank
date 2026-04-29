@@ -103,17 +103,12 @@ export function loadPlayersFromSheets(cb, onRefresh) {
   }
 
   gs({action:'getPlayers'}).then(data => {
-    if (data && data.players) {
+    if (data && Array.isArray(data.players)) {
       lSet('hs_players_cache', JSON.stringify(data));
       state.players = [];
       data.players.forEach(sp => {
         state.players.push({ name: sp.name, pos: sp.pos || ['OMO'], photo: sp.photo || '' });
       });
-      savePlayers();
-      if (onRefresh) onRefresh();
-    } else if (data && Array.isArray(data.players) && data.players.length === 0) {
-      lSet('hs_players_cache', JSON.stringify({players: []}));
-      state.players = [];
       savePlayers();
       if (onRefresh) onRefresh();
     }
@@ -409,7 +404,7 @@ export function submitRatings() {
 
 export function closeSuccessPopup() {
   const popup = byId('successPopup');
-  const rankBtn = document.querySelectorAll('.bnav-item')[1];
+  const rankBtn = document.querySelector('.bnav-item[onclick*="siralama"]');
   if (popup) popup.style.display = 'none';
   if (rankBtn) rankBtn.click();
 }

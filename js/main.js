@@ -7,7 +7,7 @@ import { savePlayers, loadPlayersFromSheets, loadMevkilerFromSheets, initSelects
 import { loadResults, loadManualWeek, setRankTab, renderSonuc, renderHafta, selectWeekBtn, renderTrend, renderComparison, renderSezon, renderKatilim, loadMatchHistory, renderDenge } from './stats.js';
 import { renderProfile } from './profile.js';
 import { shareProfileCard, doShareCard, closeSharePreview } from './sharecard.js';
-import { tryAdmin, checkPin, logoutAdmin, setAdminTab, loadBugunTab, toggleBugun, bugunSelectAll, bugunClearAll, saveBugunGelenler, loadHakemTab, selectHakem, saveHakemToSheet, clearHakem, renderPlayerList, selectPos, confirmPos, togglePosDropdown, closePosDropdown, addPlayer, removePlayer, saveMatch, loadVideos, loadAdminVideos, selectVideoWeek, selectVideoWeekByUrl, adminSaveVideo, saveCurrentWeek, resetWeekToAuto, loadVoteSetting, saveVoteSetting } from './admin.js';
+import { tryAdmin, checkPin, logoutAdmin, setAdminTab, loadBugunTab, toggleBugun, bugunSelectAll, bugunClearAll, saveBugunGelenler, loadHakemTab, selectHakem, saveHakemToSheet, clearHakem, renderPlayerList, selectPos, confirmPos, togglePosDropdown, closePosDropdown, addPlayer, removePlayer, saveMatch, loadVideos, loadAdminVideos, selectVideoWeek, selectVideoWeekByUrl, adminSaveVideo, saveCurrentWeek, resetWeekToAuto, loadVoteSetting, saveVoteSetting, refreshPhotos } from './admin.js';
 
 if (state.darkMode) document.body.classList.add('dark');
 
@@ -498,7 +498,8 @@ function buildTeamsWithData(selected) {
   const players = selected.map(pl => {
     const pos = normPos(pl)[0] || 'OMO';
     const pData = state.resultData && state.resultData.players ? state.resultData.players.find(x => x.name === pl.name) : null;
-    const avg = pData ? (posRating(pData, pl) != null ? posRating(pData, pl) : pData.genelOrt || 5) : 5;
+    const pr = pData ? posRating(pData, pl) : null;
+    const avg = pr != null ? pr : (pData?.genelOrt || 5);
     return {
       name: pl.name, pos, pobj: pl, avg,
       pas:   kritAvg(pData, 'Pas'),
@@ -660,6 +661,15 @@ export function initApp() {
   updateTeamUI();
   updateDarkBtn();
   setInterval(updateRefreshTime, 60000);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('shareCardPreviewBg')?.classList.contains('open')) {
+      closeSharePreview();
+      return;
+    }
+    document.querySelectorAll('.mbg.open').forEach(function(m) { m.classList.remove('open'); });
+  });
   loadManualWeek(() => {
     console.log('[PitchRank] Week loaded:', getWeekLabel());
     if (has('matchWeek')) el('matchWeek').value = getWeekLabel();
@@ -685,16 +695,6 @@ export function initApp() {
     });
   });
 }
-
-// ─── ESC KEY ─────────────────────────────────────────────────────────────────
-document.addEventListener('keydown', function(e) {
-  if (e.key !== 'Escape') return;
-  if (document.getElementById('shareCardPreviewBg')?.classList.contains('open')) {
-    closeSharePreview();
-    return;
-  }
-  document.querySelectorAll('.mbg.open').forEach(function(m) { m.classList.remove('open'); });
-});
 
 // ─── WINDOW EXPORTS ──────────────────────────────────────────────────────────
 // main.js functions
@@ -774,6 +774,7 @@ window.saveCurrentWeek = saveCurrentWeek;
 window.resetWeekToAuto = resetWeekToAuto;
 window.loadVoteSetting = loadVoteSetting;
 window.saveVoteSetting = saveVoteSetting;
+window.refreshPhotos = refreshPhotos;
 
 // utils.js functions
 window.showToast = showToast;

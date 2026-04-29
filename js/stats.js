@@ -107,10 +107,11 @@ function rankGateBanner(gate) {
 export function loadResults(cb, forceRefresh = false) {
   if (state.resultData && !forceRefresh) { cb(state.resultData); return; }
   const cached = lGet('hs_results_cache');
-  if (cached && !state.resultData) {
+  // Cache'den anında göster (forceRefresh'te atla — GAS'tan güncel veri beklenir)
+  if (!forceRefresh && cached && !state.resultData) {
     try {
       state.resultData = normalizeResultsData(JSON.parse(cached));
-      if (cb) cb(state.resultData);
+      if (cb) { cb(state.resultData); cb = null; } // bir kez çağır, ikinci çağrıyı engelle
     } catch(e) {}
   }
   gs({action:'getResults'}).then(d => {
@@ -125,10 +126,8 @@ export function loadResults(cb, forceRefresh = false) {
     if (cached !== newStr || forceRefresh) {
       lSet('hs_results_cache', newStr);
       state.resultData = normalized;
-      if (cb) cb(normalized);
-    } else if (cb) {
-      cb(state.resultData);
     }
+    if (cb) cb(state.resultData); // sadece cb null değilse çağır (forceRefresh veya cache yoktu)
   }).catch(() => { if (!state.resultData && cb) cb(null); });
 }
 
@@ -236,7 +235,7 @@ export function renderHafta() {
                    color:${i===0?'var(--bg)':'var(--text2)'};
                    box-shadow:${i===0?'0 4px 12px rgba(0,0,0,0.2)':'var(--sh)'};
                    border:1px solid ${i===0?'transparent':'var(--border)'};">
-            <div style="font-size:${i===0?'13':'11'}px;font-weight:800;letter-spacing:-0.3px;white-space:nowrap;">${w}</div>
+            <div class="wk-btn-label" style="font-size:${i===0?'13':'11'}px;font-weight:800;letter-spacing:-0.3px;white-space:nowrap;">${w}</div>
             <div style="font-size:9px;font-weight:700;margin-top:2px;opacity:${i===0?0.7:0.5};white-space:nowrap;">${sublabel}</div>
           </button>`;
         }).join('')}
@@ -252,14 +251,14 @@ export function selectWeekBtn(btn, week) {
     b.style.boxShadow = 'var(--sh)';
     b.style.borderColor = 'var(--border)';
     b.style.padding = '10px 14px';
-    b.querySelector('div').style.fontSize = '11px';
+    b.querySelector('.wk-btn-label').style.fontSize = '11px';
   });
   btn.style.background = 'var(--text)';
   btn.style.color = 'var(--bg)';
   btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
   btn.style.borderColor = 'transparent';
   btn.style.padding = '12px 18px';
-  btn.querySelector('div').style.fontSize = '13px';
+  btn.querySelector('.wk-btn-label').style.fontSize = '13px';
   btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   loadResults(data => renderWeek(week, data));
 }

@@ -19,7 +19,7 @@ function addCacheBusters() {
 async function loadIncludes() {
   const nodes = Array.from(document.querySelectorAll('[data-include]'));
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  const cache = isLocal ? 'no-cache' : 'force-cache';
+  const cache = isLocal ? 'no-cache' : 'default';
   await Promise.all(nodes.map(async (node) => {
     const url = node.getAttribute('data-include');
     if (!url) return;
