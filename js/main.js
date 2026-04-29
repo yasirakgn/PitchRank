@@ -689,6 +689,10 @@ export function initApp() {
 // ─── ESC KEY ─────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Escape') return;
+  if (document.getElementById('shareCardPreviewBg')?.classList.contains('open')) {
+    closeSharePreview();
+    return;
+  }
   document.querySelectorAll('.mbg.open').forEach(function(m) { m.classList.remove('open'); });
 });
 

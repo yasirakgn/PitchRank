@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+  <title>PitchRank - Uygulama</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://spor.yagserakgun.com/">
+  <meta name="theme-color" content="#1a1a1a">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="PitchRank">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/images/icon-192.png">
+  <link rel="shortcut icon" type="image/png" href="assets/images/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/images/icon-192.png">
+
+  <!-- Performance hints -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Styles -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css?v=4.4">
+  <link rel="stylesheet" href="css/main.css?v=4.4">
+</head>
+<body class="dark">
+
+  <div data-include="components/toast.html"></div>
+  <div data-include="components/home.html"></div>
+  <div data-include="components/app.html"></div>
+  <div data-include="components/nav.html"></div>
+  <div data-include="components/modals.html"></div>
+
+  <noscript>
+    <p style="text-align:center;padding:16px;font-size:13px;color:#666;font-family:sans-serif;">
+      PitchRank'ı kullanmak için tarayıcınızda JavaScript'i etkinleştirin.
+    </p>
+  </noscript>
+
+  <!-- ?team= parametresini sessionStorage'a yaz; type=module importlarından ÖNCE çalışmalı -->
+  <script>
+  (function() {
+    var t = new URL(location.href).searchParams.get('team');
+    if (t === 'haldunalagas' || t === 'arion') {
+      sessionStorage.setItem('pitchrank_selected_team', t);
+      history.replaceState(null, '', location.pathname);
+    }
+  }());
+  </script>
+  <script type="module" src="js/boot.js?v=3.1"></script>
+</body>
+</html>

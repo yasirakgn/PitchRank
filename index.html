@@ -1,79 +1,149 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+  <title>PitchRank - Halı Saha ve Futsal İstatistik, Sıralama Sistemi</title>
   <meta name="description" content="PitchRank: Halı saha ve futsal maçları için profesyonel oyuncu performans değerlendirme, puanlama ve istatistik takip sistemi.">
   <meta name="keywords" content="PitchRank, futsal, halı saha, oyuncu değerlendirme, performans, istatistik, oyuncu puanlama, maç takip, amatör futbol">
   <meta name="author" content="PitchRank">
   <meta name="robots" content="index, follow">
-  
-  <!-- Open Graph / Social Media (WhatsApp, Instagram, Facebook önizlemeleri için) -->
+  <meta name="theme-color" content="#1a1a1a">
+
+  <!-- Open Graph -->
   <meta property="og:title" content="PitchRank - Halı Saha & Futsal İstatistikleri">
   <meta property="og:description" content="PitchRank ile halı saha maçlarınızı profesyonel arenaya taşıyın. Oyuncu puanlama ve detaylı performans analizi.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://pitchrank.app/">
-  <meta property="og:image" content="https://pitchrank.app/assets/images/icon-512.png">
+  <meta property="og:url" content="https://spor.yagserakgun.com/">
+  <meta property="og:image" content="https://spor.yagserakgun.com/assets/images/icon-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="PitchRank - Halı Saha ve Futsal Uygulaması">
   <meta property="og:site_name" content="PitchRank">
-  
-  <!-- Twitter Cards -->
+  <meta property="og:locale" content="tr_TR">
+
+  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="PitchRank - Halı Saha & Futsal İstatistikleri">
   <meta name="twitter:description" content="PitchRank ile halı saha maçlarınızı profesyonel arenaya taşıyın. Oyuncu puanlama ve detaylı performans analizi.">
-  <meta name="twitter:image" content="https://pitchrank.app/assets/images/icon-512.png">
+  <meta name="twitter:image" content="https://spor.yagserakgun.com/assets/images/icon-512.png">
 
-  <meta name="theme-color" content="#1a1a1a">
-  <link rel="canonical" href="https://pitchrank.app/">
+  <!-- PWA -->
+  <link rel="canonical" href="https://spor.yagserakgun.com/">
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="PitchRank">
-  
-  <!-- Favicon ve Uygulama Logosu Etiketleri -->
-  <link rel="icon" type="image/png" href="assets/images/icon-192.png">
-  <link rel="shortcut icon" type="image/png" href="assets/images/icon-192.png">
+
+  <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="192x192" href="assets/images/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/images/icon-512.png">
+  <link rel="shortcut icon" type="image/png" href="assets/images/icon-192.png">
   <link rel="apple-touch-icon" href="assets/images/icon-192.png">
 
-  <title>PitchRank - Halı Saha ve Futsal İstatistik, Sıralama Sistemi</title>
-  <meta http-equiv="Cache-Control" content="max-age=3600, must-revalidate">
+  <!-- Performance hints -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="image" href="assets/images/icon-512.png" fetchpriority="high">
+
+  <!-- Styles -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css?v=4.4">
   <link rel="stylesheet" href="css/main.css?v=4.4">
-  <!-- Structured Data for Google -->
+
+  <style>a.home-team-btn { text-decoration: none; color: inherit; }</style>
+
+  <!-- Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "PitchRank",
-    "description": "Halı saha ve futsal maçları için profesyonel oyuncu performans değerlendirme, puanlama ve istatistik takip sistemi.",
-    "url": "https://pitchrank.app/",
-    "applicationCategory": "SportsApplication",
-    "operatingSystem": "Web",
-    "offers": {
-      "@type": "Offer",
-      "price": "0"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.5",
-      "ratingCount": "100"
-    }
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://spor.yagserakgun.com/#website",
+        "name": "PitchRank",
+        "url": "https://spor.yagserakgun.com/",
+        "description": "Halı saha ve futsal maçları için profesyonel oyuncu performans değerlendirme, puanlama ve istatistik takip sistemi.",
+        "inLanguage": "tr-TR",
+        "publisher": { "@id": "https://spor.yagserakgun.com/#organization" }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://spor.yagserakgun.com/#organization",
+        "name": "PitchRank",
+        "url": "https://spor.yagserakgun.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://spor.yagserakgun.com/assets/images/icon-512.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "PitchRank",
+        "description": "Halı saha ve futsal maçları için profesyonel oyuncu performans değerlendirme, puanlama ve istatistik takip sistemi.",
+        "url": "https://spor.yagserakgun.com/",
+        "applicationCategory": "SportsApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "tr-TR",
+        "publisher": { "@id": "https://spor.yagserakgun.com/#organization" },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "TRY"
+        }
+      }
+    ]
   }
   </script>
 </head>
 <body class="dark">
 
-  <div data-include="components/toast.html"></div>
-  <div data-include="components/home.html"></div>
-  <div data-include="components/app.html"></div>
-  <div data-include="components/nav.html"></div>
-  <div data-include="components/modals.html"></div>
+  <section id="screen-home" class="home-hero">
+    <div class="home-glow"></div>
 
-  <script type="module" src="js/boot.js?v=3.1"></script>
+    <div class="home-content">
+      <div class="home-logo-wrap">
+        <img
+          src="assets/images/icon-512.png"
+          alt="PitchRank Logo"
+          class="home-logo"
+          width="92"
+          height="92"
+          loading="eager"
+          fetchpriority="high"
+        >
+        <h1 class="home-title">PitchRank</h1>
+        <h2 class="home-sub">Halı saha istatistiklerinizi<br>profesyonelce yönetin</h2>
+      </div>
+
+      <div class="home-teams">
+        <a href="/app?team=haldunalagas" class="home-team-btn">
+          <div class="htb-icon">🦅</div>
+          <div class="htb-info">
+            <div class="htb-name">Haldunalagaş</div>
+            <div class="htb-sub">Takım İstatistikleri</div>
+          </div>
+          <div class="htb-arrow">→</div>
+        </a>
+
+        <a href="/app?team=arion" class="home-team-btn">
+          <div class="htb-icon">🐴</div>
+          <div class="htb-info">
+            <div class="htb-name">Arion FC</div>
+            <div class="htb-sub">Takım İstatistikleri</div>
+          </div>
+          <div class="htb-arrow">→</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="home-footer">v3.1 · Profesyonel Arena</div>
+  </section>
+
 </body>
 </html>

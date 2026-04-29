@@ -3,10 +3,6 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/futbolmanyaklari",
-      "destination": "/index.html"
-    },
-    {
       "source": "/(.*\\.html)",
       "destination": "/$1"
     },
@@ -16,7 +12,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/app.html"
     }
   ],
   "headers": [
@@ -54,6 +50,24 @@
         {
           "key": "Cache-Control",
           "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(robots\\.txt|sitemap\\.xml|manifest\\.json)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
+      "source": "/.well-known/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
         }
       ]
     },

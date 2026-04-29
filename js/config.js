@@ -20,7 +20,8 @@ export const TEAM_CONFIG = {
 export const BASE_URL = 'assets/images/';
 export const PLAYERS_VERSION = '6';
 export const CRITERIA = ['Pas','Sut','Dribling','Savunma','Hiz / Kondisyon','Fizik','Takim Oyunu'];
-export const CDISP    = ['Pas','Şut','Drib.','Savunma','Hız','Fizik','Takım'];
+export const CDISP         = ['Pas','Şut','Drib.','Savunma','Hız','Fizik','Takım'];
+export const CRITERIA_ABBR = ['PAS','ŞUT','DRİB','SAV','HIZ','FİZ','TAK'];
 export const POS      = { KL: 'Kaleci', DEF: 'Defans', OMO: 'Orta Saha', FRV: 'Forvet' };
 export const POS_GROUPS = [
   { label: 'Kale', keys: ['KL'] },
