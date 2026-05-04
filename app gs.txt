@@ -210,30 +210,32 @@ function getHakem(params) {
 
 // ─── PUANLAMA ─────────────────────────────────────────────────────────────
 function saveRating(params) {
-  var ss    = SpreadsheetApp.openById(SHEET_ID);
-  var sheet = ss.getSheetByName('Puanlar');
-  if (!sheet) { sheet = ss.insertSheet('Puanlar'); sheet.appendRow(['Tarih','Hafta','Puanlayan','Oyuncu','Pas','Sut','Dribling','Savunma','Hiz Kondisyon','Fizik','Takim Oyunu']); }
-  var scores = JSON.parse(params.scores);
-  var week = params.week, rater = params.rater, now = new Date().toLocaleString('tr-TR');
-  var data = sheet.getDataRange().getValues();
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var ss    = SpreadsheetApp.openById(SHEET_ID);
+    var sheet = ss.getSheetByName('Puanlar');
+    if (!sheet) { sheet = ss.insertSheet('Puanlar'); sheet.appendRow(['Tarih','Hafta','Puanlayan','Oyuncu','Pas','Sut','Dribling','Savunma','Hiz Kondisyon','Fizik','Takim Oyunu']); }
+    var scores = JSON.parse(params.scores);
+    var week = params.week, rater = params.rater, now = new Date().toLocaleString('tr-TR');
+    var data = sheet.getDataRange().getValues();
 
-  // Çift oy koruması: bu hafta zaten oy verdiyse reddet
-  var alreadyVoted = false;
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][1]) === week && String(data[i][2]) === rater) { alreadyVoted = true; break; }
-  }
-  if (alreadyVoted) {
-    return json({ success: false, alreadyVoted: true, error: 'Bu hafta zaten oy kullandınız.' });
-  }
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][1]) === week && String(data[i][2]) === rater) {
+        return json({ success: false, alreadyVoted: true, error: 'Bu hafta zaten oy kullandınız.' });
+      }
+    }
 
-  Object.keys(scores).forEach(function(player) {
-    var k = scores[player];
-    sheet.appendRow([now, week, rater, player, k['Pas']||'', k['Sut']||'', k['Dribling']||'', k['Savunma']||'', k['Hiz / Kondisyon']||'', k['Fizik']||'', k['Takim Oyunu']||'']);
-  });
-  // Katılım kaydı: oy kullananı "geldi" olarak işaretle (sadece)
-  var katSheet = getOrCreateKatilimSheet(ss);
-  setAttendance(katSheet, now, week, rater, 1);
-  return json({ success: true });
+    Object.keys(scores).forEach(function(player) {
+      var k = scores[player];
+      sheet.appendRow([now, week, rater, player, k['Pas']||'', k['Sut']||'', k['Dribling']||'', k['Savunma']||'', k['Hiz / Kondisyon']||'', k['Fizik']||'', k['Takim Oyunu']||'']);
+    });
+    var katSheet = getOrCreateKatilimSheet(ss);
+    setAttendance(katSheet, now, week, rater, 1);
+    return json({ success: true });
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function checkVoted(params) {
