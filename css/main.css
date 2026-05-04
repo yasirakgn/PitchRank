@@ -9,7 +9,7 @@
   .fc-rating { font-size: 22px !important; }
   .fc-name { font-size: 9px !important; }
   .fc-stat-val { font-size: 9px !important; }
-  .fc-stat-lbl { font-size: 7px !important; }
+  .fc-stat-lbl { font-size: 9px !important; }
   .crit-row { grid-template-columns: 78px 1fr 26px; gap: 6px; }
   .crit-name { font-size: 11px; }
   .pcard { padding: 12px; }

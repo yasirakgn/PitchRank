@@ -241,7 +241,7 @@ function makeFifaCard(p, pObj, rank, data, overrideScore) {
     <div class="fc-top">
       <div>
         <div class="fc-rating" style="color:${col.text}">${rating}</div>
-        <div class="fc-pos-tag" style="color:${col.text}cc">${posName}</div>
+        <div class="fc-pos-tag" style="color:${col.text}cc">${posKey}</div>
       </div>
       <div class="fc-icons" style="color:${col.text}">${topStyles}</div>
     </div>
