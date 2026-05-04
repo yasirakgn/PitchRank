@@ -1941,3 +1941,31 @@ input[type=range]::-webkit-slider-thumb {
     padding-inline: 10px;
   }
 }
+
+/* Lineup optimizer preset buttons */
+.tk-preset-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.preset-btn {
+  flex: 1;
+  padding: 11px 6px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.preset-btn:hover {
+  background: var(--bg3);
+}
+.preset-btn.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
