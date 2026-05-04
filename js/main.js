@@ -336,93 +336,91 @@ function openProfile(p, data) {
   const modalBg = document.getElementById('modalBg');
   if (!profileHero || !modalBody || !modalBg) return;
 
+  profileHero.className = `pmo-hero pmo-${cls}`;
+  modalBody.className = 'pmo-body';
   profileHero.innerHTML = `
-    <div style="background:${heroGrad};position:absolute;inset:0;"></div>
-    <div style="position:absolute;inset:0;opacity:0.04;background-image:url('data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"200\\" height=\\"200\\"><filter id=\\"n\\"><feTurbulence type=\\"fractalNoise\\" baseFrequency=\\"0.9\\" numOctaves=\\"4\\"/></filter><rect width=\\"200\\" height=\\"200\\" filter=\\"url(%23n)\\"/></svg>');"></div>
-    <div style="position:absolute;top:18px;left:20px;z-index:5;">
-      <div style="font-size:52px;font-weight:900;color:${col.text};line-height:1;letter-spacing:-2px;text-shadow:0 4px 12px rgba(0,0,0,0.5);">${rating}</div>
-      <div style="font-size:10px;font-weight:800;color:${col.text};opacity:0.7;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">${POS[posKey]||posKey}</div>
-    </div>
-    <div style="position:absolute;right:0;bottom:0;height:175px;width:130px;z-index:3;overflow:hidden;">
+    <div class="pmo-hero-bg"></div>
+    <div class="pmo-wm" style="color:${col.text}">${rating}</div>
+    <div class="pmo-hero-gradient"></div>
+    <div class="pmo-photo-wrap">
       ${photoUrl
-        ? `<img src="${escHtml(photoUrl)}" loading="lazy" style="position:absolute;bottom:0;right:0;height:175px;width:auto;max-width:160px;object-fit:contain;object-position:bottom right;filter:drop-shadow(-6px 0 16px rgba(0,0,0,0.5));" onerror="this.style.display='none'">`
-        : `<div style="position:absolute;bottom:20px;right:20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:${col.text};border:2px solid rgba(255,255,255,0.2);">${escHtml(p.name.charAt(0))}</div>`}
+        ? `<img src="${escHtml(photoUrl)}" loading="lazy" onerror="this.style.display='none'">`
+        : `<div class="pmo-photo-init" style="color:${col.text}">${escHtml(p.name.charAt(0))}</div>`}
     </div>
-    <div style="position:absolute;bottom:0;left:0;right:0;z-index:4;padding:14px 18px 16px;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 100%);">
-      <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;text-shadow:0 2px 6px rgba(0,0,0,0.5);">${escHtml(p.name)}</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
-        <span style="font-size:10px;font-weight:800;color:${col.text};background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:20px;border:1px solid ${col.text}33;letter-spacing:.5px;">💶 ${formatMoney(marketVal)}</span>
-        ${styles.slice(0,3).map(s=>`<span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.1);padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);">${escHtml(s.icon)} ${escHtml(s.name)}</span>`).join('')}
+    <div class="pmo-hero-inner">
+      <div class="pmo-hero-top">
+        <div class="pmo-rating-num" style="color:${col.text}">${rating}</div>
+        <span class="pmo-pos-badge" style="color:${col.text};border-color:${col.text}40;background:${col.text}18">${posKey}</span>
+      </div>
+      <div>
+        <div class="pmo-hero-name">${escHtml(p.name)}</div>
+        <div class="pmo-hero-tags">
+          <span class="pmo-tag-val" style="color:${col.text};border-color:${col.text}33">💶 ${formatMoney(marketVal)}</span>
+          ${styles.slice(0, 2).map(s => `<span class="pmo-tag-style">${escHtml(s.icon)} ${escHtml(s.name)}</span>`).join('')}
+        </div>
       </div>
     </div>
-    ${last5.length ? `<div style="position:absolute;left:20px;bottom:62px;display:flex;align-items:flex-end;gap:4px;z-index:5;width:120px;">${formBars}</div>` : ''}
   `;
 
   modalBody.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0;">
+    <div class="pmo-chips-row">
       ${[
-        ['📅', attendCount + (totalWeeks?'/'+totalWeeks:''), 'Maç'],
+        ['📅', attendCount + (totalWeeks ? '/' + totalWeeks : ''), 'Maç'],
         ['🎯', sdev < 0.5 ? 'A+' : sdev < 1.5 ? 'B' : 'C', 'Form'],
         ['%', attendPct, 'Devm.'],
         ['📊', validKrits.length, 'Kriter']
-      ].map(([ic,vl,lb])=>`<div style="text-align:center;background:var(--bg3);border-radius:14px;padding:10px 6px;border:1px solid var(--border2);">
-        <div style="font-size:16px;margin-bottom:2px;">${ic}</div>
-        <div style="font-size:16px;font-weight:900;color:var(--text);letter-spacing:-0.5px;line-height:1;">${vl}</div>
-        <div style="font-size:8px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">${lb}</div>
+      ].map(([ic, vl, lb]) => `<div class="pmo-stat-chip">
+        <span class="pmo-chip-icon">${ic}</span>
+        <span class="pmo-chip-val">${vl}</span>
+        <span class="pmo-chip-lbl">${lb}</span>
       </div>`).join('')}
     </div>
-    ${bestCrit ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-      <div style="background:var(--gl);border:1px solid #10b98130;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:20px;">💪</span>
-        <div><div style="font-size:9px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px;">Güçlü Yön</div><div style="font-size:13px;font-weight:800;color:var(--text);margin-top:1px;">${critLabelMap[bestCrit]}</div><div style="font-size:11px;color:var(--green);font-weight:700;">${kOrt[bestCrit].toFixed(1)}</div></div>
+    ${bestCrit ? `<div class="pmo-bw-row">
+      <div class="pmo-bw-card pmo-bw-best">
+        <span class="pmo-bw-icon">💪</span>
+        <div>
+          <div class="pmo-bw-label">Güçlü Yön</div>
+          <div class="pmo-bw-crit">${critLabelMap[bestCrit]}</div>
+          <div class="pmo-bw-score" style="color:var(--green)">${kOrt[bestCrit].toFixed(1)}</div>
+        </div>
       </div>
-      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:20px;">📈</span>
-        <div><div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;">Gelişmeli</div><div style="font-size:13px;font-weight:800;color:var(--text);margin-top:1px;">${critLabelMap[worstCrit]}</div><div style="font-size:11px;color:var(--text3);font-weight:700;">${kOrt[worstCrit].toFixed(1)}</div></div>
+      <div class="pmo-bw-card pmo-bw-weak">
+        <span class="pmo-bw-icon">📈</span>
+        <div>
+          <div class="pmo-bw-label">Gelişmeli</div>
+          <div class="pmo-bw-crit">${critLabelMap[worstCrit]}</div>
+          <div class="pmo-bw-score" style="color:var(--text3)">${kOrt[worstCrit].toFixed(1)}</div>
+        </div>
       </div>
     </div>` : ''}
-    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;">
-      <div style="flex-shrink:0;background:var(--bg3);border-radius:16px;padding:10px;border:1px solid var(--border2);">
-        <svg viewBox="0 0 180 180" width="150" height="150" style="display:block;overflow:visible;">
-          <defs>
-            <linearGradient id="prf" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="${col.text}" stop-opacity="0.3"/>
-              <stop offset="100%" stop-color="${col.text}" stop-opacity="0.05"/>
-            </linearGradient>
-          </defs>
-          ${rgrid}${raxes}
-          <polygon points="${rpoly}" fill="url(#prf)" stroke="${col.text}" stroke-width="1.5" stroke-linejoin="round" opacity="0.95"/>
-          ${rdots}${rlbls}
-        </svg>
-      </div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:5px;padding-top:4px;">
-        ${CRITERIA.map((c,ci) => {
-          const v = kOrt[c];
-          const pct = v !== null ? Math.round(v/10*100) : 0;
-          const barC = v !== null ? scoreColor(v) : 'var(--text3)';
-          return `<div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-              <span style="font-size:9px;font-weight:700;color:var(--text2);">${CDISP[ci]}</span>
-              <span style="font-size:10px;font-weight:900;color:${barC};">${v!==null?v.toFixed(1):'—'}</span>
-            </div>
-            <div style="height:4px;background:var(--border2);border-radius:2px;overflow:hidden;">
-              <div style="height:100%;width:${pct}%;background:${barC};border-radius:2px;transition:width .5s;"></div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
+    <div class="pmo-attrs-section">
+      <div class="pmo-section-hdr">Kriter Ortalamaları</div>
+      ${CRITERIA.map((c, ci) => {
+        const v = kOrt[c];
+        const pct = v !== null ? Math.round(v / 10 * 100) : 0;
+        const barC = v !== null ? scoreColor(v) : 'var(--text3)';
+        return `<div class="pmo-attr">
+          <div class="pmo-attr-top">
+            <span class="pmo-attr-name">${CDISP[ci]}</span>
+            <span class="pmo-attr-score" style="color:${barC}">${v !== null ? v.toFixed(1) : '—'}</span>
+          </div>
+          <div class="pmo-attr-track">
+            <div class="pmo-attr-fill" style="width:${pct}%;background:${barC}"></div>
+          </div>
+        </div>`;
+      }).join('')}
     </div>
-    ${last5.length ? `<div style="background:var(--bg3);border-radius:16px;padding:12px;border:1px solid var(--border2);">
-      <div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📅 Son ${last5.length} Hafta</div>
-      <div style="display:flex;gap:6px;">
+    ${last5.length ? `<div class="pmo-form-section">
+      <div class="pmo-section-hdr">📅 Son ${last5.length} Hafta</div>
+      <div class="pmo-form-row">
         ${last5.map(w => {
           const wi = weeks.indexOf(w);
           const v = weeklyGenels[wi] ?? null;
-          const r10 = v !== null ? Math.min(99, Math.round(v*10)) : null;
-          const cc = r10!==null ? ratingColor(r10).text : 'var(--text3)';
-          return `<div style="flex:1;text-align:center;background:var(--bg2);border-radius:10px;padding:6px 4px;border:1px solid var(--border2);">
-            <div style="font-size:14px;font-weight:900;color:${cc};line-height:1;">${r10!==null?r10:'—'}</div>
-            <div style="font-size:7px;font-weight:700;color:var(--text3);margin-top:2px;">${w.replace(/\d{4}-/,'')}</div>
+          const r10 = v !== null ? Math.min(99, Math.round(v * 10)) : null;
+          const cc = r10 !== null ? ratingColor(r10).text : 'var(--text3)';
+          return `<div class="pmo-form-cell">
+            <div class="pmo-form-score" style="color:${cc}">${r10 !== null ? r10 : '—'}</div>
+            <div class="pmo-form-week">${w.replace(/\d{4}-/, '')}</div>
           </div>`;
         }).join('')}
       </div>

@@ -1969,3 +1969,289 @@ input[type=range]::-webkit-slider-thumb {
   border-color: var(--green);
   color: #fff;
 }
+
+/* ── Profile Modal Redesign (pmo) ──────────────────────── */
+.pmo-hero {
+  position: relative;
+  min-height: 220px;
+  overflow: hidden;
+  border-radius: 28px 28px 0 0;
+}
+.pmo-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.pmo-fc-gold   .pmo-hero-bg { background: linear-gradient(140deg, #110900 0%, #3a2200 40%, #5c3a00 65%, #1a1000 100%); }
+.pmo-fc-silver .pmo-hero-bg { background: linear-gradient(140deg, #070e1a 0%, #0f1e2e 40%, #1a2e42 65%, #070e1a 100%); }
+.pmo-fc-bronze .pmo-hero-bg { background: linear-gradient(140deg, #0e0300 0%, #2c0c00 40%, #3e1500 65%, #150600 100%); }
+.pmo-fc-normal .pmo-hero-bg { background: linear-gradient(140deg, #03091c 0%, #071630 40%, #0c2248 65%, #040c1e 100%); }
+.pmo-wm {
+  position: absolute;
+  right: -12px;
+  bottom: -24px;
+  z-index: 1;
+  font-size: 190px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -10px;
+  opacity: 0.1;
+  pointer-events: none;
+  user-select: none;
+  font-family: 'Exo 2', sans-serif;
+}
+.pmo-hero-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 130px;
+  z-index: 2;
+  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 100%);
+  pointer-events: none;
+}
+.pmo-photo-wrap {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 215px;
+  width: 145px;
+  z-index: 3;
+  overflow: hidden;
+}
+.pmo-photo-wrap img {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 215px;
+  width: auto;
+  max-width: 175px;
+  object-fit: contain;
+  object-position: bottom right;
+  filter: drop-shadow(-8px 0 20px rgba(0,0,0,0.55));
+}
+.pmo-photo-init {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 900;
+}
+.pmo-hero-inner {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px 20px 16px;
+}
+.pmo-hero-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.pmo-rating-num {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 58px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -3px;
+  text-shadow: 0 4px 16px rgba(0,0,0,0.55);
+}
+.pmo-pos-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid;
+  margin-top: 10px;
+  backdrop-filter: blur(6px);
+}
+.pmo-hero-name {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  line-height: 1.1;
+  margin-bottom: 7px;
+}
+.pmo-hero-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pmo-tag-val {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid;
+  background: rgba(0,0,0,0.3);
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(4px);
+}
+.pmo-tag-style {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.82);
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(4px);
+}
+.pmo-body {
+  padding: 16px 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.pmo-chips-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.pmo-stat-chip {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 12px 6px 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.pmo-chip-icon { font-size: 16px; line-height: 1; }
+.pmo-chip-val {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+.pmo-chip-lbl {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.pmo-bw-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.pmo-bw-card {
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid;
+}
+.pmo-bw-best { background: var(--gl); border-color: rgba(16,201,135,0.22); }
+.pmo-bw-weak { background: var(--bg3); border-color: var(--border2); }
+.pmo-bw-icon { font-size: 22px; flex-shrink: 0; }
+.pmo-bw-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+}
+.pmo-bw-best .pmo-bw-label { color: var(--green); }
+.pmo-bw-crit {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  margin-top: 2px;
+  line-height: 1.2;
+}
+.pmo-bw-score {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 1px;
+}
+.pmo-attrs-section,
+.pmo-form-section {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 14px;
+}
+.pmo-section-hdr {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+}
+.pmo-attr { margin-bottom: 9px; }
+.pmo-attr:last-child { margin-bottom: 0; }
+.pmo-attr-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.pmo-attr-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text2);
+}
+.pmo-attr-score {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+}
+.pmo-attr-track {
+  height: 6px;
+  background: var(--border2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.pmo-attr-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pmo-form-row { display: flex; gap: 6px; }
+.pmo-form-cell {
+  flex: 1;
+  text-align: center;
+  background: var(--bg2);
+  border-radius: 10px;
+  padding: 8px 4px;
+  border: 1px solid var(--border2);
+}
+.pmo-form-score {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+}
+.pmo-form-week {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--text3);
+  margin-top: 3px;
+}
