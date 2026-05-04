@@ -142,14 +142,11 @@
       <button class="tk-primary-btn" onclick="buildTeams()" type="button">Dengeli Kur</button>
       <button class="tk-secondary-btn" onclick="shuffleTeams()" type="button">Rastgele</button>
     </div>
-    <div class="tk-action-row" style="margin-top:10px;align-items:center;">
-      <select id="lineupPreset" style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;font-size:14px;font-weight:700;color:var(--text);font-family:inherit;cursor:pointer;">
-        <option value="dengeli">⚖️ Dengeli</option>
-        <option value="hucum">⚔️ Hücum</option>
-        <option value="savunma">🛡️ Savunma</option>
-        <option value="hizli">⚡ Hızlı</option>
-      </select>
-      <button class="tk-primary-btn" onclick="buildOptimalLineup()" type="button" style="flex:1.2;">🪄 Optimal 5'li</button>
+    <div class="tk-preset-row">
+      <button class="preset-btn" data-preset="dengeli" onclick="buildOptimalLineup('dengeli')" type="button">⚖️ Dengeli</button>
+      <button class="preset-btn" data-preset="hucum" onclick="buildOptimalLineup('hucum')" type="button">⚔️ Hücum</button>
+      <button class="preset-btn" data-preset="savunma" onclick="buildOptimalLineup('savunma')" type="button">🛡️ Savunma</button>
+      <button class="preset-btn" data-preset="hizli" onclick="buildOptimalLineup('hizli')" type="button">⚡ Hızlı</button>
     </div>
     <div id="teamResult"></div>
     <div id="noDataTakim" class="no-data" style="display:none">En az 4 oyuncu seçin.</div>
