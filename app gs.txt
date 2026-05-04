@@ -36,6 +36,19 @@ function doGet(e) {
   if (action === 'getHakem')          return getHakem(params);
   if (action === 'checkVoted')        return checkVoted(params);
   if (action === 'getManualWeek')     return getManualWeek();
+  // Fallback: GAS may redirect POST→GET; handle write actions here too
+  if (action === 'save')             return saveRating(params);
+  if (action === 'saveMatch')        return saveMatch(params);
+  if (action === 'saveMevki')        return saveMevki(params);
+  if (action === 'savePlayer')       return savePlayer(params);
+  if (action === 'deletePlayer')     return deletePlayer(params);
+  if (action === 'saveVideo')        return saveVideo(params);
+  if (action === 'verifyPin')        return verifyPin(params);
+  if (action === 'saveTodayPlayers') return saveTodayPlayers(params);
+  if (action === 'saveHakem')        return saveHakem(params);
+  if (action === 'saveAttendance')   return saveAttendance(params);
+  if (action === 'saveManualWeek')   return saveManualWeek(params);
+  if (action === 'saveSetting')      return saveSetting(params);
   return HtmlService.createHtmlOutput('<p>Calisiyor</p>');
 }
 

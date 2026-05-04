@@ -22,9 +22,7 @@ export function gs(p) {
       }
 
       const fetchOpts = isWrite
-        ? { method: 'POST', redirect: 'follow',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(allParams) }
+        ? { method: 'POST', redirect: 'follow', body: JSON.stringify(allParams) }
         : { method: 'GET', redirect: 'follow' };
 
       const url = isWrite
