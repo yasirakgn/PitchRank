@@ -1,13 +1,18 @@
-import { getGS, CURRENT_TEAM } from './storage.js';
+import { getGS, CURRENT_TEAM, sGet } from './storage.js';
 import { showToast } from './utils.js';
 
 export function gs(p) {
   return new Promise((resolve, reject) => {
     const runRequest = (retryCount = 0) => {
       const baseUrl = getGS();
-      const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + Object.keys(p).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(p[k])).join('&');
+      const allParams = { ...p };
+      try {
+        const sess = JSON.parse(sGet('hs_admin_session') || '{}');
+        if (sess.adminToken) allParams.adminToken = sess.adminToken;
+      } catch (_) {}
+      const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + Object.keys(allParams).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(allParams[k])).join('&');
 
-      console.log(`[PitchRank] 📡 ${p.action} isteği gönderiliyor:`, url);
+      console.log(`[PitchRank] 📡 ${p.action} isteği gönderiliyor`);
 
       fetch(url, { method: 'GET', redirect: 'follow' })
         .then(r => {

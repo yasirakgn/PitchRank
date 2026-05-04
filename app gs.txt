@@ -63,6 +63,15 @@ function getOrCreateLoginAttemptsSheet(ss) {
   return sheet;
 }
 
+// ─── ADMIN TOKEN KONTROLÜ ─────────────────────────────────────────────────
+function requireAdmin(params) {
+  var token = String(params.adminToken || '').trim();
+  if (!token) return json({ success: false, error: 'Yetkisiz: token eksik.' });
+  var cached = CacheService.getScriptCache().get('ADMIN_' + token);
+  if (cached !== '1') return json({ success: false, error: 'Yetkisiz: token gecersiz veya suresi dolmus.' });
+  return null;
+}
+
 // ─── PIN DOĞRULAMA ────────────────────────────────────────────────────────
 function verifyPin(params) {
   var pin = String(params.pin || '').trim();
@@ -92,7 +101,11 @@ function verifyPin(params) {
   var total = attemptSheet.getLastRow();
   if (total > 151) attemptSheet.deleteRows(2, total - 151);
 
-  if (success) return json({ success: true });
+  if (success) {
+    var token = Utilities.getUuid();
+    CacheService.getScriptCache().put('ADMIN_' + token, '1', 7200);
+    return json({ success: true, token: token });
+  }
   if (storedPin === '') return json({ success: false, error: 'PIN Ayarlar sayfasinda bulunamadi.' });
   return json({ success: false });
 }
@@ -108,6 +121,7 @@ function getOrCreateBugunSheet(ss) {
 }
 
 function saveTodayPlayers(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   var ss    = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getOrCreateBugunSheet(ss);
   var week  = params.week || '';
@@ -157,6 +171,7 @@ function getOrCreateHakemSheet(ss) {
 }
 
 function saveHakem(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   var ss    = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getOrCreateHakemSheet(ss);
   var week  = params.week || '';
@@ -296,6 +311,7 @@ function getPlayerNamesFromSheet(ss) {
 }
 
 function saveMevki(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = ss.getSheetByName('Mevkiler');
   if (!sheet) { sheet = ss.insertSheet('Mevkiler'); sheet.appendRow(['Oyuncu', 'Mevki', 'Guncelleme']); }
@@ -331,6 +347,7 @@ function getMevkiler() {
 }
 
 function saveMatch(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var now = new Date().toLocaleString('tr-TR'), week = params.week || '';
   var macSheet = ss.getSheetByName('Maclar');
@@ -428,6 +445,7 @@ function getAttendance(params) {
 }
 
 function saveAttendance(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getOrCreateKatilimSheet(ss);
   var now = new Date().toLocaleString('tr-TR'), week = params.week || '';
@@ -463,6 +481,7 @@ function getPlayers() {
 }
 
 function savePlayer(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getOrCreateOyuncularSheet(ss);
   var name = params.name;
@@ -480,6 +499,7 @@ function savePlayer(params) {
 }
 
 function deletePlayer(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getOrCreateOyuncularSheet(ss);
   var data = sheet.getDataRange().getValues();
@@ -507,6 +527,7 @@ function getVideos() {
 }
 
 function saveVideo(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var sheet = getOrCreateVideolarSheet(ss);
   var week = params.week||'', url = params.url||'', title = params.title||(week+' Mac Yayini');
@@ -547,6 +568,7 @@ function getManualWeek() {
 }
 
 function saveManualWeek(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   try {
     var week = params.week;
     if (!week) {
@@ -578,6 +600,7 @@ function saveManualWeek(params) {
 }
 
 function saveSetting(params) {
+  var authErr = requireAdmin(params); if (authErr) return authErr;
   try {
     var key = String(params.key || '').trim();
     var val = String(params.value !== undefined ? params.value : '').trim();

@@ -4,7 +4,8 @@ import { state } from './state.js';
 import { escHtml, normPos, san, getWeekLabel, getAutoWeekLabel, showToast, showConfirm } from './utils.js';
 import { gs } from './api.js';
 import { savePlayers, initSelects, buildGoalInputs } from './players.js';
-import { loadMatchHistory } from './stats.js';
+import { loadMatchHistory, loadResults } from './stats.js';
+import { detectAnomalies } from './anomaly.js';
 
 let _pendingPos = {};
 let _bugunSelected = {};
@@ -29,7 +30,7 @@ function isAdminLocked() { const lock = getAdminLock(); if (!lock.until) return 
 function recordFailedAttempt() { const lock = getAdminLock(); const attempts = (lock.attempts || 0) + 1; if (attempts >= ADMIN_MAX_ATTEMPTS) { setAdminLock({ attempts, until: Date.now() + ADMIN_LOCKOUT_MS }); return attempts; } setAdminLock({ attempts }); return attempts; }
 function clearAdminLock() { setAdminLock({}); }
 function isAdminLoggedIn() { try { const d = JSON.parse(sGet('hs_admin_session') || '{}'); if (!d.token || !d.expires) return false; if (Date.now() > d.expires) { sRem('hs_admin_session'); return false; } return true; } catch(e) { return false; } }
-function setAdminSession() { const token = Math.random().toString(36).slice(2) + Date.now().toString(36); sSet('hs_admin_session', JSON.stringify({ token, expires: Date.now() + 2 * 60 * 60 * 1000 })); }
+function setAdminSession(adminToken) { const token = Math.random().toString(36).slice(2) + Date.now().toString(36); sSet('hs_admin_session', JSON.stringify({ token, adminToken: adminToken || '', expires: Date.now() + 2 * 60 * 60 * 1000 })); }
 
 export function tryAdmin(btnElement) {
   if (isAdminLoggedIn()) {
@@ -54,7 +55,7 @@ export function checkPin() {
   gs({action:'verifyPin', pin}).then(d => {
     btn.disabled = false; btn.textContent = 'Doğrula';
     if (d.success) {
-      clearAdminLock(); setAdminSession();
+      clearAdminLock(); setAdminSession(d.token);
       document.getElementById('pinBg').classList.remove('open');
       showToast('✅ Yönetici girişi başarılı.');
       const adminBtn = document.querySelectorAll('.bnav-item')[6];
@@ -93,6 +94,7 @@ export function setAdminTab(id, btnElement) {
     loadAdminVideos();
   }
   if (id === 'hafta') loadHaftaTab();
+  if (id === 'anomali') renderAnomalies();
 }
 
 // ─── BUGÜN GELENLER ──────────────────────────────────────────────────────────
@@ -517,6 +519,46 @@ export function loadHaftaTab() {
   const inputEl = document.getElementById('newWeekInput');
   if (displayEl) displayEl.textContent = state.manualWeek ? state.manualWeek : getAutoWeekLabel() + ' (Otomatik)';
   if (inputEl && !inputEl.value) inputEl.value = state.manualWeek || getAutoWeekLabel();
+}
+
+// ─── ANOMALİ TESPİTİ ─────────────────────────────────────────────────────────
+export function renderAnomalies() {
+  const el = document.getElementById('anomalyList');
+  if (!el) return;
+  el.innerHTML = '<div class="no-data"><span class="spin"></span>Taranıyor...</div>';
+
+  const run = () => {
+    const flags = detectAnomalies(state.resultData);
+    if (!flags.length) {
+      el.innerHTML = '<div class="no-data" style="border-color:#10b98130;background:rgba(16,185,129,0.05);color:var(--green);">✅ Anomali bulunamadı.</div>';
+      return;
+    }
+    el.innerHTML = flags.map(f => {
+      const dirCol = f.direction === 'low' ? '#ef4444' : '#3b82f6';
+      const dirIcon = f.direction === 'low' ? '↓' : '↑';
+      const dirLabel = f.direction === 'low' ? 'Düşük' : 'Yüksek';
+      const score10 = f.score.toFixed(1);
+      const med10 = f.median.toFixed(1);
+      const zStr = f.modZ.toFixed(1);
+      return `<div style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border2);border-left:3px solid ${dirCol};border-radius:14px;padding:12px;margin-bottom:8px;">
+        <div style="font-size:22px;flex-shrink:0;color:${dirCol};font-weight:900;">${dirIcon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:800;color:var(--text);letter-spacing:-0.3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(f.player)}</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:600;">${escHtml(f.week)} · medyan ${med10}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:18px;font-weight:900;color:${dirCol};line-height:1;letter-spacing:-0.5px;">${score10}</div>
+          <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">${dirLabel} · z ${zStr}</div>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  if (!state.resultData) {
+    loadResults(() => run(), false);
+  } else {
+    run();
+  }
 }
 
 // ─── OY GİZLEME SINIRI ───────────────────────────────────────────────────────
