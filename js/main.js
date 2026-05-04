@@ -563,9 +563,10 @@ function buildTeamsWithData(selected) {
   renderTeams();
 }
 
-function buildOptimalLineup() {
-  const selectEl = document.getElementById('lineupPreset');
-  const presetKey = (selectEl && selectEl.value) || 'dengeli';
+function buildOptimalLineup(presetKey = 'dengeli') {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.querySelector(`.preset-btn[data-preset="${presetKey}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
   const noDataEl = document.getElementById('noDataTakim');
   const teamResultEl = document.getElementById('teamResult');
   if (!noDataEl || !teamResultEl) return;
