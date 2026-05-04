@@ -345,14 +345,14 @@ function openProfile(p, data) {
     </div>
     <div style="position:absolute;right:0;bottom:0;height:175px;width:130px;z-index:3;overflow:hidden;">
       ${photoUrl
-        ? `<img src="${photoUrl}" loading="lazy" style="position:absolute;bottom:0;right:0;height:175px;width:auto;max-width:160px;object-fit:contain;object-position:bottom right;filter:drop-shadow(-6px 0 16px rgba(0,0,0,0.5));" onerror="this.style.display='none'">`
-        : `<div style="position:absolute;bottom:20px;right:20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:${col.text};border:2px solid rgba(255,255,255,0.2);">${p.name.charAt(0)}</div>`}
+        ? `<img src="${escHtml(photoUrl)}" loading="lazy" style="position:absolute;bottom:0;right:0;height:175px;width:auto;max-width:160px;object-fit:contain;object-position:bottom right;filter:drop-shadow(-6px 0 16px rgba(0,0,0,0.5));" onerror="this.style.display='none'">`
+        : `<div style="position:absolute;bottom:20px;right:20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:${col.text};border:2px solid rgba(255,255,255,0.2);">${escHtml(p.name.charAt(0))}</div>`}
     </div>
     <div style="position:absolute;bottom:0;left:0;right:0;z-index:4;padding:14px 18px 16px;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 100%);">
-      <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;text-shadow:0 2px 6px rgba(0,0,0,0.5);">${p.name}</div>
+      <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;text-shadow:0 2px 6px rgba(0,0,0,0.5);">${escHtml(p.name)}</div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
         <span style="font-size:10px;font-weight:800;color:${col.text};background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:20px;border:1px solid ${col.text}33;letter-spacing:.5px;">💶 ${formatMoney(marketVal)}</span>
-        ${styles.slice(0,3).map(s=>`<span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.1);padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);">${s.icon} ${s.name}</span>`).join('')}
+        ${styles.slice(0,3).map(s=>`<span style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.1);padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);">${escHtml(s.icon)} ${escHtml(s.name)}</span>`).join('')}
       </div>
     </div>
     ${last5.length ? `<div style="position:absolute;left:20px;bottom:62px;display:flex;align-items:flex-end;gap:4px;z-index:5;width:120px;">${formBars}</div>` : ''}
@@ -458,7 +458,7 @@ function renderTodayPlayers() {
     if (!(p.name in state.todaySelected)) state.todaySelected[p.name] = true;
     const on = state.todaySelected[p.name];
     const pos = normPos(p)[0] || 'OMO';
-    return `<button onclick="toggleToday('${escHtml(p.name)}')" id="td-${san(p.name)}" class="tk-chip${on?' tk-chip-on':''}">
+    return `<button data-name="${escHtml(p.name)}" onclick="toggleToday(this.dataset.name)" id="td-${san(p.name)}" class="tk-chip${on?' tk-chip-on':''}">
       ${posEmojis[pos]||''} ${escHtml(p.name)}
     </button>`;
   }).join('');

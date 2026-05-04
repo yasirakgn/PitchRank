@@ -29,7 +29,7 @@ function setAdminLock(data) { lSet('hs_admin_lock', JSON.stringify(data)); }
 function isAdminLocked() { const lock = getAdminLock(); if (!lock.until) return false; if (Date.now() < lock.until) return true; setAdminLock({}); return false; }
 function recordFailedAttempt() { const lock = getAdminLock(); const attempts = (lock.attempts || 0) + 1; if (attempts >= ADMIN_MAX_ATTEMPTS) { setAdminLock({ attempts, until: Date.now() + ADMIN_LOCKOUT_MS }); return attempts; } setAdminLock({ attempts }); return attempts; }
 function clearAdminLock() { setAdminLock({}); }
-function isAdminLoggedIn() { try { const d = JSON.parse(sGet('hs_admin_session') || '{}'); if (!d.token || !d.expires) return false; if (Date.now() > d.expires) { sRem('hs_admin_session'); return false; } return true; } catch(e) { return false; } }
+function isAdminLoggedIn() { try { const d = JSON.parse(sGet('hs_admin_session') || '{}'); if (!d.token || !d.adminToken || !d.expires) return false; if (Date.now() > d.expires) { sRem('hs_admin_session'); return false; } return true; } catch(e) { return false; } }
 function setAdminSession(adminToken) { const token = Math.random().toString(36).slice(2) + Date.now().toString(36); sSet('hs_admin_session', JSON.stringify({ token, adminToken: adminToken || '', expires: Date.now() + 2 * 60 * 60 * 1000 })); }
 
 export function tryAdmin(btnElement) {
