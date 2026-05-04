@@ -3,32 +3,39 @@ var SHEET_ID = '1olxoMoQj1qoynLU756se3qPXAwFKUTE3f7nVxkyyGWE';
 var RATE_LIMIT_MAX       = 5;
 var RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 
+function doPost(e) {
+  var params = {};
+  try { params = JSON.parse(e.postData.contents || '{}'); } catch(_) {}
+  var action = params.action;
+  if (action === 'save')             return saveRating(params);
+  if (action === 'saveMatch')        return saveMatch(params);
+  if (action === 'saveMevki')        return saveMevki(params);
+  if (action === 'savePlayer')       return savePlayer(params);
+  if (action === 'deletePlayer')     return deletePlayer(params);
+  if (action === 'saveVideo')        return saveVideo(params);
+  if (action === 'verifyPin')        return verifyPin(params);
+  if (action === 'saveTodayPlayers') return saveTodayPlayers(params);
+  if (action === 'saveHakem')        return saveHakem(params);
+  if (action === 'saveAttendance')   return saveAttendance(params);
+  if (action === 'saveManualWeek')   return saveManualWeek(params);
+  if (action === 'saveSetting')      return saveSetting(params);
+  return json({ success: false, error: 'Bilinmeyen action.' });
+}
+
 function doGet(e) {
   var params = e.parameter;
   var action = params.action;
-  if (action === 'save')              return saveRating(params);
   if (action === 'getResults')        return getResults();
-  if (action === 'saveMatch')         return saveMatch(params);
   if (action === 'getMatches')        return getMatches();
-  if (action === 'saveMevki')         return saveMevki(params);
   if (action === 'getMevkiler')       return getMevkiler();
   if (action === 'getGoals')          return getGoals(params);
   if (action === 'getAttendance')     return getAttendance(params);
-  if (action === 'saveAttendance')    return saveAttendance(params);
   if (action === 'getPlayers')        return getPlayers();
-  if (action === 'savePlayer')        return savePlayer(params);
-  if (action === 'deletePlayer')      return deletePlayer(params);
   if (action === 'getVideos')         return getVideos();
-  if (action === 'saveVideo')         return saveVideo(params);
-  if (action === 'verifyPin')         return verifyPin(params);
-  if (action === 'saveTodayPlayers')  return saveTodayPlayers(params);
   if (action === 'getTodayPlayers')   return getTodayPlayers(params);
-  if (action === 'saveHakem')         return saveHakem(params);
   if (action === 'getHakem')          return getHakem(params);
   if (action === 'checkVoted')        return checkVoted(params);
   if (action === 'getManualWeek')     return getManualWeek();
-  if (action === 'saveManualWeek')    return saveManualWeek(params);
-  if (action === 'saveSetting')       return saveSetting(params);
   return HtmlService.createHtmlOutput('<p>Calisiyor</p>');
 }
 
