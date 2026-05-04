@@ -3,11 +3,12 @@ import { CURRENT_TEAM, lGet, lSet, lRem } from './storage.js';
 import { state } from './state.js';
 import { escHtml, normPos, posLabel, san, getPlayerPhoto, getWeekLabel, getAutoWeekLabel, formatMoney, scoreColor, ratingColor, cardClass, showToast, showConfirm, closeConfirm } from './utils.js';
 import { calcStdDev, posRating, calcMarketValue, getPlayStyles } from './rating.js';
+import { findOptimalLineup, PRESET_META } from './lineup-optimizer.js';
 import { savePlayers, loadPlayersFromSheets, loadMevkilerFromSheets, initSelects, checkIdentityLock, resetIdentity, onRaterChange, buildCards, onSlider, updateProgress, submitRatings, closeSuccessPopup, buildGoalInputs, stepGoal, restoreDraft, dismissDraft } from './players.js';
 import { loadResults, loadManualWeek, setRankTab, renderSonuc, renderHafta, selectWeekBtn, renderTrend, renderComparison, renderSezon, renderKatilim, loadMatchHistory, renderDenge } from './stats.js';
 import { renderProfile } from './profile.js';
 import { shareProfileCard, doShareCard, closeSharePreview } from './sharecard.js';
-import { tryAdmin, checkPin, logoutAdmin, setAdminTab, loadBugunTab, toggleBugun, bugunSelectAll, bugunClearAll, saveBugunGelenler, loadHakemTab, selectHakem, saveHakemToSheet, clearHakem, renderPlayerList, selectPos, confirmPos, togglePosDropdown, closePosDropdown, addPlayer, removePlayer, saveMatch, loadVideos, loadAdminVideos, selectVideoWeek, selectVideoWeekByUrl, adminSaveVideo, saveCurrentWeek, resetWeekToAuto, loadVoteSetting, saveVoteSetting, refreshPhotos } from './admin.js';
+import { tryAdmin, checkPin, logoutAdmin, setAdminTab, loadBugunTab, toggleBugun, bugunSelectAll, bugunClearAll, saveBugunGelenler, loadHakemTab, selectHakem, saveHakemToSheet, clearHakem, renderPlayerList, selectPos, confirmPos, togglePosDropdown, closePosDropdown, addPlayer, removePlayer, saveMatch, loadVideos, loadAdminVideos, selectVideoWeek, selectVideoWeekByUrl, adminSaveVideo, saveCurrentWeek, resetWeekToAuto, loadVoteSetting, saveVoteSetting, refreshPhotos, renderAnomalies } from './admin.js';
 
 if (state.darkMode) document.body.classList.add('dark');
 
@@ -230,8 +231,8 @@ function makeFifaCard(p, pObj, rank, data, overrideScore) {
   });
   const statRow = (ci) => `<div class="fc-stat"><span class="fc-stat-val" style="color:${col.text}">${statVals[ci]}</span><span class="fc-stat-lbl" style="color:${col.text}bb">${statLabels[ci]}</span></div>`;
   const photoHTML = photoUrl
-    ? `<img src="${photoUrl}" loading="lazy" onerror="this.outerHTML='<div class=\\'fc-photo-ph\\' style=\\'color:${col.text}\\'>${p.name.charAt(0)}</div>'">`
-    : `<div class="fc-photo-ph" style="color:${col.text}">${p.name.charAt(0)}</div>`;
+    ? `<img src="${escHtml(photoUrl)}" loading="lazy" onerror="this.outerHTML='<div class=\\'fc-photo-ph\\' style=\\'color:${col.text}\\'>${escHtml(p.name.charAt(0))}</div>'">`
+    : `<div class="fc-photo-ph" style="color:${col.text}">${escHtml(p.name.charAt(0))}</div>`;
   const card = document.createElement('div');
   card.className = `fc ${cls}`;
   card.innerHTML = `
@@ -246,7 +247,7 @@ function makeFifaCard(p, pObj, rank, data, overrideScore) {
     </div>
     <div class="fc-photo">${photoHTML}</div>
     <div class="fc-bottom">
-      <div class="fc-name" style="color:${col.text}">${p.name.toUpperCase()}</div>
+      <div class="fc-name" style="color:${col.text}">${escHtml(p.name.toUpperCase())}</div>
       <div style="text-align:center;font-size:9px;font-weight:900;color:${col.text};opacity:.85;margin-top:-4px;margin-bottom:4px;letter-spacing:1px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));">💶 ${moneyStr}</div>
       <div class="fc-sep" style="background:${col.text}"></div>
       <div class="fc-stats" style="color:${col.text}">
@@ -562,6 +563,72 @@ function buildTeamsWithData(selected) {
   renderTeams();
 }
 
+function buildOptimalLineup() {
+  const selectEl = document.getElementById('lineupPreset');
+  const presetKey = (selectEl && selectEl.value) || 'dengeli';
+  const noDataEl = document.getElementById('noDataTakim');
+  const teamResultEl = document.getElementById('teamResult');
+  if (!noDataEl || !teamResultEl) return;
+  noDataEl.style.display = 'none';
+  teamResultEl.innerHTML = '';
+
+  const selected = state.players.filter(p => state.todaySelected[p.name] !== false);
+  if (selected.length < 5) { noDataEl.style.display = 'block'; teamResultEl.innerHTML = '<div class="no-data">Optimal kadro için en az 5 oyuncu seçilmeli.</div>'; return; }
+
+  const runOptimizer = () => {
+    const available = selected.map(pObj => {
+      const pData = state.resultData && state.resultData.players ? state.resultData.players.find(x => x.name === pObj.name) : null;
+      return { pObj, pData };
+    });
+    const result = findOptimalLineup(available, presetKey);
+    if (!result) {
+      teamResultEl.innerHTML = '<div class="no-data">Geçerli bir 5\'li bulunamadı (1 KL, 1-2 DEF, 1-2 OMO, 1 FRV gerekir).</div>';
+      return;
+    }
+    renderOptimalLineup(result);
+  };
+
+  if (!state.resultData) {
+    teamResultEl.innerHTML = '<div class="no-data"><span class="spin"></span>Veriler yükleniyor…</div>';
+    loadResults(data => { if (data) runOptimizer(); else { noDataEl.style.display = 'block'; teamResultEl.innerHTML = ''; } });
+    return;
+  }
+  runOptimizer();
+}
+
+function renderOptimalLineup(result) {
+  const teamResult = document.getElementById('teamResult');
+  if (!teamResult) return;
+  const meta = PRESET_META[result.preset] || PRESET_META.dengeli;
+  const posEmojis = { KL: '🧤', DEF: '🛡️', OMO: '⚙️', FRV: '⚡' };
+  const order = { KL: 0, DEF: 1, OMO: 2, FRV: 3 };
+  const sorted = [...result.lineup].sort((a, b) => (order[a.posKey] - order[b.posKey]) || (b.score - a.score));
+  const avgScore = result.totalScore / result.lineup.length;
+  const avgRating = Math.min(99, Math.round(avgScore * 10));
+
+  const rows = sorted.map(p => {
+    const r = Math.min(99, Math.round((p.score || 0) * 10));
+    return `<div class="tk-player-row">
+      <span class="tk-p-pos">${posEmojis[p.posKey] || '⚽'}</span>
+      <span class="tk-p-name">${escHtml(p.name)}</span>
+      <span class="tk-p-score" style="color:${ratingColor(r).text}">${r}</span>
+    </div>`;
+  }).join('');
+
+  teamResult.innerHTML = `
+    <div class="tk-balance-bar">
+      <span class="tk-bal-label" style="color:var(--green)">${meta.emoji} ${escHtml(meta.label)} — Optimal 5'li</span>
+      <span class="tk-bal-diff">Ortalama: ${avgRating}</span>
+    </div>
+    <div class="tk-team-card" style="margin-top:10px;">
+      <div class="tk-team-hdr tk-hdr-white">
+        <span>🪄 Önerilen Kadro</span>
+        <span class="tk-hdr-avg">${avgRating}</span>
+      </div>
+      ${rows}
+    </div>`;
+}
+
 function shuffleTeams() {
   const selected = state.players.filter(p => state.todaySelected[p.name] !== false);
   const noDataEl = document.getElementById('noDataTakim');
@@ -726,6 +793,7 @@ window.clearAllPlayers = clearAllPlayers;
 window.buildTeams = buildTeams;
 window.shuffleTeams = shuffleTeams;
 window.swapPlayer = swapPlayer;
+window.buildOptimalLineup = buildOptimalLineup;
 
 // players.js functions
 window.savePlayers = savePlayers;
@@ -775,6 +843,7 @@ window.resetWeekToAuto = resetWeekToAuto;
 window.loadVoteSetting = loadVoteSetting;
 window.saveVoteSetting = saveVoteSetting;
 window.refreshPhotos = refreshPhotos;
+window.renderAnomalies = renderAnomalies;
 
 // utils.js functions
 window.showToast = showToast;

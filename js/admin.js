@@ -388,7 +388,7 @@ function renderVideos(videos) {
   if (!videos || !videos.length) { if (tabs) tabs.innerHTML = ''; if (noData) noData.style.display = 'block'; if (allVideos) allVideos.innerHTML = ''; setYtPlayer(null); return; }
   if (noData) noData.style.display = 'none';
   const sorted = [...videos].sort((a, b) => b.week.localeCompare(a.week));
-  if (tabs) tabs.innerHTML = sorted.map((v, i) => `<button class="vwtab ${i===0?'active':''}" onclick="selectVideoWeek('${v.week}',this)">${v.week}</button>`).join('');
+  if (tabs) tabs.innerHTML = sorted.map((v, i) => `<button class="vwtab ${i===0?'active':''}" onclick="selectVideoWeek('${escJsSingle(v.week)}',this)">${escHtml(v.week)}</button>`).join('');
   if (allVideos) {
     allVideos.innerHTML = sorted.length > 1
       ? `<div class="sec-title" style="margin-top:8px">Tüm Yayınlar</div>` + sorted.map(v => {
@@ -431,7 +431,7 @@ export function setYtPlayer(url, week, title) {
   const vid = ytVideoId(url);
   const dispTitle = title || ((week||'') + ' Maç Yayını');
   if (!vid) { wrap.innerHTML = '<div class="yt-placeholder"><div class="yt-placeholder-icon">📺</div><div>Bu hafta için yayın bulunamadı</div></div>'; if (meta) meta.style.display = 'none'; return; }
-  wrap.innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}?rel=0&modestbranding=1&playsinline=1" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:16px;" title="${dispTitle}" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" allowfullscreen></iframe>`;
+  wrap.innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}?rel=0&modestbranding=1&playsinline=1" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:16px;" title="${escHtml(dispTitle)}" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" allowfullscreen></iframe>`;
   if (meta) meta.style.display = 'block';
   if (titleEl) titleEl.textContent = dispTitle;
   if (weekEl) weekEl.textContent = '📅 ' + week;

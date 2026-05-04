@@ -311,7 +311,7 @@ export function renderWeek(week, data) {
       const v = p.kr[c];
       const vn = v != null ? +v : null;
       const barW = vn !== null ? Math.round(vn / 10 * 100) : 0;
-      const barCol = vn !== null ? (vn >= 8 ? '#4ade80' : vn >= 6 ? '#fbbf24' : '#f87171') : 'var(--border)';
+      const barCol = vn !== null ? (vn >= 7 ? '#4ade80' : vn >= 5 ? '#fbbf24' : '#f87171') : 'var(--border)';
       return `<div class="wk-krit">
         <div class="wk-krit-lbl">${CDISP[ci]}</div>
         <div class="wk-krit-bar"><div class="wk-krit-fill" style="width:${barW}%;background:${barCol};"></div></div>
@@ -1020,7 +1020,7 @@ export function renderKatilim() {
     }).sort((a, b) => b.count - a.count);
     let html = '<table class="rtbl"><thead><tr><th>Oyuncu</th><th>Katılım</th><th>Oran</th></tr></thead><tbody>';
     rows.forEach(r => {
-      html += `<tr><td><div style="font-weight:800;font-size:15px;margin-bottom:4px;">${r.name}</div><div style="font-size:11px;color:var(--text3);font-weight:700">${posLabel({pos:r.pos})}</div></td><td style="color:var(--text);font-weight:900;font-size:18px;">${r.count}<span style="font-size:12px;color:var(--text3)">/${tw}</span></td><td><div style="display:flex;align-items:center;gap:12px"><div class="mbar" style="min-width:60px;"><div class="mfill" style="width:${r.pct}%"></div></div><span style="font-size:14px;font-weight:900;color:var(--green);">%${r.pct}</span></div></td></tr>`;
+      html += `<tr><td><div style="font-weight:800;font-size:15px;margin-bottom:4px;">${escHtml(r.name)}</div><div style="font-size:11px;color:var(--text3);font-weight:700">${escHtml(posLabel({pos:r.pos}))}</div></td><td style="color:var(--text);font-weight:900;font-size:18px;">${r.count}<span style="font-size:12px;color:var(--text3)">/${tw}</span></td><td><div style="display:flex;align-items:center;gap:12px"><div class="mbar" style="min-width:60px;"><div class="mfill" style="width:${r.pct}%"></div></div><span style="font-size:14px;font-weight:900;color:var(--green);">%${r.pct}</span></div></td></tr>`;
     });
     el.innerHTML = html + '</tbody></table>';
   });
@@ -1058,7 +1058,7 @@ export function loadMatchHistory() {
           let parts = [];
           if (g.g) parts.push(`⚽×${g.g}`);
           if (g.a) parts.push(`🅰×${g.a}`);
-          return `<span style="font-size:11px;font-weight:700;color:${color};background:var(--bg2);padding:5px 10px;border-radius:10px;box-shadow:var(--sh);display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);">${name} <span style="opacity:.7">${parts.join(' ')}</span></span>`;
+          return `<span style="font-size:11px;font-weight:700;color:${color};background:var(--bg2);padding:5px 10px;border-radius:10px;box-shadow:var(--sh);display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);">${escHtml(name)} <span style="opacity:.7">${parts.join(' ')}</span></span>`;
         };
         const allGoalBadges = neutralGoals.length
           ? neutralGoals.map(([n,g])=>goalBadge(n,g,'var(--text)')).join('')
@@ -1069,15 +1069,15 @@ export function loadMatchHistory() {
           ${isDraw?`<div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#94a3b8;border-radius:4px 0 0 4px;"></div>`:''}
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-left:8px;">
             <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:11px;font-weight:800;color:var(--green);background:var(--gd);padding:4px 10px;border-radius:10px;border:1px solid #10b98130;">${m.week}</span>
+              <span style="font-size:11px;font-weight:800;color:var(--green);background:var(--gd);padding:4px 10px;border-radius:10px;border:1px solid #10b98130;">${escHtml(m.week)}</span>
               ${resultLabel}
             </div>
-            <span style="font-size:10px;color:var(--text3);font-weight:600;">${m.date||''}</span>
+            <span style="font-size:10px;color:var(--text3);font-weight:600;">${escHtml(m.date||'')}</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 8px;">
             <div style="flex:1;text-align:center;">
               <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">⚪ Beyaz Takım</div>
-              <div style="font-size:44px;font-weight:900;line-height:1;letter-spacing:-2px;color:${win1?'var(--green)':'var(--text)'};">${m.score1}</div>
+              <div style="font-size:44px;font-weight:900;line-height:1;letter-spacing:-2px;color:${win1?'var(--green)':'var(--text)'};">${escHtml(m.score1)}</div>
               ${win1?`<div style="font-size:10px;font-weight:800;color:var(--green);margin-top:4px;">KAZANAN</div>`:''}
             </div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 16px;">
@@ -1085,13 +1085,13 @@ export function loadMatchHistory() {
             </div>
             <div style="flex:1;text-align:center;">
               <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">🔵 Renkli Takım</div>
-              <div style="font-size:44px;font-weight:900;line-height:1;letter-spacing:-2px;color:${win2?'#3b82f6':'var(--text)'};">${m.score2}</div>
+              <div style="font-size:44px;font-weight:900;line-height:1;letter-spacing:-2px;color:${win2?'#3b82f6':'var(--text)'};">${escHtml(m.score2)}</div>
               ${win2?`<div style="font-size:10px;font-weight:800;color:#3b82f6;margin-top:4px;">KAZANAN</div>`:''}
             </div>
           </div>
           ${(m.note || allGoalBadges) ? `
           <div style="background:var(--bg3);border-radius:14px;padding:12px;margin-top:4px;padding-left:8px;">
-            ${m.note?`<div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:${allGoalBadges?'10':'0'}px;display:flex;align-items:center;gap:6px;">📝 ${m.note}</div>`:''}
+            ${m.note?`<div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:${allGoalBadges?'10':'0'}px;display:flex;align-items:center;gap:6px;">📝 ${escHtml(m.note)}</div>`:''}
             ${allGoalBadges?`<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">⚽ Goller & Asistler</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${allGoalBadges}</div>`:''}
           </div>` : ''}
         </div>`;
