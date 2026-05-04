@@ -1,7 +1,7 @@
 import { TEAM_CONFIG, CRITERIA, CDISP, POS } from './config.js';
 import { CURRENT_TEAM, lGet, lSet, lRem } from './storage.js';
 import { state } from './state.js';
-import { escHtml, normPos, posLabel, san, getPlayerPhoto, getWeekLabel, getAutoWeekLabel, formatMoney, scoreColor, ratingColor, cardClass, showToast, showConfirm, closeConfirm } from './utils.js';
+import { escHtml, normPos, posLabel, san, getPlayerPhoto, getWeekLabel, getAutoWeekLabel, formatMoney, scoreColor, ratingColor, cardClass, showToast, showConfirm, closeConfirm, countUp } from './utils.js';
 import { calcStdDev, posRating, calcMarketValue, getPlayStyles } from './rating.js';
 import { findOptimalLineup, PRESET_META } from './lineup-optimizer.js';
 import { savePlayers, loadPlayersFromSheets, loadMevkilerFromSheets, initSelects, checkIdentityLock, resetIdentity, onRaterChange, buildCards, onSlider, updateProgress, submitRatings, closeSuccessPopup, buildGoalInputs, stepGoal, restoreDraft, dismissDraft } from './players.js';
@@ -257,6 +257,11 @@ function makeFifaCard(p, pObj, rank, data, overrideScore) {
       </div>
     </div>`;
   card.onclick = () => openProfile(p, data);
+  const ratingEl = card.querySelector('.fc-rating');
+  if (ratingEl && rating > 0) {
+    ratingEl.textContent = '0';
+    requestAnimationFrame(() => countUp(ratingEl, rating));
+  }
   return card;
 }
 
@@ -427,6 +432,10 @@ function openProfile(p, data) {
     </div>` : ''}
   `;
   modalBg.classList.add('open');
+  requestAnimationFrame(() => {
+    const rNum = profileHero.querySelector('.pmo-rating-num');
+    if (rNum && rating > 0) { rNum.textContent = '0'; countUp(rNum, rating, 700); }
+  });
 }
 
 function shareProfile() {

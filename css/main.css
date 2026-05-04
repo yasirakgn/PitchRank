@@ -104,12 +104,12 @@ body.home-active header { display: none !important; }
   animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .dark .bnav-item.active::before {
-  background: rgba(16,185,129,0.12);
-  box-shadow: 0 0 16px rgba(16,185,129,0.1);
+  background: rgba(33,230,154,0.1);
+  animation: navPulse 1.8s ease-in-out infinite;
 }
 .bnav-icon { width: 22px; height: 22px; display: block; flex-shrink: 0; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); margin-bottom: 2px; }
 .bnav-icon svg { width: 100%; height: 100%; display: block; }
-.bnav-item.active .bnav-icon { transform: scale(1.15) translateY(-1px); }
+.bnav-item.active .bnav-icon { transform: scale(1.15) translateY(-1px); filter: drop-shadow(0 0 6px var(--glow-green)) drop-shadow(0 0 16px var(--glow-green-dim)); transition: filter 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
 /* ── Sub Navigation ──────────────────────────────────────────────────────────── */
 .sub-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -135,17 +135,17 @@ body.home-active header { display: none !important; }
 
 /* ── Screens & Animations ────────────────────────────────────────────────────── */
 .screen { display: none; }
-.screen.active { display: block; }
-.screen.leaving { animation: screenLeave 0.18s ease forwards; pointer-events: none; }
-.screen.is-entering { animation: screenEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
-#screen-profil.is-entering { animation: screenSlideUp 0.44s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.screen.active { display: block; will-change: opacity, transform, filter; }
+.screen.leaving { animation: screenLeave 0.2s ease forwards; pointer-events: none; }
+.screen.is-entering { animation: screenEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both; }
+#screen-profil.is-entering { animation: screenSlideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 .sub-screen { display: none; }
 .sub-screen.active { display: block; }
 .sub-screen.is-entering { animation: subEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-@keyframes screenEnter  { from { opacity: 0; transform: translateY(22px); }  to { opacity: 1; transform: translateY(0); } }
-@keyframes screenLeave  { from { opacity: 1; transform: translateY(0); }      to { opacity: 0; transform: translateY(-8px); } }
+@keyframes screenEnter { from { opacity: 0; transform: scale(0.97) translateY(14px); filter: blur(3px); } to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0px); } }
+@keyframes screenLeave { from { opacity: 1; transform: scale(1); filter: blur(0px); } to { opacity: 0; transform: scale(0.97); filter: blur(4px); } }
 @keyframes screenSlideUp { from { opacity: 0; transform: translateY(52px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes subEnter     { from { opacity: 0; transform: translateY(10px); }  to { opacity: 1; transform: translateY(0); } }
 @keyframes popIn { from { transform: scale(0.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -1138,6 +1138,7 @@ body.dark::before {
     radial-gradient(circle at 50% 0%, rgba(255,255,255,0.09), transparent 58%),
     linear-gradient(135deg, rgba(33,230,154,0.20), rgba(108,134,255,0.11));
   border-color: rgba(33,230,154,0.18);
+  animation: navPulse 1.8s ease-in-out infinite;
 }
 
 .bnav-item span:not(.bnav-icon) {
@@ -2334,4 +2335,9 @@ input[type=range]::-webkit-slider-thumb {
   background: rgba(255,255,255,0.05);
   border-color: rgba(255,255,255,0.09);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+@keyframes navPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--glow-green-dim), inset 0 0 0 rgba(0,0,0,0); }
+  50%       { box-shadow: 0 0 18px var(--glow-green), 0 0 32px var(--glow-green-dim); }
 }

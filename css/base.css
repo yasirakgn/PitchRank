@@ -20,6 +20,11 @@
   --sh-card: 0 1px 0 rgba(255,255,255,0.70) inset, 0 18px 46px rgba(16,25,49,0.105), 0 2px 8px rgba(16,25,49,0.06);
   --r:  18px;
   --rs: 12px;
+  --glow-green:     rgba(16,201,135,0.5);
+  --glow-green-dim: rgba(16,201,135,0.18);
+  --glow-blue:      rgba(85,120,255,0.4);
+  --glow-blue-dim:  rgba(85,120,255,0.15);
+  --glow-gold:      rgba(245,188,75,0.5);
 }
 
 .dark {
@@ -42,6 +47,11 @@
   --sh:      0 2px 12px rgba(0,0,0,0.50), 0 1px 3px rgba(0,0,0,0.30);
   --sh2:     0 28px 76px rgba(0,0,0,0.74), 0 8px 26px rgba(0,0,0,0.48);
   --sh-card: 0 1px 0 rgba(255,255,255,0.06) inset, 0 22px 54px rgba(0,0,0,0.48), 0 3px 12px rgba(0,0,0,0.30);
+  --glow-green:     rgba(33,230,154,0.65);
+  --glow-green-dim: rgba(33,230,154,0.22);
+  --glow-blue:      rgba(108,134,255,0.55);
+  --glow-blue-dim:  rgba(108,134,255,0.18);
+  --glow-gold:      rgba(247,200,91,0.55);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -50,10 +60,7 @@ html, body { overflow-x: hidden; }
 
 body {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  background:
-    radial-gradient(circle at 12% -8%, rgba(16,201,135,0.16), transparent 32vw),
-    radial-gradient(circle at 88% 0%, rgba(85,120,255,0.12), transparent 30vw),
-    linear-gradient(180deg, var(--bg), #E9EEF8 100%);
+  background: linear-gradient(180deg, var(--bg), #E9EEF8 100%);
   color: var(--text);
   min-height: 100vh;
   transition: background .3s, color .3s;
@@ -63,11 +70,7 @@ body {
 }
 
 body.dark {
-  background:
-    radial-gradient(circle at 16% -12%, rgba(33,230,154,0.18), transparent 34vw),
-    radial-gradient(circle at 84% 0%, rgba(108,134,255,0.16), transparent 31vw),
-    radial-gradient(circle at 48% 102%, rgba(16,201,135,0.055), transparent 36vw),
-    linear-gradient(180deg, #070A14 0%, #04060D 100%);
+  background: linear-gradient(180deg, #070A14 0%, #04060D 100%);
 }
 
 ::-webkit-scrollbar { width: 3px; height: 3px; }
@@ -78,3 +81,39 @@ h1, h2, h3, .stitle, .mtitle, .hdr-title {
   font-family: 'Exo 2', 'Plus Jakarta Sans', sans-serif;
   letter-spacing: -0.03em;
 }
+
+/* ── Animated background orbs ──────────────────────────── */
+.bg-orbs {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+  filter: blur(80px);
+}
+.bg-orb-a {
+  width: 70vw;
+  height: 70vw;
+  left: -20vw;
+  top: -20vw;
+  background: rgba(16,201,135,0.13);
+  animation: orbFloat-a 16s ease-in-out infinite alternate;
+}
+.bg-orb-b {
+  width: 60vw;
+  height: 60vw;
+  right: -15vw;
+  top: -8vw;
+  background: rgba(85,120,255,0.09);
+  animation: orbFloat-b 22s ease-in-out infinite alternate;
+}
+.dark .bg-orb-a { background: rgba(33,230,154,0.15); }
+.dark .bg-orb-b { background: rgba(108,134,255,0.13); }
+
+@keyframes orbFloat-a { to { transform: translate(14vw, 24vh); } }
+@keyframes orbFloat-b { to { transform: translate(-16vw, 18vh); } }

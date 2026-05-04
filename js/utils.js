@@ -107,3 +107,16 @@ export function closeConfirm() {
   const bg = document.getElementById('confirmBg');
   if (bg) bg.classList.remove('open');
 }
+
+export function countUp(el, target, duration = 550) {
+  if (!el || target <= 0) return;
+  const start = performance.now();
+  const step = (now) => {
+    if (!el.isConnected) return;
+    const t = Math.min(1, (now - start) / duration);
+    const ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(ease * target);
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
