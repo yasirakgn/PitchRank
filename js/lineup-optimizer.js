@@ -52,11 +52,11 @@ function* combinations(arr, k) {
   }
 }
 
-// Position constraint for 5-aside futsal: 1 KL, 1-2 DEF, 1-2 OMO, 1 FRV.
+// Position constraint for 5-aside futsal: 0-1 KL, 1-2 DEF, 1-2 OMO, 1 FRV.
 function validLineup(lineup) {
   const c = { KL: 0, DEF: 0, OMO: 0, FRV: 0 };
   for (const p of lineup) c[p.posKey] = (c[p.posKey] || 0) + 1;
-  if (c.KL !== 1 || c.FRV !== 1) return false;
+  if (c.KL > 1 || c.FRV !== 1) return false;
   if (c.DEF < 1 || c.DEF > 2) return false;
   if (c.OMO < 1 || c.OMO > 2) return false;
   return c.KL + c.DEF + c.OMO + c.FRV === 5;
