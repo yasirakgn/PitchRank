@@ -2,6 +2,8 @@ import { CRITERIA, CDISP, TEAM_CONFIG } from './config.js';
 import { state } from './state.js';
 import { escHtml, posLabel, getPlayerPhoto, showToast } from './utils.js';
 import { posRating } from './rating.js';
+import { forecastHoltWinters } from './forecast.js';
+import { findSimilarPlayers } from './dna.js';
 
 // ── Yardımcı hesaplama fonksiyonları ─────────────────────────────────────────
 
@@ -143,44 +145,92 @@ function renderFormStrip(container, playerData, resultData, pObj) {
   }
   const weeks = resultData.weeks;
   const genels = playerData.weeklyGenels;
-  const entries = weeks.map((w, i) => ({ week: w, score: genels[i] }))
-    .filter(e => e.score != null)
-    .slice(-5);
 
-  if (!entries.length) { container.innerHTML = noData; return; }
+  const ratingForWeek = (weekLabel, idx) => {
+    const kr = playerData.weeklyKriterler?.[weekLabel] || {};
+    const swd = { weeklyKriterler: { [weekLabel]: kr }, weeklyGenels: [genels[idx]] };
+    const w = posRating(swd, pObj || { pos: ['OMO'] });
+    if (w !== null) return Math.min(99, Math.round(w * 10));
+    return genels[idx] != null ? Math.round(genels[idx] * 10) : null;
+  };
+
+  const allRated = weeks
+    .map((w, i) => ({ week: w, score: genels[i], rating: ratingForWeek(w, i) }))
+    .filter(e => e.score != null && e.rating != null);
+
+  if (!allRated.length) { container.innerHTML = noData; return; }
+
+  const recent = allRated.slice(-5);
+
+  const fullSeries = allRated.map(e => e.rating);
+  const forecastVals = forecastHoltWinters(fullSeries, 3);
+  const forecastPts = forecastVals.map(v => Math.max(0, Math.min(99, Math.round(v))));
 
   const W = 300, H = 80, PX = 20, PY = 14;
-  const scores = entries.map(e => {
-    const kr = playerData.weeklyKriterler?.[e.week] || {};
-    const swd = { weeklyKriterler: { [e.week]: kr }, weeklyGenels: [e.score] };
-    const w = posRating(swd, pObj || { pos: ['OMO'] });
-    return w !== null ? Math.min(99, Math.round(w * 10)) : Math.round(e.score * 10);
-  });
-  const minS = Math.max(0, Math.min(...scores) - 8);
-  const maxS = Math.min(100, Math.max(...scores) + 8);
+  const actualScores = recent.map(e => e.rating);
+  const allDisplayScores = actualScores.concat(forecastPts);
+  const minS = Math.max(0, Math.min(...allDisplayScores) - 8);
+  const maxS = Math.min(100, Math.max(...allDisplayScores) + 8);
   const range = maxS - minS || 1;
-  const n = entries.length;
+  const totalN = recent.length + forecastPts.length;
+  const innerW = W - PX * 2;
+  const innerH = H - PY * 2 - 12;
 
-  const pts = entries.map((e, i) => ({
-    x: PX + (n > 1 ? (i / (n - 1)) * (W - PX * 2) : (W - PX * 2) / 2),
-    y: PY + (1 - (scores[i] - minS) / range) * (H - PY * 2 - 12),
-    score: scores[i],
+  const xAt = (i) => PX + (totalN > 1 ? (i / (totalN - 1)) * innerW : innerW / 2);
+  const yAt = (s) => PY + (1 - (s - minS) / range) * innerH;
+
+  const actualPts = recent.map((e, i) => ({
+    x: xAt(i),
+    y: yAt(e.rating),
+    score: e.rating,
     week: e.week.replace(/\d{4}-/, ''),
   }));
 
-  const lineD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
-  const areaD = `${lineD} L${pts[pts.length - 1].x.toFixed(1)} ${H} L${pts[0].x.toFixed(1)} ${H} Z`;
+  const forecastDisplayPts = forecastPts.map((s, k) => ({
+    x: xAt(recent.length + k),
+    y: yAt(s),
+    score: s,
+    label: 'T+' + (k + 1),
+  }));
 
-  const lastScore = scores[scores.length - 1];
-  const prevScore = scores.length > 1 ? scores[scores.length - 2] : null;
+  const actualLineD = actualPts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const areaD = actualPts.length
+    ? `${actualLineD} L${actualPts[actualPts.length - 1].x.toFixed(1)} ${H} L${actualPts[0].x.toFixed(1)} ${H} Z`
+    : '';
+
+  let forecastLineD = '';
+  if (forecastDisplayPts.length && actualPts.length) {
+    const last = actualPts[actualPts.length - 1];
+    forecastLineD = `M${last.x.toFixed(1)} ${last.y.toFixed(1)}`;
+    forecastDisplayPts.forEach(p => {
+      forecastLineD += ` L${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+    });
+  }
+
+  const lastScore = actualScores[actualScores.length - 1];
+  const prevScore = actualScores.length > 1 ? actualScores[actualScores.length - 2] : null;
   const delta = prevScore !== null ? lastScore - prevScore : 0;
   const trend = delta >= 2 ? { icon: '↑', cls: 'up' } : delta <= -2 ? { icon: '↓', cls: 'down' } : { icon: '→', cls: 'flat' };
 
-  const dotsHtml = pts.map(p => `
+  const actualDotsHtml = actualPts.map(p => `
     <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" class="spark-dot"/>
     <text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" class="spark-lbl" text-anchor="middle">${p.score}</text>
     <text x="${p.x.toFixed(1)}" y="${(H - 1).toFixed(1)}" class="spark-week" text-anchor="middle">${escHtml(p.week)}</text>
   `).join('');
+
+  const forecastDotsHtml = forecastDisplayPts.map(p => `
+    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="none" stroke="#94a3b8" stroke-width="1.5" opacity="0.7"/>
+    <text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" font-size="9" font-weight="700" fill="#94a3b8" text-anchor="middle" opacity="0.85">${p.score}</text>
+    <text x="${p.x.toFixed(1)}" y="${(H - 1).toFixed(1)}" font-size="8" font-weight="600" fill="#94a3b8" text-anchor="middle" opacity="0.7">${p.label}</text>
+  `).join('');
+
+  const forecastLineSvg = forecastLineD
+    ? `<path d="${forecastLineD}" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.7"/>`
+    : '';
+
+  const forecastBadge = forecastPts.length
+    ? `<span class="spark-trend flat" style="background:rgba(148,163,184,0.15);color:#94a3b8;border-color:rgba(148,163,184,0.3);">⌖ Tahmin: ${forecastPts.join(' › ')}</span>`
+    : '';
 
   container.innerHTML = `
     <div class="prof-section">
@@ -196,9 +246,12 @@ function renderFormStrip(container, playerData, resultData, pObj) {
           </linearGradient>
         </defs>
         <path d="${areaD}" fill="url(#sparkGrad)"/>
-        <path d="${lineD}" class="spark-line" fill="none"/>
-        ${dotsHtml}
+        <path d="${actualLineD}" class="spark-line" fill="none"/>
+        ${forecastLineSvg}
+        ${actualDotsHtml}
+        ${forecastDotsHtml}
       </svg>
+      ${forecastBadge ? `<div style="text-align:right;margin-top:4px;">${forecastBadge}</div>` : ''}
     </div>`;
 }
 
@@ -265,6 +318,47 @@ function renderCompetition(container, playerData, allPlayers) {
     </div>`;
 }
 
+function renderDNA(container, playerData, resultData) {
+  if (!container) return;
+  if (!playerData || !resultData) { container.innerHTML = ''; return; }
+  const matches = findSimilarPlayers(playerData.name, resultData, 3);
+  if (!matches.length) { container.innerHTML = ''; return; }
+
+  const teamId = sessionStorage.getItem('pitchrank_selected_team') || 'haldunalagas';
+  const tc = (TEAM_CONFIG[teamId] || TEAM_CONFIG.haldunalagas).color;
+
+  const cards = matches.map(m => {
+    const photo = getPlayerPhoto(m.name);
+    const pct = Math.round(Math.max(0, Math.min(1, m.sim)) * 100);
+    const sameBadge = m.samePos
+      ? `<span style="font-size:9px;font-weight:700;color:${escHtml(tc)};background:${escHtml(tc)}1a;padding:2px 7px;border-radius:10px;border:1px solid ${escHtml(tc)}33;">Aynı mevki</span>`
+      : `<span style="font-size:9px;font-weight:700;color:var(--text3);background:var(--bg3);padding:2px 7px;border-radius:10px;border:1px solid var(--border2);">Çapraz</span>`;
+    return `
+      <div style="display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:10px 12px;">
+        <img src="${escHtml(photo)}" loading="lazy" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--bg2);" onerror="this.src='assets/images/icon-192.png'">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:800;color:var(--text);letter-spacing:-0.3px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(m.name)}</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${sameBadge}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:18px;font-weight:900;color:${escHtml(tc)};line-height:1;letter-spacing:-0.5px;">%${pct}</div>
+          <div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">benzerlik</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="prof-section">
+      <div class="prof-section-header">
+        <span class="prof-section-title">🧬 DNA Eşleşmesi</span>
+        <span class="prof-section-sub">Oyun stili</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">${cards}</div>
+    </div>`;
+}
+
 function renderCriteriaBar(container, playerData) {
   if (!playerData || !playerData.weeklyKriterler || !Object.keys(playerData.weeklyKriterler).length) {
     container.innerHTML = '<div class="prof-section"><div class="prof-section-header"><span class="prof-section-title">Kriter Ortalamaları</span></div><div class="prof-nodata">Kriter verisi yok.</div></div>';
@@ -277,7 +371,7 @@ function renderCriteriaBar(container, playerData) {
     const avg = criteriaAvg(playerData, c);
     if (!avg) return null;
     const pct = Math.min(100, Math.round(avg * 10));
-    const cls = pct >= 80 ? 'good' : pct >= 60 ? 'mid' : 'low';
+    const cls = avg >= 7 ? 'good' : avg >= 5 ? 'mid' : 'low';
     const dash = `${(pct / 100 * CIRC).toFixed(1)} ${CIRC.toFixed(1)}`;
     return `
       <div class="crit-arc">
@@ -308,6 +402,7 @@ export function renderProfile() {
   const badgesEl   = el.querySelector('#prof-badges');
   const compEl     = el.querySelector('#prof-competition');
   const criteriaEl = el.querySelector('#prof-criteria');
+  const dnaEl      = el.querySelector('#prof-dna');
 
   if (!name) {
     const noIdentityHTML = '<div class="prof-section" style="padding:32px;text-align:center;"><div class="prof-nodata">Önce kimliğini seç.</div></div>';
@@ -316,6 +411,7 @@ export function renderProfile() {
     if (formEl) formEl.innerHTML = '';
     if (badgesEl) badgesEl.innerHTML = '';
     if (criteriaEl) criteriaEl.innerHTML = '';
+    if (dnaEl) dnaEl.innerHTML = '';
     return;
   }
 
@@ -329,6 +425,7 @@ export function renderProfile() {
   if (formEl)     renderFormStrip(formEl, playerData, rd, pObj);
   if (badgesEl)   renderBadges(badgesEl, computeBadges(playerData, rd, md));
   if (criteriaEl) renderCriteriaBar(criteriaEl, playerData);
+  if (dnaEl)      renderDNA(dnaEl, playerData, rd);
 
   window.__showBadgeDesc = (msg) => showToast(msg);
 }

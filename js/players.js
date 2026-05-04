@@ -297,7 +297,7 @@ export function buildCards() {
       const slidersHtml = CRITERIA.map((cr, ci) => `
         <div class="crit-row">
           <span class="crit-name">${CDISP[ci]}</span>
-          <input type="range" min="1" max="10" step="1" value="5" data-cr="${escHtml(cr)}" data-did="d-${pid}-${san(cr)}" oninput="onSlider(this)">
+          <input type="range" min="1" max="10" step="0.5" value="5" data-cr="${escHtml(cr)}" data-did="d-${pid}-${san(cr)}" oninput="onSlider(this)">
           <span class="score-num" id="d-${pid}-${san(cr)}">—</span>
         </div>`).join('');
       card.innerHTML = `

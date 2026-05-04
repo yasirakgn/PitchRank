@@ -30,20 +30,26 @@ There is no build, transpile, or bundle step. All files are served as-is.
 
 ```
 js/
-  boot.js      ← ES module entry point; fetches data-include components, calls initApp()
-  main.js      ← initApp, makeFifaCard, openProfile, screen nav, tactics, all window.* exports
-  config.js    ← pure constants: TEAM_CONFIG, CRITERIA, POS_WEIGHTS, etc.
-  storage.js   ← CURRENT_TEAM, lGet/lSet/lRem, sGet/sSet/sRem, getGS
-  state.js     ← shared mutable state object + PLAYERS_VERSION cache invalidation
-  utils.js     ← escHtml, normPos, posLabel, san, getWeekLabel, showToast, showConfirm, etc.
-  api.js       ← gs(params) — GET requests to GAS with 2 retries
-  rating.js    ← calcStdDev, posRating, calcMarketValue, getPlayStyles
-  players.js   ← loadPlayersFromSheets, buildCards, onSlider, submitRatings, etc.
-  stats.js     ← loadResults, renderSonuc/RankTab/Hafta/Trend/Comparison/Sezon/Katilim
-  admin.js     ← PIN auth, player management, bugün/hakem/video/week admin tabs
+  boot.js            ← ES module entry point; fetches data-include components, calls initApp()
+  main.js            ← initApp, makeFifaCard, openProfile, screen nav, tactics, all window.* exports
+  config.js          ← pure constants: TEAM_CONFIG, CRITERIA, CRITERIA_ABBR, CDISP, POS_WEIGHTS, etc.
+  storage.js         ← CURRENT_TEAM, lGet/lSet/lRem, sGet/sSet/sRem, getGS
+  state.js           ← shared mutable state object + PLAYERS_VERSION cache invalidation
+  utils.js           ← escHtml, normPos, posLabel, san, getWeekLabel, showToast, showConfirm, etc.
+  api.js             ← gs(params) — GET requests to GAS with 2 retries
+  rating.js          ← calcStdDev, posRating, calcMarketValue, getPlayStyles
+  players.js         ← loadPlayersFromSheets, buildCards, onSlider, submitRatings, etc.
+  stats.js           ← loadResults, renderSonuc/RankTab/Hafta/Trend/Comparison/Sezon/Katilim/Denge
+  admin.js           ← PIN auth, player management, bugün/hakem/video/week admin tabs, renderAnomalies
+  forecast.js        ← forecastHoltWinters — Holt-Winters double exp smoothing for rating series
+  anomaly.js         ← detectAnomalies — per-week outlier detection via median+MAD (robust z-score)
+  dna.js             ← findSimilarPlayers — cosine similarity on per-criteria averages
+  lineup-optimizer.js← findOptimalLineup, PRESET_META — C(n,5) search with tactical presets
+  profile.js         ← renderProfile — full player profile screen (form strip, badges, DNA, criteria arcs)
+  sharecard.js       ← shareProfileCard, doShareCard, closeSharePreview — Canvas share card generator
 components/
   home.html    ← team picker
-  app.html     ← main app screens (puanla, siralama, istatistik, takim, yayin)
+  app.html     ← main app screens (puanla, siralama, istatistik, takim, yayin, profil)
   nav.html     ← bottom navigation bar
   modals.html  ← all modal dialogs (profile, pin, confirm, teamConfirm, success)
   toast.html   ← toast notification container
@@ -61,9 +67,19 @@ config ← storage ← state ← utils ← api ← rating
                               stats ←──── players
                                 ↓
                               admin → main → boot
+                                       ↑
+forecast ─┐                            │
+anomaly    ├──→ profile ───────────────┘
+dna ───────┘
+
+lineup-optimizer ← (imported by admin/main)
+
+sharecard ← (config, state, utils, rating, storage) → main
 ```
 
 Each module only imports from modules to its left/above. `admin.js` avoids a circular dep with `main.js` by calling `window.switchMainScreen(...)` at runtime instead of importing it.
+
+`forecast.js` and `anomaly.js` are pure algorithmic modules with no app imports. `dna.js` imports from `config`, `state`, `utils`. `lineup-optimizer.js` imports from `config` and `utils`. `profile.js` is the heaviest leaf: it imports from `config`, `state`, `utils`, `rating`, `forecast`, and `dna`.
 
 ### Shared state
 
@@ -83,7 +99,7 @@ Storage keys are always prefixed with the active team ID via `getStorageKey(key)
 
 ### Window exports
 
-All `~50` functions called from HTML `onclick=` attributes are assigned to `window` at the bottom of `main.js`. When adding a new HTML-callable function to any module, import it in `main.js` and add `window.fnName = fnName` there.
+All `~55` functions called from HTML `onclick=` attributes are assigned to `window` at the bottom of `main.js`. When adding a new HTML-callable function to any module, import it in `main.js` and add `window.fnName = fnName` there.
 
 ### Adding a new team
 
@@ -106,7 +122,23 @@ All player names rendered into `innerHTML` must go through `escHtml(s)`. For `on
 
 ### Screens and navigation
 
-The main app has 5 screens switched via `switchMainScreen(name, btn)`: `puanla`, `siralama`, `istatistik`, `takim`, `yayin`. Each maps to a `#screen-{name}` element inside `app.html`. When switching to `siralama`, `switchMainScreen` calls `renderSonuc(makeFifaCard)` — always pass the callback to avoid breaking the FIFA card grid. Statistics sub-screens use `setStatScreen()`.
+The main app has 6 screens switched via `switchMainScreen(name, btn)`: `puanla`, `siralama`, `istatistik`, `takim`, `yayin`, `profil`. Each maps to a `#screen-{name}` element inside `app.html`. When switching to `siralama`, `switchMainScreen` calls `renderSonuc(makeFifaCard)` — always pass the callback to avoid breaking the FIFA card grid. When switching to `profil`, `switchMainScreen` calls `renderProfile()` from `profile.js`. Statistics sub-screens use `setStatScreen()`.
+
+### Profile screen
+
+`renderProfile()` (in `profile.js`) renders `#screen-profil` for `state.currentRater`. It renders 6 sections into named sub-elements (`#prof-header`, `#prof-competition`, `#prof-form`, `#prof-badges`, `#prof-criteria`, `#prof-dna`):
+
+- **Form Şeridi**: SVG sparkline of the last 5 weekly ratings + 3-period Holt-Winters forecast (dashed)
+- **Rozetler**: 12 badge definitions (`BADGE_DEFS`) checked against playerData/resultData/matchesData — earned badges render filled, locked ones dimmed. Badge desc shown via `window.__showBadgeDesc` toast.
+- **Kriter Ortalamaları**: Circular arc SVGs per criterion (good/mid/low CSS class by ≥80/≥60/<60 threshold)
+- **DNA Eşleşmesi**: Top-3 similar players via cosine similarity on per-criteria averages (`dna.js`); same-position players ranked first
+
+### Analytics modules
+
+- **`forecast.js`** — `forecastHoltWinters(series, periods, alpha, beta)`: requires ≥3 non-null values; default α=0.4 β=0.2
+- **`anomaly.js`** — `detectAnomalies(resultData)`: requires `MIN_WEEKS=5` data points per player; modified z-score threshold 3.5; returns `[{player, week, score, median, modZ, direction}]` sorted by `|modZ|`
+- **`lineup-optimizer.js`** — `findOptimalLineup(available, presetKey)`: brute-force C(n,5) with position constraint (1 KL + 1 FRV + 1-2 DEF + 1-2 OMO); presets: `dengeli`, `hucum`, `savunma`, `hizli`
+- **`sharecard.js`** — `shareProfileCard()` generates a 540×960 Canvas card for `state.currentRater` using team color, OVR rating, per-criteria stats, ego title, and personal badges. Card type tiers: efsane (≥90), altin (≥85), gumus (≥75), bronz (<75). Uses `Web Share API` with PNG file fallback to download. Preview shown in `#shareCardPreviewBg` modal before sharing. `CRITERIA_ABBR` from `config.js` provides 7 short labels: `['PAS','ŞUT','DRİB','SAV','HIZ','FİZ','TAK']`.
 
 ### FIFA card rendering
 

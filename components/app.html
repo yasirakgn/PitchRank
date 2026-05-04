@@ -26,17 +26,6 @@
   </header>
 
   <section id="screen-puanla" class="screen active" aria-label="Puanla">
-    <div class="screen-intro screen-intro-primary">
-      <div>
-        <div class="screen-kicker">Haftalik Gorev</div>
-        <h2>Oyuncu performansini puanla</h2>
-        <p>Once kimligini sec, sonra bu haftaki kadroyu 7 kriterle degerlendir.</p>
-      </div>
-      <div class="screen-metric">
-        <span>7</span>
-        <small>Kriter</small>
-      </div>
-    </div>
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
@@ -79,17 +68,6 @@
   </section>
 
   <section id="screen-siralama" class="screen" aria-label="Sıralama">
-    <div class="screen-intro">
-      <div>
-        <div class="screen-kicker">Lig Tablosu</div>
-        <h2>En formda oyuncular</h2>
-        <p>Genel ve mevki bazli ratingleri karsilastir.</p>
-      </div>
-      <div class="screen-metric">
-        <span>99</span>
-        <small>Rating</small>
-      </div>
-    </div>
     <div id="statsInfoBand" class="card" style="display:none; margin-bottom:14px; padding:12px 16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div id="statsInfoText" style="font-size:13px;font-weight:700;color:var(--text2);"></div>
@@ -108,17 +86,6 @@
   </section>
 
   <section id="screen-istatistik" class="screen" aria-label="Istatistik">
-    <div class="screen-intro">
-      <div>
-        <div class="screen-kicker">Performans Merkezi</div>
-        <h2>Trendleri ve detaylari oku</h2>
-        <p>Hafta, sezon, karsilastirma ve katilim verilerini tek panoda incele.</p>
-      </div>
-      <div class="screen-metric">
-        <span>360</span>
-        <small>Analiz</small>
-      </div>
-    </div>
     <div class="sub-nav">
       <button class="sub-nb active" onclick="setStatScreen('hafta',this)" type="button">Hafta</button>
       <button class="sub-nb" onclick="setStatScreen('trend',this)" type="button">Trend</button>
@@ -161,17 +128,6 @@
   </section>
 
   <section id="screen-takim" class="screen" aria-label="Takım Kur">
-    <div class="screen-intro">
-      <div>
-        <div class="screen-kicker">Mac Hazirligi</div>
-        <h2>Dengeli takim kur</h2>
-        <p>Bugunku kadroyu sec, rating ve mevki dengesine gore takimi olustur.</p>
-      </div>
-      <div class="screen-metric">
-        <span>VS</span>
-        <small>Denge</small>
-      </div>
-    </div>
     <div class="tk-roster-section">
       <div class="tk-roster-hdr">
         <span class="tk-roster-lbl">Kadro</span>
@@ -186,22 +142,20 @@
       <button class="tk-primary-btn" onclick="buildTeams()" type="button">Dengeli Kur</button>
       <button class="tk-secondary-btn" onclick="shuffleTeams()" type="button">Rastgele</button>
     </div>
+    <div class="tk-action-row" style="margin-top:10px;align-items:center;">
+      <select id="lineupPreset" style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;font-size:14px;font-weight:700;color:var(--text);font-family:inherit;cursor:pointer;">
+        <option value="dengeli">⚖️ Dengeli</option>
+        <option value="hucum">⚔️ Hücum</option>
+        <option value="savunma">🛡️ Savunma</option>
+        <option value="hizli">⚡ Hızlı</option>
+      </select>
+      <button class="tk-primary-btn" onclick="buildOptimalLineup()" type="button" style="flex:1.2;">🪄 Optimal 5'li</button>
+    </div>
     <div id="teamResult"></div>
     <div id="noDataTakim" class="no-data" style="display:none">En az 4 oyuncu seçin.</div>
   </section>
 
   <section id="screen-admin" class="screen" aria-label="Yönetici">
-    <div class="screen-intro">
-      <div>
-        <div class="screen-kicker">Kontrol Paneli</div>
-        <h2>Mac ve kadro yonetimi</h2>
-        <p>Skor, katilim, hakem, yayin ve hafta ayarlarini yonet.</p>
-      </div>
-      <div class="screen-metric">
-        <span>OPS</span>
-        <small>Admin</small>
-      </div>
-    </div>
     <div class="card" style="text-align:center; background:var(--bg2); border:none;">
       <div style="width:44px;height:44px;margin:0 auto 14px;color:var(--green);">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%;">
@@ -220,6 +174,7 @@
       <button class="sub-nb" onclick="setAdminTab('yayin',this)" type="button">Yayın</button>
       <button class="sub-nb" onclick="setAdminTab('hafta',this)" type="button">Hafta</button>
       <button class="sub-nb" onclick="setAdminTab('ayarlar',this)" type="button">Oyuncular</button>
+      <button class="sub-nb" onclick="setAdminTab('anomali',this)" type="button">Anomali</button>
     </div>
 
     <div id="admin-bugun" class="sub-screen">
@@ -350,6 +305,20 @@
       </div>
     </div>
 
+    <div id="admin-anomali" class="sub-screen">
+      <div class="card">
+        <div class="slabel">Veri Kontrolü</div>
+        <div class="stitle" style="margin-bottom:4px;">⚠️ Anomali Tespiti</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:16px;line-height:1.5;">
+          Geçmiş haftalardaki ortalamadan belirgin sapma gösteren puanlar listelenir. Oy verenler gizli; sadece (oyuncu, hafta, puan) ikilisi gösterilir.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+          <button class="abtn" style="margin:0;font-size:12px;padding:8px 14px;" onclick="renderAnomalies()" type="button">🔄 Tara</button>
+        </div>
+        <div id="anomalyList"><div class="no-data">Taramayı başlatmak için 🔄 tuşuna bas.</div></div>
+      </div>
+    </div>
+
     <div id="admin-ayarlar" class="sub-screen">
       <div class="card">
         <div class="slabel">Veritabanı</div>
@@ -381,17 +350,6 @@
   </section>
 
   <section id="screen-yayin" class="screen" aria-label="Yayınlar">
-    <div class="screen-intro">
-      <div>
-        <div class="screen-kicker">Mac Arsivi</div>
-        <h2>Yayinlari izle</h2>
-        <p>Haftalik mac kayitlarini sec, izle ve gecmise don.</p>
-      </div>
-      <div class="screen-metric">
-        <span>HD</span>
-        <small>Arsiv</small>
-      </div>
-    </div>
     <div class="card" style="margin-bottom:12px;">
       <div class="slabel">Canlı Arşiv</div>
       <div class="stitle" style="margin-bottom:4px;">🎬 Maç Yayınları</div>
@@ -415,21 +373,11 @@
   </section>
 
   <section id="screen-profil" class="screen prof-screen" aria-label="Profilim">
-    <div class="screen-intro">
-      <div>
-        <div class="screen-kicker">Oyuncu Profili</div>
-        <h2>Kendi performans kartin</h2>
-        <p>Form, rozetler, kriterler ve rekabet durumunu takip et.</p>
-      </div>
-      <div class="screen-metric">
-        <span>PR</span>
-        <small>Profil</small>
-      </div>
-    </div>
     <div id="prof-header"></div>
     <div id="prof-competition"></div>
     <div id="prof-form"></div>
     <div id="prof-badges"></div>
     <div id="prof-criteria"></div>
+    <div id="prof-dna"></div>
   </section>
 </main>
