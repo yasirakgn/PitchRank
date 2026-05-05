@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Panel — Tam Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #070A14; color: #e2e8f0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; padding: 0; min-height: 100vh; }
+
+  .phone {
+    max-width: 390px;
+    margin: 0 auto;
+    padding: 16px 14px 100px;
+  }
+
+  /* ── Compact header ── */
+  .adm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .adm-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .adm-title svg { width: 18px; height: 18px; color: #10b981; }
+  .adm-title span { font-size: 15px; font-weight: 800; color: #10b981; letter-spacing: -.02em; }
+  .adm-logout {
+    background: rgba(255,59,48,0.08);
+    border: 1px solid rgba(255,59,48,0.2);
+    color: #ff3b30;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+
+  /* ── Tab pills ── */
+  .adm-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .adm-tab {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid #1e293b;
+    background: #1e293b;
+    color: #64748b;
+    white-space: nowrap;
+  }
+  .adm-tab.active {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+  }
+
+  /* ── Score cards ── */
+  .score-row {
+    display: grid;
+    grid-template-columns: 1fr 32px 1fr;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .score-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .score-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+  .score-num { font-size: 32px; font-weight: 900; line-height: 1; margin-bottom: 8px; }
+  .score-num.green { color: #10b981; }
+  .score-num.blue { color: #6366f1; }
+  .score-btns { display: flex; justify-content: center; gap: 8px; }
+  .sbtn-minus {
+    background: #334155; border: none; color: #fff;
+    width: 28px; height: 28px; border-radius: 7px; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sbtn-plus-g {
+    background: #10b981; border: none; color: #fff;
+    width: 28px; height: 28px; border-radius: 7px; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sbtn-plus-b {
+    background: #6366f1; border: none; color: #fff;
+    width: 28px; height: 28px; border-radius: 7px; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .vs-label { text-align: center; font-size: 11px; font-weight: 700; color: #475569; }
+
+  /* ── Meta inputs ── */
+  .meta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .meta-input {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 9px;
+    padding: 8px 11px;
+    color: #94a3b8;
+    font-size: 12px;
+    outline: none;
+    width: 100%;
+  }
+
+  /* ── Section label ── */
+  .sec-label {
+    font-size: 9px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 7px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sec-label-right { color: #334155; font-size: 9px; }
+
+  /* ── Player grid ── */
+  .player-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+  .player-cell {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 9px;
+    padding: 7px 5px;
+    text-align: center;
+  }
+  .player-cell.active {
+    background: #0d2318;
+    border-color: #10b981;
+  }
+  .player-name {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .player-cell.active .player-name { color: #10b981; }
+  .stepper-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+    margin-bottom: 3px;
+  }
+  .st-btn {
+    background: #0f172a; border: none; color: #94a3b8;
+    width: 18px; height: 18px; border-radius: 4px; font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+  }
+  .st-btn.g { background: #10b981; color: #fff; }
+  .st-btn.b { background: #6366f1; color: #fff; }
+  .st-val { font-size: 13px; font-weight: 800; min-width: 14px; text-align: center; line-height: 18px; color: #64748b; }
+  .st-val.green { color: #10b981; }
+  .st-val.blue { color: #6366f1; }
+  .st-icon { font-size: 8px; color: #475569; margin-right: 1px; }
+
+  /* ── Save button ── */
+  .save-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    padding: 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    letter-spacing: -.01em;
+  }
+
+  /* ── History ── */
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .history-title { font-size: 12px; font-weight: 700; color: #94a3b8; }
+  .history-toggle { font-size: 11px; color: #10b981; cursor: pointer; }
+  .history-item {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 9px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .history-week { font-size: 11px; color: #64748b; }
+  .history-score { font-size: 14px; font-weight: 800; color: #10b981; }
+  .history-note { font-size: 10px; color: #475569; margin-top: 1px; }
+
+  /* ── Label badge ── */
+  .badge {
+    display: inline-block;
+    background: rgba(16,185,129,0.12);
+    color: #10b981;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    border: 1px solid rgba(16,185,129,0.2);
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- Compact admin header -->
+  <div class="adm-header">
+    <div class="adm-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <span>Yönetici Paneli</span>
+    </div>
+    <button class="adm-logout">Çıkış</button>
+  </div>
+
+  <!-- Tab pills -->
+  <div class="adm-tabs">
+    <button class="adm-tab active">⚽ Skor</button>
+    <button class="adm-tab">📋 Bugün</button>
+    <button class="adm-tab">🎽 Hakem</button>
+    <button class="adm-tab">📺 Yayın</button>
+    <button class="adm-tab">📅 Hafta</button>
+    <button class="adm-tab">👥 Oyuncular</button>
+    <button class="adm-tab">⚠️ Anomali</button>
+  </div>
+
+  <!-- ═══ SKOR TAB ═══ -->
+
+  <!-- Score stepper cards -->
+  <div class="score-row">
+    <div class="score-card">
+      <div class="score-label">⚪ Beyaz</div>
+      <div class="score-num green">3</div>
+      <div class="score-btns">
+        <button class="sbtn-minus">−</button>
+        <button class="sbtn-plus-g">+</button>
+      </div>
+    </div>
+    <div class="vs-label">VS</div>
+    <div class="score-card">
+      <div class="score-label">🔵 Renkli</div>
+      <div class="score-num blue">2</div>
+      <div class="score-btns">
+        <button class="sbtn-minus">−</button>
+        <button class="sbtn-plus-b">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week + note inline -->
+  <div class="meta-row">
+    <input class="meta-input" placeholder="Hafta (2026-H17)" value="2026-H17">
+    <input class="meta-input" placeholder="Maç notu…">
+  </div>
+
+  <!-- Player grid -->
+  <div class="sec-label">
+    <span>Gol & Asist</span>
+    <span class="sec-label-right">⚽ Gol &nbsp; 🅰 Asist</span>
+  </div>
+  <div class="player-grid">
+
+    <!-- Active: Ahmet scored -->
+    <div class="player-cell active">
+      <div class="player-name">Ahmet</div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val green">2</span>
+        <button class="st-btn g">+</button>
+      </div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val blue">1</span>
+        <button class="st-btn b">+</button>
+      </div>
+    </div>
+
+    <!-- Hasan 1 goal -->
+    <div class="player-cell active">
+      <div class="player-name">Hasan</div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val green">1</span>
+        <button class="st-btn g">+</button>
+      </div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val" style="color:#64748b">0</span>
+        <button class="st-btn b">+</button>
+      </div>
+    </div>
+
+    <!-- Regular cells -->
+    <div class="player-cell">
+      <div class="player-name">Mehmet</div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+    </div>
+    <div class="player-cell">
+      <div class="player-name">Ali</div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+    </div>
+    <div class="player-cell">
+      <div class="player-name">Kemal</div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+    </div>
+    <div class="player-cell">
+      <div class="player-name">Yusuf</div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+    </div>
+    <div class="player-cell">
+      <div class="player-name">Ömer</div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+    </div>
+    <div class="player-cell">
+      <div class="player-name">Tarık</div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+    </div>
+    <div class="player-cell">
+      <div class="player-name">Emre</div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+      <div class="stepper-row">
+        <button class="st-btn">−</button>
+        <span class="st-val">0</span>
+        <button class="st-btn">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save button -->
+  <button class="save-btn">💾 Kaydet</button>
+
+  <!-- Match history - collapsed by default -->
+  <div class="history-header">
+    <span class="history-title">Geçmiş Karşılaşmalar <span class="badge">12</span></span>
+    <span class="history-toggle">▼ Göster</span>
+  </div>
+  <div class="history-item">
+    <div>
+      <div class="history-week">2026-H16</div>
+      <div class="history-note">Normal maç</div>
+    </div>
+    <div class="history-score">4 − 3</div>
+  </div>
+  <div class="history-item">
+    <div>
+      <div class="history-week">2026-H15</div>
+      <div class="history-note">—</div>
+    </div>
+    <div class="history-score">2 − 2</div>
+  </div>
+
+</div>
+</body>
+</html>

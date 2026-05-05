@@ -1,0 +1,234 @@
+<h2>Skor Sekmesi — Oyuncu Listesi Detayı</h2>
+<p class="subtitle">Her oyuncunun gol + asist'i nasıl gösterilsin?</p>
+
+<div class="cards">
+
+  <!-- OPTION A1: 3-col grid, G/A stacked -->
+  <div class="card" data-choice="a1" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:14px;font-family:system-ui;">
+
+      <!-- Score stepper cards -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:10px;">
+        <div style="background:#1e293b;border-radius:10px;padding:10px;text-align:center;border:1px solid #334155;">
+          <div style="font-size:9px;color:#64748b;margin-bottom:4px;">⚪ BEYAZ</div>
+          <div style="font-size:26px;font-weight:800;color:#10b981;">3</div>
+          <div style="display:flex;justify-content:center;gap:6px;margin-top:4px;">
+            <button style="background:#334155;border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:15px;">−</button>
+            <button style="background:#10b981;border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:15px;">+</button>
+          </div>
+        </div>
+        <span style="color:#475569;font-size:11px;font-weight:700;">VS</span>
+        <div style="background:#1e293b;border-radius:10px;padding:10px;text-align:center;border:1px solid #334155;">
+          <div style="font-size:9px;color:#64748b;margin-bottom:4px;">🔵 RENKLİ</div>
+          <div style="font-size:26px;font-weight:800;color:#6366f1;">2</div>
+          <div style="display:flex;justify-content:center;gap:6px;margin-top:4px;">
+            <button style="background:#334155;border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:15px;">−</button>
+            <button style="background:#6366f1;border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:15px;">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week/note inline, compact -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+        <input style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:7px 10px;color:#94a3b8;font-size:11px;outline:none;" placeholder="2026-H17" value="2026-H17" readonly>
+        <input style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:7px 10px;color:#94a3b8;font-size:11px;outline:none;" placeholder="Maç notu…">
+      </div>
+
+      <!-- 3-col player grid, G+A stacked -->
+      <div style="font-size:9px;color:#475569;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;display:flex;justify-content:space-between;padding:0 2px;">
+        <span>Oyuncu Listesi</span>
+        <span style="color:#334155;">⚽G &nbsp; 🅰A</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
+        <!-- player cell — active (has goal) -->
+        <div style="background:#0d2318;border:1px solid #10b981;border-radius:8px;padding:6px;text-align:center;">
+          <div style="font-size:10px;color:#10b981;font-weight:700;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Ahmet</div>
+          <div style="display:flex;justify-content:center;gap:4px;margin-bottom:3px;">
+            <button style="background:#1e293b;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#10b981;font-weight:800;font-size:13px;min-width:14px;line-height:18px;">2</span>
+            <button style="background:#10b981;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+          <div style="display:flex;justify-content:center;gap:4px;">
+            <button style="background:#1e293b;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#6366f1;font-weight:800;font-size:13px;min-width:14px;line-height:18px;">1</span>
+            <button style="background:#6366f1;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+        </div>
+        <!-- normal cells -->
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px;text-align:center;">
+          <div style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:5px;">Mehmet</div>
+          <div style="display:flex;justify-content:center;gap:4px;margin-bottom:3px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+          <div style="display:flex;justify-content:center;gap:4px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+        </div>
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px;text-align:center;">
+          <div style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:5px;">Ali</div>
+          <div style="display:flex;justify-content:center;gap:4px;margin-bottom:3px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+          <div style="display:flex;justify-content:center;gap:4px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+        </div>
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px;text-align:center;">
+          <div style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:5px;">Hasan</div>
+          <div style="display:flex;justify-content:center;gap:4px;margin-bottom:3px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+          <div style="display:flex;justify-content:center;gap:4px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+        </div>
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px;text-align:center;">
+          <div style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:5px;">Kemal</div>
+          <div style="display:flex;justify-content:center;gap:4px;margin-bottom:3px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+          <div style="display:flex;justify-content:center;gap:4px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+        </div>
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px;text-align:center;">
+          <div style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:5px;">Yusuf</div>
+          <div style="display:flex;justify-content:center;gap:4px;margin-bottom:3px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+          <div style="display:flex;justify-content:center;gap:4px;">
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">−</button>
+            <span style="color:#64748b;font-size:13px;min-width:14px;line-height:18px;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:18px;height:18px;border-radius:4px;font-size:11px;">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A1 — 3 Kolon, G+A üst üste</h3>
+      <p>Her kart içinde isim üstte, gol (yeşil) ve asist (mor) steppers alt alta. Gol girenler yeşil parlıyor. 18 oyuncu = 6 satır.</p>
+    </div>
+  </div>
+
+  <!-- OPTION A2: 2-col, G and A side by side -->
+  <div class="card" data-choice="a2" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:14px;font-family:system-ui;">
+
+      <!-- Score stepper - same as A1 -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:10px;">
+        <div style="background:#1e293b;border-radius:10px;padding:10px;text-align:center;border:1px solid #334155;">
+          <div style="font-size:9px;color:#64748b;margin-bottom:4px;">⚪ BEYAZ</div>
+          <div style="font-size:26px;font-weight:800;color:#10b981;">3</div>
+          <div style="display:flex;justify-content:center;gap:6px;margin-top:4px;">
+            <button style="background:#334155;border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:15px;">−</button>
+            <button style="background:#10b981;border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:15px;">+</button>
+          </div>
+        </div>
+        <span style="color:#475569;font-size:11px;font-weight:700;">VS</span>
+        <div style="background:#1e293b;border-radius:10px;padding:10px;text-align:center;border:1px solid #334155;">
+          <div style="font-size:9px;color:#64748b;margin-bottom:4px;">🔵 RENKLİ</div>
+          <div style="font-size:26px;font-weight:800;color:#6366f1;">2</div>
+          <div style="display:flex;justify-content:center;gap:6px;margin-top:4px;">
+            <button style="background:#334155;border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:15px;">−</button>
+            <button style="background:#6366f1;border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:15px;">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Week/note inline -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+        <input style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:7px 10px;color:#94a3b8;font-size:11px;outline:none;" value="2026-H17" readonly>
+        <input style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:7px 10px;color:#94a3b8;font-size:11px;outline:none;" placeholder="Maç notu…">
+      </div>
+
+      <!-- 2-col, each row: name | G stepper | A stepper -->
+      <div style="font-size:9px;color:#475569;margin-bottom:5px;text-transform:uppercase;">Gol & Asist</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+        <!-- active -->
+        <div style="background:#0d2318;border:1px solid #10b981;border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:5px;">
+          <span style="color:#10b981;font-weight:700;font-size:11px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">Ahmet</span>
+          <div style="display:flex;gap:2px;align-items:center;">
+            <span style="color:#10b981;font-size:9px;font-weight:700;">G</span>
+            <button style="background:#1e293b;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">−</button>
+            <span style="color:#10b981;font-weight:800;font-size:12px;min-width:10px;text-align:center;">2</span>
+            <button style="background:#10b981;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">+</button>
+          </div>
+          <div style="display:flex;gap:2px;align-items:center;">
+            <span style="color:#6366f1;font-size:9px;font-weight:700;">A</span>
+            <button style="background:#1e293b;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">−</button>
+            <span style="color:#6366f1;font-weight:800;font-size:12px;min-width:10px;text-align:center;">1</span>
+            <button style="background:#6366f1;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">+</button>
+          </div>
+        </div>
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:5px;">
+          <span style="color:#94a3b8;font-size:11px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">Mehmet</span>
+          <div style="display:flex;gap:2px;align-items:center;">
+            <span style="color:#475569;font-size:9px;">G</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">−</button>
+            <span style="color:#64748b;font-size:12px;min-width:10px;text-align:center;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">+</button>
+          </div>
+          <div style="display:flex;gap:2px;align-items:center;">
+            <span style="color:#475569;font-size:9px;">A</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">−</button>
+            <span style="color:#64748b;font-size:12px;min-width:10px;text-align:center;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">+</button>
+          </div>
+        </div>
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:5px;">
+          <span style="color:#94a3b8;font-size:11px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">Ali</span>
+          <div style="display:flex;gap:2px;align-items:center;">
+            <span style="color:#475569;font-size:9px;">G</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">−</button>
+            <span style="color:#64748b;font-size:12px;min-width:10px;text-align:center;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">+</button>
+          </div>
+          <div style="display:flex;gap:2px;align-items:center;">
+            <span style="color:#475569;font-size:9px;">A</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">−</button>
+            <span style="color:#64748b;font-size:12px;min-width:10px;text-align:center;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">+</button>
+          </div>
+        </div>
+        <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:5px;">
+          <span style="color:#94a3b8;font-size:11px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">Hasan</span>
+          <div style="display:flex;gap:2px;align-items:center;">
+            <span style="color:#475569;font-size:9px;">G</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">−</button>
+            <span style="color:#64748b;font-size:12px;min-width:10px;text-align:center;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">+</button>
+          </div>
+          <div style="display:flex;gap:2px;align-items:center;">
+            <span style="color:#475569;font-size:9px;">A</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">−</button>
+            <span style="color:#64748b;font-size:12px;min-width:10px;text-align:center;">0</span>
+            <button style="background:#0f172a;border:none;color:#fff;width:16px;height:16px;border-radius:3px;font-size:10px;">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A2 — 2 Kolon, G+A yan yana</h3>
+      <p>Her satırda isim + G (gol) + A (asist) yatay dizili. 2 kolon sayesinde 18 oyuncu = 9 satır. Biraz daha geniş butonlar.</p>
+    </div>
+  </div>
+
+</div>

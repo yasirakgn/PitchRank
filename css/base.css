@@ -82,7 +82,7 @@ h1, h2, h3, .stitle, .mtitle, .hdr-title {
   letter-spacing: -0.03em;
 }
 
-/* ── Animated background orbs ──────────────────────────── */
+/* ── Background orbs (static — animation removed for perf) ── */
 .bg-orbs {
   position: fixed;
   inset: 0;
@@ -93,27 +93,21 @@ h1, h2, h3, .stitle, .mtitle, .hdr-title {
 .bg-orb {
   position: absolute;
   border-radius: 50%;
-  will-change: transform;
-  filter: blur(80px);
+  filter: blur(60px);
 }
 .bg-orb-a {
-  width: 70vw;
-  height: 70vw;
-  left: -20vw;
-  top: -20vw;
-  background: rgba(16,201,135,0.13);
-  animation: orbFloat-a 16s ease-in-out infinite alternate;
-}
-.bg-orb-b {
   width: 60vw;
   height: 60vw;
-  right: -15vw;
-  top: -8vw;
-  background: rgba(85,120,255,0.09);
-  animation: orbFloat-b 22s ease-in-out infinite alternate;
+  left: -10vw;
+  top: -15vw;
+  background: rgba(16,201,135,0.12);
 }
-.dark .bg-orb-a { background: rgba(33,230,154,0.15); }
-.dark .bg-orb-b { background: rgba(108,134,255,0.13); }
-
-@keyframes orbFloat-a { to { transform: translate(14vw, 24vh); } }
-@keyframes orbFloat-b { to { transform: translate(-16vw, 18vh); } }
+.bg-orb-b {
+  width: 50vw;
+  height: 50vw;
+  right: -10vw;
+  top: -5vw;
+  background: rgba(85,120,255,0.08);
+}
+.dark .bg-orb-a { background: rgba(33,230,154,0.13); }
+.dark .bg-orb-b { background: rgba(108,134,255,0.11); }

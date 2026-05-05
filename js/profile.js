@@ -4,6 +4,7 @@ import { escHtml, posLabel, getPlayerPhoto, showToast } from './utils.js';
 import { posRating } from './rating.js';
 import { forecastHoltWinters } from './forecast.js';
 import { findSimilarPlayers } from './dna.js';
+import { loadResults, weekGate, gateCurrentWeek } from './stats.js';
 
 // ── Yardımcı hesaplama fonksiyonları ─────────────────────────────────────────
 
@@ -415,17 +416,19 @@ export function renderProfile() {
     return;
   }
 
-  const rd = state.resultData;
-  const md = state.matchesData;
-  const playerData = rd && Array.isArray(rd.players) ? rd.players.find(p => p.name === name) : null;
-  const pObj = Array.isArray(state.players) ? state.players.find(p => p.name === name) : null;
-
-  if (headerEl)   renderHeader(headerEl, playerData, pObj);
-  if (compEl)     renderCompetition(compEl, playerData, rd && rd.players);
-  if (formEl)     renderFormStrip(formEl, playerData, rd, pObj);
-  if (badgesEl)   renderBadges(badgesEl, computeBadges(playerData, rd, md));
-  if (criteriaEl) renderCriteriaBar(criteriaEl, playerData);
-  if (dnaEl)      renderDNA(dnaEl, playerData, rd);
-
   window.__showBadgeDesc = (msg) => showToast(msg);
+
+  loadResults(rawData => {
+    const rd = gateCurrentWeek(rawData, weekGate(rawData));
+    const md = state.matchesData;
+    const playerData = rd && Array.isArray(rd.players) ? rd.players.find(p => p.name === name) : null;
+    const pObj = Array.isArray(state.players) ? state.players.find(p => p.name === name) : null;
+
+    if (headerEl)   renderHeader(headerEl, playerData, pObj);
+    if (compEl)     renderCompetition(compEl, playerData, rd && rd.players);
+    if (formEl)     renderFormStrip(formEl, playerData, rd, pObj);
+    if (badgesEl)   renderBadges(badgesEl, computeBadges(playerData, rd, md));
+    if (criteriaEl) renderCriteriaBar(criteriaEl, playerData);
+    if (dnaEl)      renderDNA(dnaEl, playerData, rd);
+  });
 }

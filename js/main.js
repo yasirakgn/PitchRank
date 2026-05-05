@@ -210,7 +210,7 @@ function setStatScreen(id, btnElement) {
 // ─── FIFA KART ────────────────────────────────────────────────────────────────
 function makeFifaCard(p, pObj, rank, data, overrideScore) {
   const wAvg = overrideScore !== undefined ? overrideScore : posRating(p, pObj);
-  const rating = wAvg !== null ? Math.min(99, Math.round(wAvg * 10)) : Math.round((p.genelOrt || 0) * 10);
+  const rating = wAvg !== null ? Math.min(99, Math.round(wAvg * 10)) : Math.min(99, Math.round((p.genelOrt || 0) * 10));
   const posArr = normPos(pObj);
   const posKey = posArr[0] || 'OMO';
   const posName = POS[posKey] || posKey;
@@ -257,11 +257,6 @@ function makeFifaCard(p, pObj, rank, data, overrideScore) {
       </div>
     </div>`;
   card.onclick = () => openProfile(p, data);
-  const ratingEl = card.querySelector('.fc-rating');
-  if (ratingEl && rating > 0) {
-    ratingEl.textContent = '0';
-    requestAnimationFrame(() => countUp(ratingEl, rating));
-  }
   return card;
 }
 
@@ -270,7 +265,7 @@ function openProfile(p, data) {
   state.currentProfileName = p.name;
   const pObjP = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
   const wAvg = posRating(p, pObjP);
-  const rating = wAvg !== null ? Math.min(99, Math.round(wAvg * 10)) : (p.genelOrt ? Math.round(p.genelOrt * 10) : 0);
+  const rating = wAvg !== null ? Math.min(99, Math.round(wAvg * 10)) : (p.genelOrt ? Math.min(99, Math.round(p.genelOrt * 10)) : 0);
   const marketVal = calcMarketValue(p, data);
   const sdev = calcStdDev(p);
   const styles = getPlayStyles(p);
@@ -299,7 +294,13 @@ function openProfile(p, data) {
   const formBars = last5.map(w => {
     const wi = weeks.indexOf(w);
     const v = weeklyGenels[wi] ?? null;
-    const r10 = v !== null ? Math.min(99, Math.round(v * 10)) : null;
+    let r10 = null;
+    if (v !== null) {
+      const kr = p.weeklyKriterler?.[w] || {};
+      const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [v] };
+      const wr = posRating(swd, pObjP);
+      r10 = wr !== null ? Math.min(99, Math.round(wr * 10)) : Math.min(99, Math.round(v * 10));
+    }
     const h = r10 !== null ? Math.max(8, Math.round(r10 / 99 * 36)) : 4;
     const barCol = r10 !== null ? (r10 >= 80 ? '#f59e0b' : r10 >= 65 ? col.text : '#64748b') : '#374151';
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;">

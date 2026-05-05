@@ -62,7 +62,7 @@ export function weekGate(data) {
   return { currentWeek: cw, count, visible: count >= threshold, remaining: Math.max(0, threshold - count), threshold };
 }
 
-function gateCurrentWeek(data, gate) {
+export function gateCurrentWeek(data, gate) {
   if (gate.visible) return data;
   const weekIdx = Array.isArray(data.weeks) ? data.weeks.indexOf(gate.currentWeek) : -1;
   if (weekIdx === -1) return data;
@@ -105,30 +105,29 @@ function rankGateBanner(gate) {
 }
 
 export function loadResults(cb, forceRefresh = false) {
-  if (state.resultData && !forceRefresh) { cb(state.resultData); return; }
   const cached = lGet('hs_results_cache');
-  // Cache'den anında göster (forceRefresh'te atla — GAS'tan güncel veri beklenir)
-  if (!forceRefresh && cached && !state.resultData) {
-    try {
-      state.resultData = normalizeResultsData(JSON.parse(cached));
-      if (cb) { cb(state.resultData); cb = null; } // bir kez çağır, ikinci çağrıyı engelle
-    } catch(e) {}
+
+  // Stale-while-revalidate: eski veriyi anında göster, GAS'tan taze veri her zaman çekilir
+  if (!forceRefresh) {
+    if (state.resultData) {
+      cb(state.resultData);
+    } else if (cached) {
+      try {
+        state.resultData = normalizeResultsData(JSON.parse(cached));
+        if (state.resultData) cb(state.resultData);
+      } catch(e) {}
+    }
   }
+
+  // Her zaman GAS'tan taze veri çek
   gs({action:'getResults'}).then(d => {
     const normalized = normalizeResultsData(d || { results: [] });
-    if (!d || !normalized.players.length) {
-      lSet('hs_results_cache', JSON.stringify(normalized));
-      state.resultData = normalized;
-      if (cb) cb(state.resultData);
-      return;
-    }
     const newStr = JSON.stringify(normalized);
-    if (cached !== newStr || forceRefresh) {
-      lSet('hs_results_cache', newStr);
-      state.resultData = normalized;
-    }
-    if (cb) cb(state.resultData); // sadece cb null değilse çağır (forceRefresh veya cache yoktu)
-  }).catch(() => { if (!state.resultData && cb) cb(null); });
+    const prevStr = JSON.stringify(state.resultData);
+    lSet('hs_results_cache', newStr);
+    state.resultData = normalized;
+    if (forceRefresh || newStr !== prevStr) cb(state.resultData);
+  }).catch(() => { if (!state.resultData) cb(null); });
 }
 
 export function loadManualWeek(cb) {
@@ -279,7 +278,7 @@ export function renderWeek(week, data) {
       const pObj = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
       const singleWeekData = { weeklyKriterler: { [week]: kr }, weeklyGenels: [score] };
       const weighted = posRating(singleWeekData, pObj);
-      const r10 = weighted !== null ? Math.min(99, weighted * 10) : (score != null ? score * 10 : null);
+      const r10 = weighted !== null ? Math.min(99, weighted * 10) : (score != null ? Math.min(99, score * 10) : null);
       return { name: p.name, score, kr, pObj, r10 };
     })
     .filter(p => p.score != null)
@@ -620,7 +619,7 @@ export function renderComparison() {
           const kr = pd.weeklyKriterler?.[w] || {};
           const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [rawV] };
           const r = posRating(swd, pObjT);
-          allTrendVals.push(r !== null ? Math.min(99, r * 10) : rawV * 10);
+          allTrendVals.push(r !== null ? Math.min(99, r * 10) : Math.min(99, rawV * 10));
         }
       });
     });
@@ -638,7 +637,7 @@ export function renderComparison() {
           const kr = pdata.weeklyKriterler?.[w] || {};
           const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [rawV] };
           const r = posRating(swd, pObjT);
-          v = r !== null ? +Math.min(99, r * 10).toFixed(1) : +(rawV * 10).toFixed(1);
+          v = r !== null ? +Math.min(99, r * 10).toFixed(1) : +Math.min(99, rawV * 10).toFixed(1);
         }
         return { x: tToX(i), y: v !== null ? tToY(v) : null, v };
       });
@@ -756,7 +755,8 @@ export function renderComparison() {
 export function renderSezon() {
   const el = document.getElementById('sezonContent');
   el.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
-  loadResults(data => {
+  loadResults(rawData => {
+    const data = gateCurrentWeek(rawData, weekGate(rawData));
     if (!data || !data.players || !data.weeks || !data.weeks.length) { el.innerHTML = '<div class="no-data">Henüz yeterli veri yok.</div>'; return; }
     const players = data.players.filter(p => p.genelOrt !== null);
     if (!players.length) { el.innerHTML = '<div class="no-data">Henüz puan girilmedi.</div>'; return; }
@@ -773,7 +773,7 @@ export function renderSezon() {
       const kr = p.weeklyKriterler?.[w] || {};
       const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [rawV] };
       const r = posRating(swd, pObjS);
-      return r !== null ? Math.min(99, r * 10) : rawV * 10;
+      return r !== null ? Math.min(99, r * 10) : Math.min(99, rawV * 10);
     };
     const weekRatings = (p) => data.weeks.map((_, i) => weekRating(p, i)).filter(v => v !== null);
     const last3Avg = (p) => { const vals = weekRatings(p).slice(-3); return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
@@ -1010,7 +1010,8 @@ export function renderSezon() {
 export function renderKatilim() {
   const el = document.getElementById('attendContent');
   el.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
-  loadResults(data => {
+  loadResults(rawData => {
+    const data = gateCurrentWeek(rawData, weekGate(rawData));
     if (!data || !data.weeks || !data.weeks.length) { el.innerHTML = '<div class="no-data">Veri yok.</div>'; return; }
     const tw = data.weeks.length;
     const rows = state.players.map(p => {

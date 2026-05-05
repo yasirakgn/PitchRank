@@ -464,7 +464,7 @@ async function generateCard(playerName, pd, pObj, rd) {
 
   // ── STAT GRID (4 + 3) ─────────────────────────────────────────────────────────
   const avgs = CRITERIA.map(cr => criteriaAvg(pd, cr));
-  const vals = avgs.map(a => a > 0 ? Math.min(99, Math.round(a * 9.9)) : 0);
+  const vals = avgs.map(a => a > 0 ? Math.min(99, Math.round(a * 10)) : 0);
 
   const sColor = (v) =>
     v >= 88 ? ct.c1 :

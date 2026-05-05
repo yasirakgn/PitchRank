@@ -36,7 +36,7 @@ export function calcMarketValue(p, data) {
   if (!data) return 0;
   const pObj = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
   let r = posRating(p, pObj);
-  r = r !== null ? Math.min(99, Math.round(r * 10)) : (p.genelOrt ? Math.round(p.genelOrt * 10) : 50);
+  r = r !== null ? Math.min(99, Math.round(r * 10)) : (p.genelOrt ? Math.min(99, Math.round(p.genelOrt * 10)) : 50);
   if (isNaN(r) || r < 0) r = 50;
   const stdDev = calcStdDev(p);
   const totalWeeks = Array.isArray(data.weeks) ? data.weeks.length : 1;
