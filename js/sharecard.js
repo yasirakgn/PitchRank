@@ -140,7 +140,7 @@ function personalBadges(pd, rd, statRanks) {
 
   const myAtt = attendCount(pd);
   if (rd && Array.isArray(rd.players)) {
-    const maxAtt     = Math.max(...rd.players.map(p => attendCount(p)));
+    const maxAtt     = rd.players.length ? Math.max(...rd.players.map(p => attendCount(p))) : 0;
     const totalWeeks = Array.isArray(rd.weeks) ? rd.weeks.length : 0;
     if (myAtt > 0 && myAtt >= maxAtt && totalWeeks >= 4) {
       result.push({ e: '💯', t: 'EN SADIK OYUNCU' });

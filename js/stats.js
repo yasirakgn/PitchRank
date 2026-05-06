@@ -127,6 +127,7 @@ export function setRankTab(tab, btn) {
   document.querySelectorAll('#screen-siralama .sub-nb').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   const grid = document.getElementById('fifaGrid');
+  if (!grid) return;
   grid.className = 'fg'; grid.style.marginBottom = '12px';
   if (state.sonucData) renderRankTab(state.sonucData, _makeFifaCard);
 }
@@ -138,6 +139,7 @@ export function renderSonuc(makeFifaCard) {
   const infoTextEl = document.getElementById('statsInfoText');
   const infoWeekBadgeEl = document.getElementById('statsInfoWeekBadge');
   const bannerEl = document.getElementById('siralama-gate-banner');
+  if (!grid || !nd) return;
   grid.className = 'fg'; grid.style.marginBottom = '12px';
   grid.innerHTML = '<div class="no-data"><span class="spin"></span>Istatistikler çekiliyor...</div>';
   nd.style.display = 'none';

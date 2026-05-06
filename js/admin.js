@@ -60,7 +60,7 @@ export function checkPin() {
       clearAdminLock(); setAdminSession(d.token);
       document.getElementById('pinBg').classList.remove('open');
       showToast('✅ Yönetici girişi başarılı.');
-      const adminBtn = document.querySelectorAll('.bnav-item')[6];
+      const adminBtn = document.querySelector('.bnav-item[onclick*="tryAdmin"]');
       window.switchMainScreen('admin', adminBtn);
       setAdminTab('mac', document.querySelector('#screen-admin .sub-nb'));
     } else {
@@ -320,7 +320,7 @@ export function confirmPos(i) {
   const key = _pendingPos[i];
   if (!key) { closePosDropdown(i); return; }
   state.players[i].pos = [key]; savePlayers();
-  gs({action:'saveMevki', name:state.players[i].name, mevki:JSON.stringify([key])}).catch(e => console.warn('Mevki kaydedilemedi:', e));
+  gs({action:'saveMevki', name:state.players[i].name, mevki:JSON.stringify([key])}).catch(() => showToast('Mevki kaydedilemedi, bağlantıyı kontrol edin.', true));
   const chipsEl = document.getElementById(`poschips-${i}`);
   if (chipsEl) chipsEl.innerHTML = `<span style="font-size:11px;font-weight:800;padding:6px 12px;border-radius:12px;background:var(--text);color:var(--bg);">${POS[key]}</span>`;
   delete _pendingPos[i]; closePosDropdown(i); showToast('Mevki güncellendi!');

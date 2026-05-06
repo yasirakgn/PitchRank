@@ -15,7 +15,6 @@ export const state = {
   pendingPos: {},
   currentProfileName: '',
   currentRankTab: 'genel',
-  bugunSelected: {},
   videosData: null,
   currentVideoWeek: null,
   hakemData: { week: '', hakem: [] },
