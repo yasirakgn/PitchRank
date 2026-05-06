@@ -1,26 +1,12 @@
 import { CRITERIA, CDISP, TEAM_CONFIG } from './config.js';
 import { state } from './state.js';
-import { escHtml, posLabel, getPlayerPhoto, showToast } from './utils.js';
-import { posRating } from './rating.js';
+import { escHtml, posLabel, getPlayerPhoto, showToast, criteriaAvg, attendCount } from './utils.js';
+import { posRating, calcTrend } from './rating.js';
 import { forecastHoltWinters } from './forecast.js';
 import { findSimilarPlayers } from './dna.js';
 import { loadResults, weekGate, gateCurrentWeek } from './stats.js';
 
 // ── Yardımcı hesaplama fonksiyonları ─────────────────────────────────────────
-
-function criteriaAvg(playerData, criterion) {
-  if (!playerData || !playerData.weeklyKriterler) return 0;
-  const vals = [];
-  Object.values(playerData.weeklyKriterler).forEach(wk => {
-    if (wk && wk[criterion] != null) vals.push(+wk[criterion]);
-  });
-  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-}
-
-function attendanceCount(playerData) {
-  if (!playerData || !Array.isArray(playerData.weeklyGenels)) return 0;
-  return playerData.weeklyGenels.filter(v => v != null).length;
-}
 
 function isLeader(playerData, resultData) {
   if (!resultData || !Array.isArray(resultData.players) || !playerData) return false;
@@ -40,8 +26,17 @@ function hasConsecutiveTop3(playerData, resultData, count) {
   if (weeks.length < count) return false;
   const startIdx = weeks.length - count;
   for (let i = startIdx; i < weeks.length; i++) {
+    const w = weeks[i];
     const scores = resultData.players
-      .map(p => ({ name: p.name, score: Array.isArray(p.weeklyGenels) ? p.weeklyGenels[i] : null }))
+      .map(p => {
+        const pObjT = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
+        const rawV = Array.isArray(p.weeklyGenels) ? p.weeklyGenels[i] : null;
+        if (rawV == null) return { name: p.name, score: null };
+        const kr = p.weeklyKriterler?.[w] || {};
+        const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [rawV] };
+        const r = posRating(swd, pObjT);
+        return { name: p.name, score: r !== null ? r : rawV };
+      })
       .filter(p => p.score != null)
       .sort((a, b) => b.score - a.score);
     const rank = scores.findIndex(s => s.name === playerData.name);
@@ -77,7 +72,7 @@ const BADGE_DEFS = [
   { id: 'tank',     icon: '🦍', name: 'Tank',          desc: 'Fizik ortalaması 8.0+',         check: (p)        => criteriaAvg(p, 'Fizik') >= 8.0 },
   { id: 'joker',    icon: '🤝', name: 'Joker',         desc: 'Takım Oyunu ortalaması 8.0+',   check: (p)        => criteriaAvg(p, 'Takim Oyunu') >= 8.0 },
   { id: 'ates',     icon: '🔥', name: 'Ateş',          desc: '3 hafta üst üste ilk 3 sıra',  check: (p, rd)    => hasConsecutiveTop3(p, rd, 3) },
-  { id: 'devamli',  icon: '📅', name: 'Devamlı',       desc: '5+ maça katılım',               check: (p)        => attendanceCount(p) >= 5 },
+  { id: 'devamli',  icon: '📅', name: 'Devamlı',       desc: '5+ maça katılım',               check: (p)        => attendCount(p) >= 5 },
   { id: 'lider',    icon: '👑', name: 'Lider',          desc: 'Sezon genel sıralaması 1.',    check: (p, rd)    => isLeader(p, rd) },
   { id: 'golcu',    icon: '⚽', name: 'Golcü',          desc: '5+ gol bu sezon',               check: (p, _, md) => getTotalGoals(p?.name, md) >= 5 },
   { id: 'asist',    icon: '🅰️', name: 'Asist Kralı',   desc: '5+ asist bu sezon',             check: (p, _, md) => getTotalAssists(p?.name, md) >= 5 },
@@ -209,9 +204,8 @@ function renderFormStrip(container, playerData, resultData, pObj) {
   }
 
   const lastScore = actualScores[actualScores.length - 1];
-  const prevScore = actualScores.length > 1 ? actualScores[actualScores.length - 2] : null;
-  const delta = prevScore !== null ? lastScore - prevScore : 0;
-  const trend = delta >= 2 ? { icon: '↑', cls: 'up' } : delta <= -2 ? { icon: '↓', cls: 'down' } : { icon: '→', cls: 'flat' };
+  const { dir: trendDir } = calcTrend(actualScores);
+  const trend = trendDir === '↑' ? { icon: '↑', cls: 'up' } : trendDir === '↓' ? { icon: '↓', cls: 'down' } : { icon: '→', cls: 'flat' };
 
   const actualDotsHtml = actualPts.map(p => `
     <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" class="spark-dot"/>

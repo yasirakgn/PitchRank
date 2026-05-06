@@ -4,9 +4,19 @@ import { normPos } from './utils.js';
 
 export function calcStdDev(playerData) {
   const vals = Array.isArray(playerData && playerData.weeklyGenels) ? playerData.weeklyGenels.filter(v => v != null) : [];
-  if (vals.length < 2) return 0;
+  if (vals.length < 2) return null;
   const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
   return Math.sqrt(vals.reduce((a, v) => a + Math.pow(v - avg, 2), 0) / vals.length);
+}
+
+export function calcTrend(vals) {
+  const valid = (Array.isArray(vals) ? vals : []).filter(v => v != null && !isNaN(v));
+  if (valid.length < 2) return { dir: '→', change: 0, pct: 0 };
+  const first = valid[0], last = valid[valid.length - 1];
+  const change = +(last - first).toFixed(2);
+  const pct = first !== 0 ? +(change / first * 100).toFixed(1) : 0;
+  const dir = pct > 3 ? '↑' : pct < -3 ? '↓' : '→';
+  return { dir, change, pct };
 }
 
 export function posRating(playerData, pObj) {
@@ -28,7 +38,7 @@ export function posRating(playerData, pObj) {
   }).filter(v => v !== null);
   if (!posScores.length) return null;
   const baseScore = posScores.reduce((a, b) => a + b, 0) / posScores.length;
-  const stdDev = calcStdDev(playerData);
+  const stdDev = calcStdDev(playerData) ?? 0;
   return baseScore * Math.max(0.85, 1 - (stdDev / 5) * 0.15);
 }
 
@@ -39,11 +49,12 @@ export function calcMarketValue(p, data) {
   r = r !== null ? Math.min(99, Math.round(r * 10)) : (p.genelOrt ? Math.min(99, Math.round(p.genelOrt * 10)) : 50);
   if (isNaN(r) || r < 0) r = 50;
   const stdDev = calcStdDev(p);
+  const consistency = stdDev !== null ? Math.max(0.4, 1.2 - stdDev / 2.5) : 1.0;
   const totalWeeks = Array.isArray(data.weeks) ? data.weeks.length : 1;
   const attend = Array.isArray(p && p.weeklyGenels) ? p.weeklyGenels.filter(v => v != null).length : 0;
   const attRatio = totalWeeks ? (attend / totalWeeks) : 1;
   let base = Math.pow(1.12, r) * 3000;
-  let val = base * Math.max(0.4, 1.2 - (stdDev / 2.5)) * (0.5 + (0.5 * attRatio));
+  let val = base * consistency * (0.5 + (0.5 * attRatio));
   if (isNaN(val)) return 0;
   if (val > 1000000) val = Math.floor(val / 100000) * 100000;
   else if (val > 10000) val = Math.floor(val / 10000) * 10000;

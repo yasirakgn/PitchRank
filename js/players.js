@@ -76,66 +76,21 @@ function saveDraftDebounced(rater, week, scores) {
   _draftTimer = setTimeout(() => saveDraft(rater, week, scores), 400);
 }
 
-export function savePlayers() {
-  lSet('hs_players', JSON.stringify(state.players));
-}
+export function savePlayers() {}
 
-export function loadPlayersFromSheets(cb, onRefresh) {
-  const cached = lGet('hs_players_cache');
-  if (cached) {
-    try {
-      const data = JSON.parse(cached);
-      if (data && data.players) {
-        state.players = [];
-        data.players.forEach(sp => {
-          if (!state.players.find(p => p.name === sp.name)) {
-            state.players.push({ name: sp.name, pos: sp.pos || ['OMO'], photo: sp.photo || '' });
-          }
-        });
-        savePlayers();
-      }
-    } catch(e) {}
-    if (cb) {
-      const currentCb = cb;
-      cb = null;
-      currentCb();
-    }
-  }
-
+export function loadPlayersFromSheets(cb) {
   gs({action:'getPlayers'}).then(data => {
     if (data && Array.isArray(data.players)) {
-      lSet('hs_players_cache', JSON.stringify(data));
-      state.players = [];
-      data.players.forEach(sp => {
-        state.players.push({ name: sp.name, pos: sp.pos || ['OMO'], photo: sp.photo || '' });
-      });
-      savePlayers();
-      if (onRefresh) onRefresh();
+      state.players = data.players.map(sp => ({ name: sp.name, pos: sp.pos || ['OMO'], photo: sp.photo || '' }));
     }
     if (cb) cb();
   }).catch(() => { if (cb) cb(); });
 }
 
 export function loadMevkilerFromSheets(cb) {
-  const cached = lGet('hs_mevkiler_cache');
-  if (cached) {
-    try {
-      const data = JSON.parse(cached);
-      if (data && data.mevkiler) {
-        state.players.forEach(p => { if (data.mevkiler[p.name]) p.pos = data.mevkiler[p.name]; });
-      }
-    } catch(e) {}
-    if (cb) {
-      const currentCb = cb;
-      cb = null;
-      currentCb();
-    }
-  }
   gs({action:'getMevkiler'}).then(data => {
     if (data && data.mevkiler) {
-      lSet('hs_mevkiler_cache', JSON.stringify(data));
       state.players.forEach(p => { if (data.mevkiler[p.name]) p.pos = data.mevkiler[p.name]; });
-      savePlayers();
     }
     if (cb) cb();
   }).catch(() => { if (cb) cb(); });
@@ -218,19 +173,9 @@ export function buildCards() {
   state.currentScores = {}; state.completedCards = {};
 
   const week = getWeekLabel();
-  const cached = lGet('hs_today_players_cache');
-  let cachedWeek = null, cachedList = null;
-  if (cached) {
-    try { const cd = JSON.parse(cached); cachedWeek = cd.week; cachedList = cd.players; } catch(e) {}
-  }
-  const hakemCached = lGet('hs_hakem_cache');
-  let cachedHakemWeek = null, cachedHakemName = '';
-  if (hakemCached) {
-    try { const hd = JSON.parse(hakemCached); cachedHakemWeek = hd.week; cachedHakemName = hd.hakem || ''; } catch(e) {}
-  }
 
-  const renderWithData = (activePlayers, hakemName) => {
-    const isHakem = (hakemName && state.currentRater === hakemName);
+  const renderWithData = (activePlayers, hakemNames) => {
+    const isHakem = Array.isArray(hakemNames) && hakemNames.includes(state.currentRater);
 
     if (!isHakem && activePlayers && activePlayers.length && !activePlayers.includes(state.currentRater)) {
       c.innerHTML = `<div class="no-data" style="border-color:#ff3b30;color:#ff3b30;background:rgba(255,59,48,0.05);">
@@ -265,11 +210,11 @@ export function buildCards() {
     c.innerHTML = '<div class="no-data"><span class="spin"></span>Oylama durumu kontrol ediliyor...</div>';
     gs({ action: 'checkVoted', week, rater: state.currentRater }).then(vd => {
       if (vd.voted) { showVotedBlock(); return; }
-      renderCards(activePlayers, hakemName, isHakem);
-    }).catch(() => renderCards(activePlayers, hakemName, isHakem));
+      renderCards(activePlayers, hakemNames, isHakem);
+    }).catch(() => renderCards(activePlayers, hakemNames, isHakem));
   };
 
-  const renderCards = (activePlayers, hakemName, isHakem) => {
+  const renderCards = (activePlayers, hakemNames, isHakem) => {
     const submitArea = byId('submitArea');
     const progressWrap = byId('progressWrap');
     if (submitArea) submitArea.style.display = 'block';
@@ -283,9 +228,10 @@ export function buildCards() {
       </div>`;
     }
 
+    const excludeSet = new Set([state.currentRater, ...(Array.isArray(hakemNames) ? hakemNames : [])]);
     const list = (activePlayers && activePlayers.length)
-      ? state.players.filter(p => activePlayers.includes(p.name) && p.name !== state.currentRater && p.name !== hakemName)
-      : state.players.filter(p => p.name !== state.currentRater && p.name !== hakemName);
+      ? state.players.filter(p => activePlayers.includes(p.name) && !excludeSet.has(p.name))
+      : state.players.filter(p => !excludeSet.has(p.name));
 
     c.innerHTML = hakemBanner;
     list.forEach(p => {
@@ -314,30 +260,16 @@ export function buildCards() {
     checkDraftBanner();
   };
 
-  const useCache = !state.manualWeek && (cachedWeek === week && cachedList) && (cachedHakemWeek === week);
-
-  if (useCache) {
-    renderWithData(cachedList, cachedHakemName);
-    Promise.all([
-      gs({ action: 'getTodayPlayers', week }),
-      gs({ action: 'getHakem', week })
-    ]).then(([tdData, hkData]) => {
-      lSet('hs_today_players_cache', JSON.stringify({ week, players: tdData.players || [] }));
-      lSet('hs_hakem_cache', JSON.stringify({ week, hakem: hkData.hakem || '' }));
-    }).catch(() => {});
-    return;
-  }
-
   Promise.all([
     gs({ action: 'getTodayPlayers', week }),
     gs({ action: 'getHakem', week })
   ]).then(([tdData, hkData]) => {
-    const players = tdData.players || [];
-    const hakem = hkData.hakem || '';
-    lSet('hs_today_players_cache', JSON.stringify({ week, players }));
-    lSet('hs_hakem_cache', JSON.stringify({ week, hakem }));
-    renderWithData(players, hakem);
-  }).catch(() => renderWithData([], ''));
+    const raw = hkData.hakem || '';
+    let hakemNames = [];
+    try { const p = JSON.parse(raw); if (Array.isArray(p)) hakemNames = p; else if (p) hakemNames = [String(p)]; }
+    catch(e) { if (raw) hakemNames = [raw]; }
+    renderWithData(tdData.players || [], hakemNames);
+  }).catch(() => renderWithData([], []));
 }
 
 export function onSlider(el) {
@@ -384,7 +316,6 @@ export function submitRatings() {
       if (d.success) {
         btn.textContent = 'Puanları Gönder';
         clearDraft(state.currentRater, getWeekLabel());
-        lRem('hs_results_cache');
         state.resultData = null;
         loadResults(() => {}, true);
         if (successPopup) successPopup.style.display = 'flex';

@@ -1,6 +1,9 @@
+export const FORECAST_ALPHA = 0.4;
+export const FORECAST_BETA  = 0.2;
+
 // Holt-Winters double exponential smoothing — captures level + trend.
 // Suited for short, non-seasonal series like weekly player ratings.
-export function forecastHoltWinters(series, periods = 3, alpha = 0.4, beta = 0.2) {
+export function forecastHoltWinters(series, periods = 3, alpha = FORECAST_ALPHA, beta = FORECAST_BETA) {
   const cleaned = (Array.isArray(series) ? series : [])
     .filter(v => v != null && !isNaN(v))
     .map(v => +v);

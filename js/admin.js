@@ -1,13 +1,15 @@
 import { POS, POS_GROUPS } from './config.js';
-import { lGet, lSet, lRem, sGet, sSet, sRem } from './storage.js';
+import { lGet, lSet, sGet, sSet, sRem } from './storage.js';
 import { state } from './state.js';
 import { escHtml, normPos, san, getWeekLabel, getAutoWeekLabel, showToast, showConfirm } from './utils.js';
 import { gs } from './api.js';
 import { savePlayers, initSelects, buildGoalInputs } from './players.js';
 import { loadMatchHistory, loadResults } from './stats.js';
 import { detectAnomalies } from './anomaly.js';
+import { posRating } from './rating.js';
 
 let _pendingPos = {};
+let _posSheetIdx = null;
 let _bugunSelected = {};
 
 function escJsSingle(value) {
@@ -157,37 +159,47 @@ export function saveBugunGelenler() {
     if (d.success) {
       msg.textContent = `✅ ${presentList.length} oyuncu kaydedildi!`;
       msg.style.display = 'block';
-      lRem('hs_today_players_cache');
       showToast(`${presentList.length} oyuncu bu hafta için işaretlendi!`);
     }
   }).catch(() => { btn.disabled = false; btn.textContent = '💾 Kaydet'; showToast('Kayıt hatası.', true); });
 }
 
 // ─── HAKEM ───────────────────────────────────────────────────────────────────
+function parseHakemValue(raw) {
+  if (!raw) return [];
+  try { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed; } catch(e) {}
+  return typeof raw === 'string' && raw.trim() ? [raw.trim()] : [];
+}
+
 export function loadHakemTab() {
   const week = getWeekLabel();
   document.getElementById('hakemWeekLabel').textContent = week;
   const el = document.getElementById('hakemPlayerList');
   el.innerHTML = '<span class="spin"></span>';
-  state.selectedHakem = '';
+  state.selectedHakem = [];
   gs({ action: 'getHakem', week }).then(data => {
-    state.selectedHakem = data.hakem || '';
+    state.selectedHakem = parseHakemValue(data.hakem);
     state.hakemData = { week, hakem: state.selectedHakem };
-    const infoEl = document.getElementById('hakemCurrentInfo');
-    if (state.selectedHakem) {
-      infoEl.style.display = 'block';
-      infoEl.textContent = `🟡 Mevcut hakem: ${state.selectedHakem}`;
-    } else {
-      infoEl.style.display = 'none';
-    }
+    _updateHakemInfo();
     renderHakemPlayerList();
-  }).catch(() => { state.selectedHakem = ''; renderHakemPlayerList(); });
+  }).catch(() => { state.selectedHakem = []; renderHakemPlayerList(); });
+}
+
+function _updateHakemInfo() {
+  const infoEl = document.getElementById('hakemCurrentInfo');
+  if (!infoEl) return;
+  if (state.selectedHakem.length) {
+    infoEl.style.display = 'block';
+    infoEl.textContent = `🟡 Mevcut hakem${state.selectedHakem.length > 1 ? 'ler' : ''}: ${state.selectedHakem.join(', ')}`;
+  } else {
+    infoEl.style.display = 'none';
+  }
 }
 
 function renderHakemPlayerList() {
   const el = document.getElementById('hakemPlayerList');
   el.innerHTML = state.players.map(p => {
-    const on = state.selectedHakem === p.name;
+    const on = state.selectedHakem.includes(p.name);
     return `<button id="hk-${san(p.name)}" data-name="${escHtml(p.name)}" onclick="selectHakem(this.dataset.name)"
       style="font-size:13px;font-weight:700;padding:10px 16px;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .2s;
              border:2px solid ${on?'#f59e0b':'var(--border)'};
@@ -200,7 +212,9 @@ function renderHakemPlayerList() {
 }
 
 export function selectHakem(name) {
-  state.selectedHakem = (state.selectedHakem === name) ? '' : name;
+  const idx = state.selectedHakem.indexOf(name);
+  if (idx === -1) state.selectedHakem.push(name);
+  else state.selectedHakem.splice(idx, 1);
   renderHakemPlayerList();
 }
 
@@ -210,20 +224,17 @@ export function saveHakemToSheet() {
   const msg = document.getElementById('hakemSaveMsg');
   btn.disabled = true; btn.textContent = 'Kaydediliyor...';
   msg.style.display = 'none';
-  gs({ action: 'saveHakem', week, hakem: state.selectedHakem }).then(d => {
+  gs({ action: 'saveHakem', week, hakem: JSON.stringify(state.selectedHakem) }).then(d => {
     btn.disabled = false; btn.textContent = '💾 Kaydet';
     if (d.success) {
       state.hakemData = { week, hakem: state.selectedHakem };
-      lSet('hs_hakem_cache', JSON.stringify({ week, hakem: state.selectedHakem }));
-      const infoEl = document.getElementById('hakemCurrentInfo');
-      if (state.selectedHakem) {
-        infoEl.style.display = 'block';
-        infoEl.textContent = `🟡 Mevcut hakem: ${state.selectedHakem}`;
-        msg.textContent = `✅ ${state.selectedHakem} hakem olarak atandı!`;
-        showToast(`${state.selectedHakem} bu hafta hakem olarak atandı!`);
+      _updateHakemInfo();
+      if (state.selectedHakem.length) {
+        const names = state.selectedHakem.join(', ');
+        msg.textContent = `✅ ${names} hakem olarak atandı!`;
+        showToast(`${names} bu hafta hakem olarak atandı!`);
       } else {
-        infoEl.style.display = 'none';
-        msg.textContent = `✅ Hakem kaldırıldı.`;
+        msg.textContent = '✅ Hakem kaldırıldı.';
         showToast('Hakem kaldırıldı.');
       }
       msg.style.display = 'block';
@@ -232,12 +243,49 @@ export function saveHakemToSheet() {
 }
 
 export function clearHakem() {
-  state.selectedHakem = '';
+  state.selectedHakem = [];
   renderHakemPlayerList();
   saveHakemToSheet();
 }
 
 // ─── OYUNCU LİSTESİ ──────────────────────────────────────────────────────────
+function _openPosSheet(i) {
+  const p = state.players[i];
+  if (!p) return;
+  const curPos = _pendingPos[i] !== undefined ? _pendingPos[i] : normPos(p)[0];
+  _pendingPos[i] = curPos;
+  _posSheetIdx = i;
+
+  let overlay = document.getElementById('_posSheetOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = '_posSheetOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:300;display:none;';
+    document.body.appendChild(overlay);
+  }
+
+  const dropItems = POS_GROUPS.map(g => `
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text3);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">${g.label}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${g.keys.map(k => {
+          const on = k === curPos;
+          return `<button onclick="selectPos(${i},'${k}')" id="posbtn-${i}-${k}" style="font-size:14px;font-weight:700;padding:10px 16px;border-radius:12px;border:2px solid ${on?'var(--green)':'var(--border)'};background:${on?'var(--green)':'var(--bg3)'};color:${on?'#fff':'var(--text2)'};cursor:pointer;font-family:inherit;transition:all 0.2s;">${POS[k]}</button>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+
+  overlay.innerHTML = `
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);" onclick="closePosDropdown(${i})"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;background:var(--bg2);border-radius:24px 24px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px));max-height:78vh;overflow-y:auto;box-shadow:0 -4px 32px rgba(0,0,0,0.35);">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 20px;"></div>
+      <div style="font-size:16px;font-weight:800;letter-spacing:-0.5px;margin-bottom:20px;">${escHtml(p.name)} — Mevki Seç</div>
+      ${dropItems}
+      <button onclick="confirmPos(${i})" style="width:100%;margin-top:8px;padding:16px;border:none;border-radius:16px;background:var(--text);color:var(--bg);font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;">Kaydet ✓</button>
+    </div>`;
+  overlay.style.display = 'block';
+}
+
 export function renderPlayerList() {
   const el = document.getElementById('playerList');
   if (!el) return;
@@ -246,26 +294,12 @@ export function renderPlayerList() {
     const chip = curPos
       ? `<span style="font-size:11px;font-weight:800;padding:6px 12px;border-radius:12px;background:var(--text);color:var(--bg);">${POS[curPos]}</span>`
       : `<span style="font-size:11px;color:var(--text3)">—</span>`;
-    const dropItems = POS_GROUPS.map(g => `
-      <div style="margin-bottom:16px">
-        <div style="font-size:11px;color:var(--text3);font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">${g.label}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
-          ${g.keys.map(k => {
-            const on = k === curPos;
-            return `<button onclick="selectPos(${i},'${k}')" id="posbtn-${i}-${k}" style="font-size:14px;font-weight:700;padding:10px 16px;border-radius:12px;border:2px solid ${on?'var(--green)':'var(--border)'};background:${on?'var(--green)':'var(--bg3)'};color:${on?'#fff':'var(--text2)'};cursor:pointer;font-family:inherit;transition:all 0.2s;">${POS[k]}</button>`;
-          }).join('')}
-        </div>
-      </div>`).join('');
-    return `<div class="player-row" style="position:relative;display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--border2);">
+    return `<div class="player-row" style="display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--border2);">
       <div class="av" style="width:44px;height:44px;font-size:16px;">${p.name.charAt(0)}</div>
       <span style="flex:1;font-size:16px;font-weight:800;letter-spacing:-0.5px;">${p.name}</span>
       <div id="poschips-${i}" style="display:flex;gap:6px;flex-wrap:wrap">${chip}</div>
       <button onclick="togglePosDropdown(${i})" style="font-size:18px;padding:8px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit;transition:all 0.2s;box-shadow:var(--sh);">✏️</button>
       <button class="xcls" style="color:#ef4444;background:#fef2f2;border:1px solid #fecaca;width:42px;height:42px;font-size:24px;flex-shrink:0;border-radius:12px;" onclick="removePlayer(${i})">×</button>
-      <div id="posdrop-${i}" style="display:none;position:absolute;right:0;top:calc(100% + 8px);z-index:50;background:var(--bg2);border:1px solid var(--border);border-radius:24px;box-shadow:var(--sh2);padding:24px;min-width:300px;transform-origin:top right;animation:popIn 0.2s ease;">
-        ${dropItems}
-        <button onclick="confirmPos(${i})" style="width:100%;margin-top:16px;padding:16px;border:none;border-radius:16px;background:var(--text);color:var(--bg);font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;">Kaydet ✓</button>
-      </div>
     </div>`;
   }).join('');
 }
@@ -293,15 +327,20 @@ export function confirmPos(i) {
 }
 
 export function togglePosDropdown(i) {
-  state.players.forEach((_, j) => { if (j !== i) closePosDropdown(j); });
-  const d = document.getElementById(`posdrop-${i}`);
-  if (d) d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  const overlay = document.getElementById('_posSheetOverlay');
+  if (overlay && overlay.style.display !== 'none') {
+    const wasOpen = _posSheetIdx === i;
+    closePosDropdown(_posSheetIdx);
+    if (wasOpen) return;
+  }
+  _openPosSheet(i);
 }
 
 export function closePosDropdown(i) {
-  const d = document.getElementById(`posdrop-${i}`);
-  if (d) d.style.display = 'none';
-  delete _pendingPos[i];
+  const overlay = document.getElementById('_posSheetOverlay');
+  if (overlay) overlay.style.display = 'none';
+  if (i !== undefined && i !== null) delete _pendingPos[i];
+  _posSheetIdx = null;
 }
 
 export function addPlayer() {
@@ -345,7 +384,6 @@ export function saveMatch() {
   gs({action:'saveMatch', score1:s1, score2:s2, week, note, goals:JSON.stringify(goals)}).then(d => {
     btn.disabled = false; btn.textContent = 'Veritabanına Kaydet';
     if (d.success) {
-      lRem('hs_matches_cache');
       loadMatchHistory();
       document.getElementById('matchNote').value = '';
       state.players.forEach(p => {
@@ -486,11 +524,8 @@ export function saveCurrentWeek() {
     btn.disabled = false; btn.textContent = '💾 Kaydet';
     if (d.success) {
       state.manualWeek = newWeek;
-      lSet('hs_manual_week', JSON.stringify({ week: state.manualWeek }));
-      lRem('hs_today_players_cache');
-      lRem('hs_hakem_cache');
-      lRem('hs_results_cache');
-      lRem('hs_matches_cache');
+      state.resultData = null;
+      state.matchesData = null;
       document.getElementById('currentWeekDisplay').textContent = state.manualWeek;
       document.getElementById('matchWeek').value = state.manualWeek;
       showToast('Hafta başarıyla güncellendi! ✓');
@@ -503,10 +538,8 @@ export function saveCurrentWeek() {
 export function resetWeekToAuto() {
   showConfirm('Otomatik haftaya dönmek istediğinize emin misiniz? (Yalnızca bu oturum için)', () => {
     state.manualWeek = null;
-    lRem('hs_today_players_cache');
-    lRem('hs_hakem_cache');
-    lRem('hs_results_cache');
-    lRem('hs_matches_cache');
+    state.resultData = null;
+    state.matchesData = null;
     const autoWeek = getAutoWeekLabel();
     document.getElementById('currentWeekDisplay').textContent = autoWeek + ' (Otomatik)';
     document.getElementById('matchWeek').value = autoWeek;
@@ -528,7 +561,15 @@ export function renderAnomalies() {
   el.innerHTML = '<div class="no-data"><span class="spin"></span>Taranıyor...</div>';
 
   const run = () => {
-    const flags = detectAnomalies(state.resultData);
+    const scorer = (p, idx) => {
+      const pObj = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
+      const w = state.resultData.weeks[idx];
+      const kr = p.weeklyKriterler?.[w] || {};
+      const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [p.weeklyGenels?.[idx]] };
+      const r = posRating(swd, pObj);
+      return r !== null ? r : p.weeklyGenels?.[idx];
+    };
+    const flags = detectAnomalies(state.resultData, scorer);
     if (!flags.length) {
       el.innerHTML = '<div class="no-data" style="border-color:#10b98130;background:rgba(16,185,129,0.05);color:var(--green);">✅ Anomali bulunamadı.</div>';
       return;
@@ -595,7 +636,6 @@ export function saveVoteSetting() {
     btn.disabled = false; btn.textContent = '💾 Kaydet';
     if (d.success) {
       state.resultData = null;
-      lRem('hs_results_cache');
       if (msg) { msg.textContent = `✅ Eşik ${val} olarak kaydedildi.`; msg.style.display = 'block'; }
       showToast(`Oy gizleme sınırı ${val} olarak güncellendi!`);
     } else {

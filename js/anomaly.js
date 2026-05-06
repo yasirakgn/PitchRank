@@ -19,15 +19,15 @@ function mad(arr, med) {
   return median(dev);
 }
 
-export function detectAnomalies(resultData) {
+export function detectAnomalies(resultData, scorer = null) {
   if (!resultData || !Array.isArray(resultData.players) || !Array.isArray(resultData.weeks)) return [];
   const out = [];
   resultData.players.forEach(p => {
     const series = Array.isArray(p.weeklyGenels) ? p.weeklyGenels : [];
     const valid = [];
     for (let i = 0; i < series.length; i++) {
-      const v = series[i];
-      if (v != null && !isNaN(+v)) valid.push({ v: +v, i });
+      const raw = scorer ? scorer(p, i) : series[i];
+      if (raw != null && !isNaN(+raw)) valid.push({ v: +raw, i });
     }
     if (valid.length < MIN_WEEKS) return;
     const vals = valid.map(x => x.v);

@@ -108,6 +108,19 @@ export function closeConfirm() {
   if (bg) bg.classList.remove('open');
 }
 
+export function criteriaAvg(playerData, criterion) {
+  if (!playerData || !playerData.weeklyKriterler) return 0;
+  const vals = Object.values(playerData.weeklyKriterler)
+    .map(wk => (wk && wk[criterion] != null ? +wk[criterion] : null))
+    .filter(v => v !== null);
+  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+}
+
+export function attendCount(playerData) {
+  if (!playerData || !Array.isArray(playerData.weeklyGenels)) return 0;
+  return playerData.weeklyGenels.filter(v => v != null).length;
+}
+
 export function countUp(el, target, duration = 550) {
   if (!el || target <= 0) return;
   const start = performance.now();

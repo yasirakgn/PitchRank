@@ -1,9 +1,8 @@
 import { CRITERIA, CDISP, POS } from './config.js';
-import { lGet, lSet } from './storage.js';
 import { state } from './state.js';
-import { escHtml, normPos, posLabel, getWeekLabel, getPlayerPhoto, scoreColor, formatMoney, showToast } from './utils.js';
+import { escHtml, normPos, posLabel, getWeekLabel, getPlayerPhoto, scoreColor, formatMoney, showToast, criteriaAvg, attendCount } from './utils.js';
 import { gs } from './api.js';
-import { posRating, calcMarketValue } from './rating.js';
+import { posRating, calcMarketValue, calcStdDev, calcTrend } from './rating.js';
 
 let _makeFifaCard = null;
 
@@ -105,45 +104,19 @@ function rankGateBanner(gate) {
 }
 
 export function loadResults(cb, forceRefresh = false) {
-  const cached = lGet('hs_results_cache');
-
-  // Stale-while-revalidate: eski veriyi anında göster, GAS'tan taze veri her zaman çekilir
-  if (!forceRefresh) {
-    if (state.resultData) {
-      cb(state.resultData);
-    } else if (cached) {
-      try {
-        state.resultData = normalizeResultsData(JSON.parse(cached));
-        if (state.resultData) cb(state.resultData);
-      } catch(e) {}
-    }
+  if (!forceRefresh && state.resultData) {
+    cb(state.resultData);
+    return;
   }
-
-  // Her zaman GAS'tan taze veri çek
   gs({action:'getResults'}).then(d => {
-    const normalized = normalizeResultsData(d || { results: [] });
-    const newStr = JSON.stringify(normalized);
-    const prevStr = JSON.stringify(state.resultData);
-    lSet('hs_results_cache', newStr);
-    state.resultData = normalized;
-    if (forceRefresh || newStr !== prevStr) cb(state.resultData);
-  }).catch(() => { if (!state.resultData) cb(null); });
+    state.resultData = normalizeResultsData(d || { results: [] });
+    cb(state.resultData);
+  }).catch(() => { cb(state.resultData || null); });
 }
 
 export function loadManualWeek(cb) {
-  const cached = lGet('hs_manual_week');
-  if (cached) {
-    try {
-      const data = JSON.parse(cached);
-      if (data && data.week) state.manualWeek = data.week;
-    } catch(e) {}
-    if (cb) cb(); cb = null;
-  }
   gs({action:'getManualWeek'}).then(d => {
-    if (d && d.week) {
-      state.manualWeek = d.week;
-      lSet('hs_manual_week', JSON.stringify({ week: state.manualWeek }));
-    }
+    if (d && d.week) state.manualWeek = d.week;
     if (cb) cb();
   }).catch(() => { if (cb) cb(); });
 }
@@ -372,22 +345,19 @@ export function renderTrend() {
 
     // Detaylı metrikler
     const current = valid[valid.length - 1].score;
-    const first = valid[0].score;
     const avg = +(valid.reduce((a, s) => a + s.score, 0) / valid.length).toFixed(1);
     const max = Math.max(...valid.map(s => s.score));
     const min = Math.min(...valid.map(s => s.score));
-    const trendChange = +(current - first).toFixed(1);
-    const trendPercent = +((trendChange / first) * 100).toFixed(1);
-    const trendDir = trendChange > 0.3 ? '↑' : trendChange < -0.3 ? '↓' : '→';
+    const { dir: trendDir, change: trendChange, pct: trendPercent } = calcTrend(valid.map(s => s.score));
     const trendColor = trendDir === '↑' ? 'var(--green)' : trendDir === '↓' ? '#f97316' : 'var(--text3)';
     const trendLabel = trendDir === '↑' ? 'Yükseliyor' : trendDir === '↓' ? 'Düşüyor' : 'Stabil';
-    
+
     // Standart sapma
     const variance = valid.reduce((a, s) => a + Math.pow(s.score - avg, 2), 0) / valid.length;
     const stdDev = Math.sqrt(variance).toFixed(1);
-    
-    // Performance rating (0-100)
-    const perfRating = Math.round(((avg - min) / (max - min || 1) * 60 + 40));
+
+    // Performance rating (0-100); tamamen tutarlı oyuncu → 50
+    const perfRating = max === min ? 50 : Math.round((avg - min) / (max - min) * 100);
 
     const maxS = Math.max(...valid.map(s => s.score));
     const minS = Math.min(...valid.map(s => s.score));
@@ -432,9 +402,7 @@ export function renderTrend() {
       const vals = last5weeks.map(w => pdata.weeklyKriterler && pdata.weeklyKriterler[w] ? pdata.weeklyKriterler[w][c] : null).filter(v => v != null);
       if (!vals.length) return '';
       const cavg = vals.reduce((a, b) => a + b, 0) / vals.length;
-      const cfirst = vals[0];
-      const clast = vals[vals.length - 1];
-      const ctrend = clast > cfirst + 1 ? '↑' : clast < cfirst - 1 ? '↓' : '→';
+      const { dir: ctrend } = calcTrend(vals);
       const ctrendColor = ctrend === '↑' ? 'var(--green)' : ctrend === '↓' ? '#f97316' : 'var(--text3)';
       const bar = Math.round(cavg / 10 * 100);
       const col = scoreColor(cavg);
@@ -681,8 +649,21 @@ export function renderComparison() {
     const bBestCrit = CRITERIA[bVals.indexOf(Math.max(...bVals))];
     const aWorstCrit = CRITERIA[aVals.indexOf(Math.min(...aVals))];
     const bWorstCrit = CRITERIA[bVals.indexOf(Math.min(...bVals))];
-    const aFormTrend = (() => { const v = pa.weeklyGenels.filter(x=>x!=null); if (v.length<2) return 'stabil'; return v[v.length-1]>v[v.length-2]?'yükselen':'düşen'; })();
-    const bFormTrend = (() => { const v = pb.weeklyGenels.filter(x=>x!=null); if (v.length<2) return 'stabil'; return v[v.length-1]>v[v.length-2]?'yükselen':'düşen'; })();
+    const getFormTrend = (pdata, pObjT) => {
+      const vals = last5.map(w => {
+        const wi = data.weeks.indexOf(w);
+        const rv = pdata.weeklyGenels[wi];
+        if (rv == null) return null;
+        const kr = pdata.weeklyKriterler?.[w] || {};
+        const swd = { weeklyKriterler: { [w]: kr }, weeklyGenels: [rv] };
+        const r = posRating(swd, pObjT);
+        return r !== null ? Math.min(99, r * 10) : Math.min(99, rv * 10);
+      }).filter(v => v !== null);
+      const { dir } = calcTrend(vals);
+      return dir === '↑' ? 'yükselen' : dir === '↓' ? 'düşen' : 'stabil';
+    };
+    const aFormTrend = getFormTrend(pa, paObj);
+    const bFormTrend = getFormTrend(pb, pbObj);
     const overallWinner = aRating > bRating ? a : bRating > aRating ? b : null;
     const critLabels = { 'Pas':'Pas', 'Sut':'Şut', 'Dribling':'Dribling', 'Savunma':'Savunma', 'Hiz / Kondisyon':'Hız/Kondisyon', 'Fizik':'Fizik', 'Takim Oyunu':'Takım Oyunu' };
 
@@ -762,9 +743,7 @@ export function renderSezon() {
     if (!players.length) { el.innerHTML = '<div class="no-data">Henüz puan girilmedi.</div>'; return; }
 
     const totalWeeks = data.weeks.length;
-    const kritAvg = (p, c) => { let vals = []; if (p.weeklyKriterler) Object.values(p.weeklyKriterler).forEach(wk => { if (wk && wk[c] != null) vals.push(+wk[c]); }); return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
-    const attendCount = (p) => p.weeklyGenels.filter(v => v != null).length;
-    const stddev = (p) => { const vals = p.weeklyGenels.filter(v => v != null); if (vals.length < 2) return 999; const avg = vals.reduce((a,b)=>a+b,0)/vals.length; return Math.sqrt(vals.reduce((a,v)=>a+Math.pow(v-avg,2),0)/vals.length); };
+    const kritAvg = (p, c) => criteriaAvg(p, c);
     const weekRating = (p, weekIdx) => {
       const pObjS = state.players.find(pl => pl.name === p.name) || { pos: ['OMO'] };
       const w = data.weeks[weekIdx];
@@ -776,8 +755,8 @@ export function renderSezon() {
       return r !== null ? Math.min(99, r * 10) : Math.min(99, rawV * 10);
     };
     const weekRatings = (p) => data.weeks.map((_, i) => weekRating(p, i)).filter(v => v !== null);
-    const last3Avg = (p) => { const vals = weekRatings(p).slice(-3); return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
-    const first3Avg = (p) => { const vals = weekRatings(p).slice(0,3); return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0; };
+    const last3Avg = (p) => { const wr = weekRatings(p); const n = Math.min(3, Math.ceil(wr.length / 2)); return n ? wr.slice(-n).reduce((a,b)=>a+b,0)/n : 0; };
+    const first3Avg = (p) => { const wr = weekRatings(p); const n = Math.min(3, Math.floor(wr.length / 2)); return n ? wr.slice(0,n).reduce((a,b)=>a+b,0)/n : 0; };
     const peakScore = (p) => Math.max(...weekRatings(p), 0);
 
     const sorted = [...players].sort((a, b) => {
@@ -788,7 +767,7 @@ export function renderSezon() {
 
     const mvp = sorted[0];
     const mostValuable = [...players].sort((a,b) => calcMarketValue(b,data) - calcMarketValue(a,data))[0];
-    const mostCon = [...players].sort((a,b) => stddev(a) - stddev(b))[0];
+    const mostCon = [...players].filter(p => calcStdDev(p) !== null).sort((a,b) => calcStdDev(a) - calcStdDev(b))[0] || players[0];
     const mostAttend = [...players].sort((a,b) => attendCount(b) - attendCount(a))[0];
     const bestDef = [...players].sort((a,b) => kritAvg(b,'Savunma') - kritAvg(a,'Savunma'))[0];
     const bestFwd = [...players].sort((a,b) => kritAvg(b,'Sut') - kritAvg(a,'Sut'))[0];
@@ -798,7 +777,8 @@ export function renderSezon() {
     const peakPlayer = [...players].sort((a,b) => peakScore(b) - peakScore(a))[0];
 
     const podium = sorted.slice(0, 3);
-    const avgRating = (players.reduce((s,p) => { const pObj = state.players.find(pl=>pl.name===p.name)||{pos:['OMO']}; return s+(posRating(p,pObj)||0); },0)/players.length*10).toFixed(1);
+    const avgRatingVals = players.map(p => posRating(p, state.players.find(pl=>pl.name===p.name)||{pos:['OMO']})).filter(v => v !== null);
+    const avgRating = avgRatingVals.length ? (avgRatingVals.reduce((a,b)=>a+b,0) / avgRatingVals.length * 10).toFixed(1) : '0.0';
 
     // ── SEASON BANNER ──────────────────────────────────────────
     let html = `
@@ -913,7 +893,7 @@ export function renderSezon() {
     const awards = [
       { icon:'👑', bg:'linear-gradient(145deg,#92400e,#f59e0b)', title:'MVP',           sub:'En Yüksek Rating',   name:mvp.name,          val:Math.min(99,Math.round((posRating(mvp,state.players.find(pl=>pl.name===mvp.name)||{pos:['OMO']})||0)*10))+' puan' },
       { icon:'💎', bg:'linear-gradient(145deg,#1e3a8a,#38bdf8)', title:'PIYASA LIDERI', sub:'Piyasa Değeri',      name:mostValuable.name,  val:formatMoney(calcMarketValue(mostValuable,data)) },
-      { icon:'🎯', bg:'linear-gradient(145deg,#064e3b,#34d399)', title:'EN TUTARLI',    sub:'En Düşük Varyans',   name:mostCon.name,       val:'σ = '+stddev(mostCon).toFixed(2) },
+      { icon:'🎯', bg:'linear-gradient(145deg,#064e3b,#34d399)', title:'EN TUTARLI',    sub:'En Düşük Varyans',   name:mostCon.name,       val:'σ = '+(calcStdDev(mostCon) ?? 0).toFixed(2) },
       { icon:'🏃', bg:'linear-gradient(145deg,#4c1d95,#a78bfa)', title:'DEMIR ADAM',    sub:'En Çok Katılım',     name:mostAttend.name,    val:attendCount(mostAttend)+'/'+totalWeeks+' maç' },
       { icon:'🧱', bg:'linear-gradient(145deg,#1f2937,#6b7280)', title:'BETON DUVAR',   sub:'Savunma Şampiyonu',  name:bestDef.name,       val:kritAvg(bestDef,'Savunma').toFixed(1)+'/10' },
       { icon:'⚽', bg:'linear-gradient(145deg,#7f1d1d,#f87171)', title:'GOL MAKINESI', sub:'Şut Şampiyonu',      name:bestFwd.name,       val:kritAvg(bestFwd,'Sut').toFixed(1)+'/10' },
@@ -1101,16 +1081,11 @@ export function loadMatchHistory() {
     if (elAdmin) elAdmin.innerHTML = html;
     if (elPublic) elPublic.innerHTML = html;
   };
-  const cached = lGet('hs_matches_cache');
-  if (cached) { try { state.matchesData = normalizeMatchesData(JSON.parse(cached)); render(state.matchesData); } catch(e) {} }
-  else {
-    if (elAdmin) elAdmin.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
-    if (elPublic) elPublic.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
-  }
+  if (elAdmin) elAdmin.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
+  if (elPublic) elPublic.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
   gs({action:'getMatches'}).then(data => {
-    const normalized = normalizeMatchesData(data);
-    const newStr = JSON.stringify(normalized);
-    if (cached !== newStr) { lSet('hs_matches_cache', newStr); state.matchesData = normalized; render(normalized); }
+    state.matchesData = normalizeMatchesData(data);
+    render(state.matchesData);
   }).catch(() => {});
 }
 
@@ -1201,17 +1176,11 @@ export function renderDenge() {
   if (state.matchesData) { renderContent(state.matchesData); return; }
 
   el.innerHTML = '<div class="no-data"><span class="spin"></span>Yükleniyor...</div>';
-  const cached = lGet('hs_matches_cache');
-  if (cached) {
-    try { state.matchesData = normalizeMatchesData(JSON.parse(cached)); renderContent(state.matchesData); } catch (e) {}
-  }
   gs({ action: 'getMatches' }).then(data => {
-    const normalized = normalizeMatchesData(data);
-    lSet('hs_matches_cache', JSON.stringify(normalized));
-    state.matchesData = normalized;
-    renderContent(normalized);
+    state.matchesData = normalizeMatchesData(data);
+    renderContent(state.matchesData);
   }).catch(() => {
-    if (!state.matchesData) el.innerHTML = '<div class="no-data">Veri yüklenemedi.</div>';
+    el.innerHTML = '<div class="no-data">Veri yüklenemedi.</div>';
   });
 }
 

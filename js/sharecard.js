@@ -1,7 +1,7 @@
 import { CRITERIA, CRITERIA_ABBR, TEAM_CONFIG } from './config.js';
 import { state } from './state.js';
-import { getPlayerPhoto, posLabel, showToast } from './utils.js';
-import { posRating, calcStdDev } from './rating.js';
+import { getPlayerPhoto, posLabel, showToast, criteriaAvg, attendCount } from './utils.js';
+import { posRating, calcStdDev, calcTrend } from './rating.js';
 import { CURRENT_TEAM } from './storage.js';
 
 // ── Yardımcılar ───────────────────────────────────────────────────────────────
@@ -14,17 +14,6 @@ function hexRgb(hex) {
   };
 }
 
-function criteriaAvg(pd, cr) {
-  if (!pd || !pd.weeklyKriterler) return 0;
-  const vals = Object.values(pd.weeklyKriterler)
-    .map(wk => (wk && wk[cr] != null ? +wk[cr] : null))
-    .filter(v => v !== null);
-  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-}
-
-function attCount(pd) {
-  return Array.isArray(pd?.weeklyGenels) ? pd.weeklyGenels.filter(v => v != null).length : 0;
-}
 
 function getSeasonRank(pd, rd) {
   if (!pd || !rd || !Array.isArray(rd.players)) return -1;
@@ -72,9 +61,9 @@ const CARD_TYPES = {
 
 function getCardType(rating) {
   if (!rating)      return CARD_TYPES.bronz;
-  if (rating >= 90) return CARD_TYPES.efsane;
-  if (rating >= 85) return CARD_TYPES.altin;
-  if (rating >= 75) return CARD_TYPES.gumus;
+  if (rating >= 80) return CARD_TYPES.efsane;
+  if (rating >= 70) return CARD_TYPES.altin;
+  if (rating >= 60) return CARD_TYPES.gumus;
   return CARD_TYPES.bronz;
 }
 
@@ -90,7 +79,7 @@ const STAT_TITLES = [
   { e: '🤝', t: 'TAKIMIN KALBİ'  },
 ];
 
-function egoTitle(pd, rd, rank) {
+function egoTitle(pd, rd, rank, pObj) {
   if (rd && Array.isArray(rd.players)) {
     if (rank === 0) return { e: '👑', t: 'SAHANIN KRALİ'      };
     if (rank === 1) return { e: '🌟', t: 'SEZONUN YILDIZI'    };
@@ -106,11 +95,12 @@ function egoTitle(pd, rd, rank) {
 
   if (avgs.filter(a => a >= 7.5).length >= 2) return { e: '💥', t: 'ÇIFT TEHLIKE' };
 
-  const att = attCount(pd);
+  const att = attendCount(pd);
   if (att >= 12) return { e: '🎖️', t: 'EFSANELER LIGINDEN' };
   if (att >= 8)  return { e: '🏃', t: 'SAHANIN DİNAMOSU'   };
 
-  const r = pd.genelOrt ? Math.round(pd.genelOrt * 10) : 0;
+  const wAvg = pd && pObj ? posRating(pd, pObj) : null;
+  const r = wAvg !== null ? Math.min(99, Math.round(wAvg * 10)) : (pd?.genelOrt ? Math.min(99, Math.round(pd.genelOrt * 10)) : 0);
   if (r >= 85) return { e: '🔥', t: 'ELİT PERFORMANS'       };
   if (r >= 78) return { e: '💫', t: 'FORM OYUNCUSU'         };
   if (r >= 72) return { e: '📈', t: 'YÜKSELİŞTEKİ YILDIZ'  };
@@ -148,9 +138,9 @@ function personalBadges(pd, rd, statRanks) {
   const bestStatIdx = statRanks.indexOf(0);
   if (bestStatIdx >= 0) result.push(STAT_BEST_LABELS[bestStatIdx]);
 
-  const myAtt = attCount(pd);
+  const myAtt = attendCount(pd);
   if (rd && Array.isArray(rd.players)) {
-    const maxAtt     = Math.max(...rd.players.map(p => attCount(p)));
+    const maxAtt     = Math.max(...rd.players.map(p => attendCount(p)));
     const totalWeeks = Array.isArray(rd.weeks) ? rd.weeks.length : 0;
     if (myAtt > 0 && myAtt >= maxAtt && totalWeeks >= 4) {
       result.push({ e: '💯', t: 'EN SADIK OYUNCU' });
@@ -162,11 +152,10 @@ function personalBadges(pd, rd, statRanks) {
   if (pd.weeklyGenels && Array.isArray(pd.weeklyGenels)) {
     const all = pd.weeklyGenels.filter(v => v != null);
     if (all.length >= 4) {
-      const overall = all.reduce((a, b) => a + b, 0) / all.length;
-      const recent  = all.slice(-3).reduce((a, b) => a + b, 0) / 3;
-      if (recent >= overall * 1.06) {
+      const { dir: tDir } = calcTrend(all);
+      if (tDir === '↑') {
         result.push({ e: '📈', t: 'YÜKSELIŞ TRENDİ' });
-      } else if (calcStdDev(pd) < 0.38 && all.length >= 5) {
+      } else if ((calcStdDev(pd) ?? 1) < 0.38 && all.length >= 5) {
         result.push({ e: '🔒', t: 'İSTİKRAR ABİDESİ' });
       }
     }
@@ -175,8 +164,10 @@ function personalBadges(pd, rd, statRanks) {
   if (!result.find(b => b.t === 'YÜKSELIŞ TRENDİ') && pd.weeklyGenels) {
     const all = pd.weeklyGenels.filter(v => v != null);
     if (all.length >= 3) {
-      const peak = Math.max(...all);
-      if (all.slice(-3).includes(peak)) result.push({ e: '⭐', t: 'KİŞİSEL REKOR' });
+      const prev = all.slice(0, -1);
+      if (prev.length && all[all.length - 1] > Math.max(...prev)) {
+        result.push({ e: '⭐', t: 'KİŞİSEL REKOR' });
+      }
     }
   }
 
@@ -387,7 +378,7 @@ async function generateCard(playerName, pd, pObj, rd) {
   }
 
   // ── EGO BAŞLIĞI ───────────────────────────────────────────────────────────────
-  const ego  = egoTitle(pd, rd, rank);
+  const ego  = egoTitle(pd, rd, rank, pObj);
   const EGO_Y = 422;
 
   ctx.font = fn(13, 900);
@@ -561,7 +552,7 @@ async function generateCard(playerName, pd, pObj, rd) {
 
   // ── SEZON ÖZETİ ───────────────────────────────────────────────────────────────
   const SUM_Y     = AFTER_STATS + 74;
-  const attendance = attCount(pd);
+  const attendance = attendCount(pd);
   const weeks = rd && Array.isArray(rd.weeks) ? rd.weeks : [];
   const bestScore = (() => {
     if (!pd || !Array.isArray(pd.weeklyGenels)) return null;
@@ -640,7 +631,7 @@ export async function shareProfileCard() {
   const rankIdx    = players.findIndex(p => p.name === playerName);
   const rank       = rankIdx >= 0 ? rankIdx + 1 : null;
   const total      = players.length || null;
-  const ego        = egoTitle(pd, rd, seasonRank);
+  const ego        = egoTitle(pd, rd, seasonRank, pObj);
   const appUrl     = window.location.origin;
 
   const rankLine = rank ? `🏆 ${rank}. sıra${total ? '/' + total : ''}` : '';

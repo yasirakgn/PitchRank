@@ -165,6 +165,7 @@ function refreshData() {
   if (btn) btn.disabled = true;
   if (icon) icon.classList.add('spinning');
 
+  state.matchesData = null;
   loadResults(() => {
     state.lastRefreshTime = Date.now();
     updateRefreshTime();
@@ -746,12 +747,21 @@ export function initApp() {
     }
     document.querySelectorAll('.mbg.open').forEach(function(m) { m.classList.remove('open'); });
   });
+  const raterSel = el('raterSelect');
+  if (raterSel) {
+    raterSel.disabled = true;
+    raterSel.innerHTML = '<option>⏳ Oyuncular yükleniyor...</option>';
+  }
+
   loadManualWeek(() => {
     console.log('[PitchRank] Week loaded:', getWeekLabel());
     if (has('matchWeek')) el('matchWeek').value = getWeekLabel();
     loadPlayersFromSheets(() => {
       console.log('[PitchRank] Players loaded:', state.players.length);
       loadMevkilerFromSheets(() => {
+        if (raterSel) raterSel.disabled = false;
+        const loadBanner = el('appLoadingBanner');
+        if (loadBanner) loadBanner.style.display = 'none';
         if (has('raterSelect') || has('trendSelect') || has('cmpA') || has('cmpB')) initSelects();
         if (has('playerList')) renderPlayerList();
         if (has('goalInputs')) buildGoalInputs();
@@ -764,10 +774,6 @@ export function initApp() {
           if (has('matchHistory')) loadMatchHistory();
         }, 500);
       });
-    }, () => {
-      if (has('raterSelect') || has('trendSelect') || has('cmpA') || has('cmpB')) initSelects();
-      if (has('playerList')) renderPlayerList();
-      if (has('goalInputs')) buildGoalInputs();
     });
   });
 }
