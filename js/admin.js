@@ -1,4 +1,4 @@
-import { POS, POS_GROUPS } from './config.js';
+import { POS, POS_GROUPS, POS_EMOJIS } from './config.js';
 import { lGet, lSet, sGet, sSet, sRem } from './storage.js';
 import { state } from './state.js';
 import { escHtml, normPos, san, getWeekLabel, getAutoWeekLabel, showToast, showConfirm } from './utils.js';
@@ -11,16 +11,6 @@ import { posRating } from './rating.js';
 let _pendingPos = {};
 let _posSheetIdx = null;
 let _bugunSelected = {};
-
-function escJsSingle(value) {
-  return String(value ?? '')
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\u0022')
-    .replace(/'/g, "\\'")
-    .replace(/</g, '\\u003C')
-    .replace(/>/g, '\\u003E')
-    .replace(/\r?\n/g, ' ');
-}
 
 // ─── ADMİN GİRİŞ ─────────────────────────────────────────────────────────────
 const ADMIN_MAX_ATTEMPTS = 5;
@@ -118,7 +108,6 @@ export function loadBugunTab() {
 
 function renderBugunList() {
   const el = document.getElementById('bugunPlayerList');
-  const posEmojis = { KL: '🧤', DEF: '🛡️', OMO: '⚙️', FRV: '⚡' };
   el.innerHTML = state.players.map(p => {
     const on = _bugunSelected[p.name] !== false;
     const pos = normPos(p)[0] || 'OMO';
@@ -128,7 +117,7 @@ function renderBugunList() {
              background:${on ? 'var(--green)' : 'var(--bg2)'};
              color:${on ? '#fff' : 'var(--text2)'};
              box-shadow:${on ? '0 4px 10px rgba(16,185,129,.3)' : 'var(--sh)'}">
-      ${posEmojis[pos] || ''} ${escHtml(p.name)}
+      ${POS_EMOJIS[pos] || ''} ${escHtml(p.name)}
     </button>`;
   }).join('');
 }

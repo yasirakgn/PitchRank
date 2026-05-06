@@ -37,3 +37,4 @@ export const POS_WEIGHTS = {
   FRV: [0.65, 1.00, 0.90, 0.10, 1.00, 0.75, 0.75]
 };
 export const MEDALS = ['🥇','🥈','🥉'];
+export const POS_EMOJIS = { KL: '🧤', DEF: '🛡️', OMO: '⚙️', FRV: '⚡' };

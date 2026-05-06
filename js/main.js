@@ -1,10 +1,10 @@
-import { TEAM_CONFIG, CRITERIA, CDISP, POS } from './config.js';
+import { TEAM_CONFIG, CRITERIA, CDISP, POS, POS_EMOJIS } from './config.js';
 import { CURRENT_TEAM, lGet, lSet, lRem } from './storage.js';
 import { state } from './state.js';
 import { escHtml, normPos, posLabel, san, getPlayerPhoto, getWeekLabel, getAutoWeekLabel, formatMoney, scoreColor, ratingColor, cardClass, showToast, showConfirm, closeConfirm, countUp } from './utils.js';
 import { calcStdDev, posRating, calcMarketValue, getPlayStyles } from './rating.js';
 import { findOptimalLineup, PRESET_META } from './lineup-optimizer.js';
-import { savePlayers, loadPlayersFromSheets, loadMevkilerFromSheets, initSelects, checkIdentityLock, resetIdentity, onRaterChange, buildCards, onSlider, updateProgress, submitRatings, closeSuccessPopup, buildGoalInputs, stepGoal, restoreDraft, dismissDraft } from './players.js';
+import { loadPlayersFromSheets, loadMevkilerFromSheets, initSelects, checkIdentityLock, resetIdentity, onRaterChange, buildCards, onSlider, updateProgress, submitRatings, closeSuccessPopup, buildGoalInputs, stepGoal, restoreDraft, dismissDraft } from './players.js';
 import { loadResults, loadManualWeek, setRankTab, renderSonuc, renderHafta, selectWeekBtn, renderTrend, renderComparison, renderSezon, renderKatilim, loadMatchHistory, renderDenge } from './stats.js';
 import { renderProfile } from './profile.js';
 import { shareProfileCard, doShareCard, closeSharePreview, copyShareCaption } from './sharecard.js';
@@ -462,13 +462,12 @@ let _teamA = [], _teamB = [];
 function renderTodayPlayers() {
   const el = document.getElementById('todayPlayers');
   if (!el) return;
-  const posEmojis = { KL: '🧤', DEF: '🛡️', OMO: '⚙️', FRV: '⚡' };
   el.innerHTML = state.players.map(p => {
     if (!(p.name in state.todaySelected)) state.todaySelected[p.name] = true;
     const on = state.todaySelected[p.name];
     const pos = normPos(p)[0] || 'OMO';
     return `<button data-name="${escHtml(p.name)}" onclick="toggleToday(this.dataset.name)" id="td-${san(p.name)}" class="tk-chip${on?' tk-chip-on':''}">
-      ${posEmojis[pos]||''} ${escHtml(p.name)}
+      ${POS_EMOJIS[pos]||''} ${escHtml(p.name)}
     </button>`;
   }).join('');
 }
@@ -610,7 +609,6 @@ function renderOptimalLineup(result) {
   const teamResult = document.getElementById('teamResult');
   if (!teamResult) return;
   const meta = PRESET_META[result.preset] || PRESET_META.dengeli;
-  const posEmojis = { KL: '🧤', DEF: '🛡️', OMO: '⚙️', FRV: '⚡' };
   const order = { KL: 0, DEF: 1, OMO: 2, FRV: 3 };
   const sorted = [...result.lineup].sort((a, b) => (order[a.posKey] - order[b.posKey]) || (b.score - a.score));
   const avgScore = result.totalScore / result.lineup.length;
@@ -619,7 +617,7 @@ function renderOptimalLineup(result) {
   const rows = sorted.map(p => {
     const r = Math.min(99, Math.round((p.score || 0) * 10));
     return `<div class="tk-player-row">
-      <span class="tk-p-pos">${posEmojis[p.posKey] || '⚽'}</span>
+      <span class="tk-p-pos">${POS_EMOJIS[p.posKey] || '⚽'}</span>
       <span class="tk-p-name">${escHtml(p.name)}</span>
       <span class="tk-p-score" style="color:${ratingColor(r).text}">${r}</span>
     </div>`;
@@ -669,7 +667,6 @@ function swapPlayer(name) {
 function renderTeams() {
   const teamResult = document.getElementById('teamResult');
   if (!teamResult || !_teamA.length || !_teamB.length) return;
-  const posEmojis = { KL: '🧤', DEF: '🛡️', OMO: '⚙️', FRV: '⚡' };
   const fieldAvg = (t) => { const f = t.filter(p => p.pos !== 'KL'); return f.length ? f.reduce((s,p) => s+(p.avg||0), 0) / f.length : 0; };
   const avg1 = fieldAvg(_teamA), avg2 = fieldAvg(_teamB);
   const diff = Math.abs(avg1 - avg2);
@@ -679,7 +676,7 @@ function renderTeams() {
   const playerRow = (p, arrow) => {
     const r = Math.min(99, Math.round((p.avg || 0) * 10));
     return `<div class="tk-player-row">
-      <span class="tk-p-pos">${posEmojis[p.pos]||'⚽'}</span>
+      <span class="tk-p-pos">${POS_EMOJIS[p.pos]||'⚽'}</span>
       <span class="tk-p-name">${escHtml(p.name)}</span>
       <span class="tk-p-score" style="color:${ratingColor(r).text}">${r}</span>
       <button class="tk-swap-btn" onclick="swapPlayer('${escHtml(p.name)}')" title="Diğer takıma taşı">${arrow}</button>
@@ -711,7 +708,6 @@ function renderTeams() {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 export function initApp() {
-  console.log('[PitchRank] App Initializing. Current Team:', CURRENT_TEAM);
   const el = (id) => document.getElementById(id);
   const has = (id) => !!el(id);
 
@@ -720,7 +716,6 @@ export function initApp() {
   const navBar = document.querySelector('.bottom-nav');
 
   if (!CURRENT_TEAM) {
-    console.log('[PitchRank] No team selected, showing home screen.');
     if (homeScreen) homeScreen.style.display = 'flex';
     if (appScreen) appScreen.style.display = 'none';
     if (navBar) navBar.style.display = 'none';
@@ -729,7 +724,6 @@ export function initApp() {
     return;
   }
 
-  console.log('[PitchRank] Team selected:', CURRENT_TEAM);
   if (homeScreen) homeScreen.style.display = 'none';
   if (appScreen) appScreen.style.display = 'block';
   if (navBar) navBar.style.display = 'flex';
@@ -754,10 +748,8 @@ export function initApp() {
   }
 
   loadManualWeek(() => {
-    console.log('[PitchRank] Week loaded:', getWeekLabel());
     if (has('matchWeek')) el('matchWeek').value = getWeekLabel();
     loadPlayersFromSheets(() => {
-      console.log('[PitchRank] Players loaded:', state.players.length);
       loadMevkilerFromSheets(() => {
         if (raterSel) raterSel.disabled = false;
         const loadBanner = el('appLoadingBanner');
@@ -768,8 +760,7 @@ export function initApp() {
         if (has('raterSelect')) checkIdentityLock();
         setTimeout(() => {
           if (has('fifaGrid') || has('weekContent') || has('trendContent') || has('cmpContent')) {
-            console.log('[PitchRank] Loading results...');
-            loadResults(() => { console.log('[PitchRank] Results loaded.'); state.lastRefreshTime = Date.now(); updateRefreshTime(); }, false);
+            loadResults(() => { state.lastRefreshTime = Date.now(); updateRefreshTime(); }, false);
           }
           if (has('matchHistory')) loadMatchHistory();
         }, 500);
@@ -812,7 +803,6 @@ window.swapPlayer = swapPlayer;
 window.buildOptimalLineup = buildOptimalLineup;
 
 // players.js functions
-window.savePlayers = savePlayers;
 window.onRaterChange = onRaterChange;
 window.resetIdentity = resetIdentity;
 window.onSlider = onSlider;

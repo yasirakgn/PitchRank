@@ -1,6 +1,6 @@
 import { CRITERIA, POS_WEIGHTS } from './config.js';
 import { state } from './state.js';
-import { normPos } from './utils.js';
+import { normPos, criteriaAvg } from './utils.js';
 
 export function calcStdDev(playerData) {
   const vals = Array.isArray(playerData && playerData.weeklyGenels) ? playerData.weeklyGenels.filter(v => v != null) : [];
@@ -65,17 +65,12 @@ export function calcMarketValue(p, data) {
 export function getPlayStyles(p) {
   const styles = [];
   if (!p.weeklyKriterler) return styles;
-  const getAvg = (c) => {
-    let vals = [];
-    Object.values(p.weeklyKriterler).forEach(wk => { if (wk && wk[c] != null) vals.push(+wk[c]); });
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-  };
-  if (getAvg('Hiz / Kondisyon') >= 8.0) styles.push({ icon: '⚡', name: 'Motor' });
-  if (getAvg('Fizik') >= 8.0) styles.push({ icon: '🦍', name: 'Tank' });
-  if (getAvg('Pas') >= 8.0) styles.push({ icon: '🎯', name: 'Maestro' });
-  if (getAvg('Dribling') >= 8.0) styles.push({ icon: '🪄', name: 'Cambaz' });
-  if (getAvg('Sut') >= 8.0) styles.push({ icon: '🚀', name: 'Füze' });
-  if (getAvg('Savunma') >= 8.0) styles.push({ icon: '🧱', name: 'Duvar' });
-  if (getAvg('Takim Oyunu') >= 8.0) styles.push({ icon: '🤝', name: 'Joker' });
+  if (criteriaAvg(p, 'Hiz / Kondisyon') >= 8.0) styles.push({ icon: '⚡', name: 'Motor' });
+  if (criteriaAvg(p, 'Fizik') >= 8.0) styles.push({ icon: '🦍', name: 'Tank' });
+  if (criteriaAvg(p, 'Pas') >= 8.0) styles.push({ icon: '🎯', name: 'Maestro' });
+  if (criteriaAvg(p, 'Dribling') >= 8.0) styles.push({ icon: '🪄', name: 'Cambaz' });
+  if (criteriaAvg(p, 'Sut') >= 8.0) styles.push({ icon: '🚀', name: 'Füze' });
+  if (criteriaAvg(p, 'Savunma') >= 8.0) styles.push({ icon: '🧱', name: 'Duvar' });
+  if (criteriaAvg(p, 'Takim Oyunu') >= 8.0) styles.push({ icon: '🤝', name: 'Joker' });
   return styles;
 }

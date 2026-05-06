@@ -149,25 +149,20 @@ function personalBadges(pd, rd, statRanks) {
     }
   }
 
-  if (pd.weeklyGenels && Array.isArray(pd.weeklyGenels)) {
-    const all = pd.weeklyGenels.filter(v => v != null);
-    if (all.length >= 4) {
-      const { dir: tDir } = calcTrend(all);
-      if (tDir === '↑') {
-        result.push({ e: '📈', t: 'YÜKSELIŞ TRENDİ' });
-      } else if ((calcStdDev(pd) ?? 1) < 0.38 && all.length >= 5) {
-        result.push({ e: '🔒', t: 'İSTİKRAR ABİDESİ' });
-      }
+  const genelAll = Array.isArray(pd.weeklyGenels) ? pd.weeklyGenels.filter(v => v != null) : [];
+  if (genelAll.length >= 4) {
+    const { dir: tDir } = calcTrend(genelAll);
+    if (tDir === '↑') {
+      result.push({ e: '📈', t: 'YÜKSELIŞ TRENDİ' });
+    } else if ((calcStdDev(pd) ?? 1) < 0.38 && genelAll.length >= 5) {
+      result.push({ e: '🔒', t: 'İSTİKRAR ABİDESİ' });
     }
   }
 
-  if (!result.find(b => b.t === 'YÜKSELIŞ TRENDİ') && pd.weeklyGenels) {
-    const all = pd.weeklyGenels.filter(v => v != null);
-    if (all.length >= 3) {
-      const prev = all.slice(0, -1);
-      if (prev.length && all[all.length - 1] > Math.max(...prev)) {
-        result.push({ e: '⭐', t: 'KİŞİSEL REKOR' });
-      }
+  if (!result.find(b => b.t === 'YÜKSELIŞ TRENDİ') && genelAll.length >= 3) {
+    const prev = genelAll.slice(0, -1);
+    if (prev.length && genelAll[genelAll.length - 1] > Math.max(...prev)) {
+      result.push({ e: '⭐', t: 'KİŞİSEL REKOR' });
     }
   }
 

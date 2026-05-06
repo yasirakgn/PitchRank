@@ -1,6 +1,6 @@
 import { CRITERIA } from './config.js';
 import { state } from './state.js';
-import { normPos } from './utils.js';
+import { normPos, attendCount } from './utils.js';
 
 const MIN_ATTEND = 3;
 
@@ -27,10 +27,6 @@ function cosineSim(a, b) {
     mb += b[i] * b[i];
   }
   return (ma && mb) ? dot / (Math.sqrt(ma) * Math.sqrt(mb)) : 0;
-}
-
-function attendCount(p) {
-  return Array.isArray(p.weeklyGenels) ? p.weeklyGenels.filter(v => v != null).length : 0;
 }
 
 // Hybrid: same position first (sorted by similarity), then cross-position.
