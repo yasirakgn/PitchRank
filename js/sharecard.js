@@ -658,6 +658,10 @@ export async function shareProfileCard() {
 export async function doShareCard() {
   if (!_pending) return;
   const { canvas, name, caption } = _pending;
+
+  // Açıklamayı panoya kopyala (kullanıcı gesturesi içindeyken — modal kapanmadan önce)
+  try { await navigator.clipboard.writeText(caption); } catch(e) {}
+
   closeSharePreview();
 
   canvas.toBlob(async (blob) => {
@@ -668,7 +672,7 @@ export async function doShareCard() {
       } catch (e) { if (e.name !== 'AbortError') download(blob, name); }
     } else {
       download(blob, name);
-      showToast('Kart indirildi — Story\'ye ekleyebilirsin!');
+      showToast('Kart indirildi! Açıklama panoya kopyalandı, yapıştırabilirsin.');
     }
   }, 'image/png');
 }
