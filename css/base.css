@@ -58,15 +58,21 @@
 
 html, body { overflow-x: hidden; }
 
+html {
+  height: -webkit-fill-available;
+}
+
 body {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   background: linear-gradient(180deg, var(--bg), #E9EEF8 100%);
   color: var(--text);
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   transition: background .3s, color .3s;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
 }
 
 body.dark {
