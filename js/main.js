@@ -7,7 +7,7 @@ import { findOptimalLineup, PRESET_META } from './lineup-optimizer.js';
 import { savePlayers, loadPlayersFromSheets, loadMevkilerFromSheets, initSelects, checkIdentityLock, resetIdentity, onRaterChange, buildCards, onSlider, updateProgress, submitRatings, closeSuccessPopup, buildGoalInputs, stepGoal, restoreDraft, dismissDraft } from './players.js';
 import { loadResults, loadManualWeek, setRankTab, renderSonuc, renderHafta, selectWeekBtn, renderTrend, renderComparison, renderSezon, renderKatilim, loadMatchHistory, renderDenge } from './stats.js';
 import { renderProfile } from './profile.js';
-import { shareProfileCard, doShareCard, closeSharePreview } from './sharecard.js';
+import { shareProfileCard, doShareCard, closeSharePreview, copyShareCaption } from './sharecard.js';
 import { tryAdmin, checkPin, logoutAdmin, setAdminTab, loadBugunTab, toggleBugun, bugunSelectAll, bugunClearAll, saveBugunGelenler, loadHakemTab, selectHakem, saveHakemToSheet, clearHakem, renderPlayerList, selectPos, confirmPos, togglePosDropdown, closePosDropdown, addPlayer, removePlayer, saveMatch, loadVideos, loadAdminVideos, selectVideoWeek, selectVideoWeekByUrl, adminSaveVideo, saveCurrentWeek, resetWeekToAuto, loadVoteSetting, saveVoteSetting, refreshPhotos, renderAnomalies } from './admin.js';
 
 if (state.darkMode) document.body.classList.add('dark');
@@ -797,6 +797,7 @@ window.dismissDraft = dismissDraft;
 window.shareProfileCard  = shareProfileCard;
 window.doShareCard       = doShareCard;
 window.closeSharePreview = closeSharePreview;
+window.copyShareCaption  = copyShareCaption;
 window.showTeamConfirm = showTeamConfirm;
 window.selectTeam = selectTeam;
 window.resetTeam = resetTeam;

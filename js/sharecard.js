@@ -648,6 +648,10 @@ export async function shareProfileCard() {
 
   const img = document.getElementById('shareCardPreviewImg');
   if (img) img.src = canvas.toDataURL('image/png');
+  const captionEl = document.getElementById('shareCardCaption');
+  const captionWrap = document.getElementById('shareCardCaptionWrap');
+  if (captionEl) captionEl.textContent = caption;
+  if (captionWrap) captionWrap.style.display = 'block';
   document.getElementById('shareCardPreviewBg')?.classList.add('open');
 }
 
@@ -673,7 +677,17 @@ export function closeSharePreview() {
   document.getElementById('shareCardPreviewBg')?.classList.remove('open');
   const img = document.getElementById('shareCardPreviewImg');
   if (img) img.src = '';
+  const captionEl = document.getElementById('shareCardCaption');
+  const captionWrap = document.getElementById('shareCardCaptionWrap');
+  if (captionEl) captionEl.textContent = '';
+  if (captionWrap) captionWrap.style.display = 'none';
   _pending = null;
+}
+
+export function copyShareCaption() {
+  const captionEl = document.getElementById('shareCardCaption');
+  if (!captionEl || !captionEl.textContent) return;
+  navigator.clipboard.writeText(captionEl.textContent).then(() => showToast('Açıklama kopyalandı!'));
 }
 
 function download(blob, name) {
