@@ -737,7 +737,7 @@ export function initApp() {
 
   updateTeamUI();
   updateDarkBtn();
-  setInterval(updateRefreshTime, 60000);
+  if (!window._refreshInterval) window._refreshInterval = setInterval(updateRefreshTime, 60000);
 
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;

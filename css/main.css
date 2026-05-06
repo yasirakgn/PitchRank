@@ -1,5 +1,4 @@
 /* ── Layout ──────────────────────────────────────────────────────────────────── */
-.app { max-width: 600px; margin: 0 auto; padding: 10px 12px; padding-bottom: 86px; padding-top: 76px; }
 
 @media (max-width: 480px) {
   .app { padding: 8px; padding-bottom: 80px; padding-top: 72px; }
@@ -241,9 +240,10 @@ input[type=range] {
   outline: none; cursor: pointer; -webkit-appearance: none;
 }
 input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 22px; height: 22px;
+  -webkit-appearance: none; width: 20px; height: 20px;
   background: var(--green); border: 2px solid rgba(255,255,255,0.35);
-  border-radius: 50%; cursor: pointer; box-shadow: 0 2px 8px var(--gd);
+  border-radius: 50%; cursor: pointer;
+  box-shadow: 0 8px 18px var(--gd), 0 0 0 5px rgba(255,255,255,0.10);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 input[type=range]::-webkit-slider-thumb:active { transform: scale(1.22); box-shadow: 0 4px 16px var(--gd); }
@@ -976,6 +976,9 @@ body.dark .denge-badge.tektarafli { background: #1f0a0a; color: #fca5a5; }
 /* Premium product UI refresh */
 .app {
   max-width: 680px;
+  margin: 0 auto;
+  padding: 10px 12px;
+  padding-bottom: 86px;
   padding-top: calc(78px + env(safe-area-inset-top));
   animation: appReveal .32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -1499,11 +1502,6 @@ input[type=range] {
   background: linear-gradient(90deg, var(--green), var(--border));
 }
 
-input[type=range]::-webkit-slider-thumb {
-  width: 20px;
-  height: 20px;
-  box-shadow: 0 8px 18px var(--gd), 0 0 0 5px rgba(255,255,255,0.10);
-}
 
 .score-num,
 .prog-count,

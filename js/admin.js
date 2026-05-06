@@ -405,8 +405,8 @@ export function getYtEmbedUrl(input) {
   const srcMatch = input.match(/src=["']([^"']+)["']/);
   if (srcMatch) input = srcMatch[1];
   if (input.includes('/embed/')) { const part = input.split('/embed/')[1]; const videoId = part.split('?')[0].split('&')[0].split('/')[0].trim(); if (videoId.length === 11) return 'https://www.youtube.com/embed/' + videoId; }
-  if (input.includes('v=')) { const videoId = input.split('v=')[1].split('&')[0].split('?')[0].trim(); if (videoId.length >= 11) return 'https://www.youtube.com/embed/' + videoId.substring(0,11); }
-  if (input.includes('youtu.be/')) { const videoId = input.split('youtu.be/')[1].split('?')[0].split('/')[0].trim(); if (videoId.length >= 11) return 'https://www.youtube.com/embed/' + videoId.substring(0,11); }
+  if (input.includes('v=')) { const videoId = input.split('v=')[1].split('&')[0].split('?')[0].trim().substring(0,11); if (videoId.length === 11) return 'https://www.youtube.com/embed/' + videoId; }
+  if (input.includes('youtu.be/')) { const videoId = input.split('youtu.be/')[1].split('?')[0].split('/')[0].trim().substring(0,11); if (videoId.length === 11) return 'https://www.youtube.com/embed/' + videoId; }
   const liveMatch = input.match(/\/(live|shorts)\/([A-Za-z0-9_-]{11})/);
   if (liveMatch) return 'https://www.youtube.com/embed/' + liveMatch[2];
   return null;
